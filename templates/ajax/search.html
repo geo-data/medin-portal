@@ -1,0 +1,12 @@
+<%inherit file="base.html"/>
+
+Search the MEDIN Data Archive Centres.
+
+<form method="GET" action="${request_uri}/results">
+  <input type="text" name="q"/>
+  <input type="submit" value="search"/>
+</form>
+
+<pre>
+  ${environ}
+</pre>
