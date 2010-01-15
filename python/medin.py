@@ -64,10 +64,25 @@ def get_template_kwargs(environ, title, **kwargs):
     
     kwargs.update(dict(title=title,
                        request_uri=environ['REQUEST_URI'],
+                       http_root=get_http_root(environ),
+                       script_root=get_script_root(environ),
                        environ=pformat(environ)))
     return kwargs
 
+def get_http_root(environ):
+    return '%s://%s' % (environ['wsgi.url_scheme'], environ['HTTP_HOST'])
+
+def get_script_root(environ):
+    return ''.join((get_http_root(environ), environ['SCRIPT_NAME']))
+
 # The WSGI Applications
+
+def opensearch(environ, start_response):
+    template = get_template(environ, 'opensearch-description.xml', '')
+    kwargs = get_template_kwargs(environ, 'MEDIN Portal')
+    
+    start_response('200 OK', [('Content-type', 'application/opensearchdescription+xml')])   
+    return [template.render(**kwargs)]
 
 def search(environ, start_response):
     template = get_template(environ, 'search.html')

@@ -10,6 +10,9 @@ application = selector.Selector(consume_path=False)
 # provide a choice of templates
 application.add('[/]', GET=medin.template)
 
+# the OpenSearch Description document
+application.add('/opensearch-description.xml', GET=medin.opensearch)
+
 # the default entry point for the search
 application.add('/{template}[/]', GET=medin.search)
 
