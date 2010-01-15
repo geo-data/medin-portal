@@ -8,6 +8,9 @@ import suds                             # for the SOAP client
 _template_dir = None
 _template_lookup = None
 
+
+# Helper Functions
+
 def parse_qsl(environ):
     try:
         qsl = environ['QUERY_STRING']
@@ -46,30 +49,53 @@ def template_lookup(environ):
 
     return _template_lookup
 
-def search(environ, start_response):
+def get_template(environ, page, template=None):
     lookup = template_lookup(environ)
-    template = lookup.get_template('/ajax/search.html')
+    if template is None:
+        try:
+            template = environ['selector.vars']['template'] # the template
+        except KeyError:
+            raise RuntimeError('No template is specified')
+    path = os.path.join(os.path.sep, template, page)
+    return lookup.get_template(path)
 
+def get_template_kwargs(environ, title, **kwargs):
     from pprint import pformat
-    kwargs = dict(title='Search',
-                  request_uri=environ['REQUEST_URI'],
-                  environ=pformat(environ))
+    
+    kwargs.update(dict(title=title,
+                       request_uri=environ['REQUEST_URI'],
+                       environ=pformat(environ)))
+    return kwargs
+
+# The WSGI Applications
+
+def search(environ, start_response):
+    template = get_template(environ, 'search.html')
+    kwargs = get_template_kwargs(environ, 'Search')
     
     start_response('200 OK', [('Content-type', 'text/html')])   
     return [template.render(**kwargs)]
 
 def results(environ, start_response):
-    lookup = template_lookup(environ)
-    template = lookup.get_template('/ajax/results.html')
-    
+    template = get_template(environ, 'results.html')
+    kwargs = get_template_kwargs(environ, 'Results')
+
     start_response('200 OK', [('Content-type', 'text/html')])
-    return [template.render(title='Results')]
+    return [template.render(**kwargs)]
 
 def metadata(environ, start_response):
     gid = environ['selector.vars']['gid'] # the global metadata identifier
 
-    lookup = template_lookup(environ)
-    template = lookup.get_template('/ajax/metadata.html')
+    template = get_template(environ, 'metadata.html')
+    kwargs = get_template_kwargs(environ, 'Metadata %s' % gid,
+                                 gid=gid)
     
     start_response('200 OK', [('Content-type', 'text/html')])
-    return [template.render(title='Metadata %s' % gid, gid=gid)]
+    return [template.render(**kwargs)]
+
+def template(environ, start_response):
+    template = get_template(environ, 'templates.html', 'light')
+    kwargs = get_template_kwargs(environ, 'Choose Your Search Format')
+    
+    start_response('200 OK', [('Content-type', 'text/html')])
+    return [template.render(**kwargs)]
