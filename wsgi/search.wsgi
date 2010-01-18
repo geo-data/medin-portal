@@ -11,14 +11,13 @@ application = selector.Selector(consume_path=False)
 application.add('[/]', GET=medin.template)
 
 # the OpenSearch Description document
-application.add('/opensearch-description.xml', GET=medin.opensearch)
+application.add('/opensearch/catalogue/{template}.xml', GET=medin.opensearch)
 
 # the default entry point for the search
 application.add('/{template}[/]', GET=medin.search)
 
 # display and navigate through the result set
-application.add('/{template}/results', GET=medin.results)
+application.add('/{template}/catalogue[.{format:word}]', GET=medin.results)
 
 # display the metadata
-application.add('/{template}/metadata/{gid:digits}', GET=medin.metadata)
-
+application.add('/{template}/catalogue/{gid:digits}', GET=medin.metadata)

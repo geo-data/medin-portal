@@ -49,14 +49,15 @@ def template_lookup(environ):
 
     return _template_lookup
 
-def get_template(environ, page, template=None):
+def get_template(environ, path, expand=True):
     lookup = template_lookup(environ)
-    if template is None:
+    path = os.path.join(os.path.sep, *path)
+    if expand:
         try:
             template = environ['selector.vars']['template'] # the template
         except KeyError:
             raise RuntimeError('No template is specified')
-    path = os.path.join(os.path.sep, template, page)
+        path = path % template
     return lookup.get_template(path)
 
 def get_template_kwargs(environ, title, **kwargs):
@@ -78,21 +79,21 @@ def get_script_root(environ):
 # The WSGI Applications
 
 def opensearch(environ, start_response):
-    template = get_template(environ, 'opensearch-description.xml', '')
-    kwargs = get_template_kwargs(environ, 'MEDIN Portal')
+    template = get_template(environ, ['opensearch', 'catalogue', '%s.xml'])
+    kwargs = get_template_kwargs(environ, 'MEDIN Catalogue')
     
     start_response('200 OK', [('Content-type', 'application/opensearchdescription+xml')])   
     return [template.render(**kwargs)]
 
 def search(environ, start_response):
-    template = get_template(environ, 'search.html')
+    template = get_template(environ, ['%s', 'search.html'])
     kwargs = get_template_kwargs(environ, 'Search')
     
     start_response('200 OK', [('Content-type', 'text/html')])   
     return [template.render(**kwargs)]
 
 def results(environ, start_response):
-    template = get_template(environ, 'results.html')
+    template = get_template(environ, ['%s', 'catalogue.html'])
     kwargs = get_template_kwargs(environ, 'Results')
 
     start_response('200 OK', [('Content-type', 'text/html')])
@@ -101,7 +102,7 @@ def results(environ, start_response):
 def metadata(environ, start_response):
     gid = environ['selector.vars']['gid'] # the global metadata identifier
 
-    template = get_template(environ, 'metadata.html')
+    template = get_template(environ, ['%s', 'metadata.html'])
     kwargs = get_template_kwargs(environ, 'Metadata %s' % gid,
                                  gid=gid)
     
@@ -109,7 +110,7 @@ def metadata(environ, start_response):
     return [template.render(**kwargs)]
 
 def template(environ, start_response):
-    template = get_template(environ, 'templates.html', 'light')
+    template = get_template(environ, ['light', 'templates.html'], False)
     kwargs = get_template_kwargs(environ, 'Choose Your Search Format')
     
     start_response('200 OK', [('Content-type', 'text/html')])

@@ -1,16 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<%!
+    template_ = ""
+%><?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
   <ShortName>${title}</ShortName>
-  <Description>Search the MEDIN metadata catalogue</Description>
+  <LongName>Marine Environmental Data Initiative Metadata (MEDIN) Catalogue Search</LongName>
+  <Description>Search the MEDIN metadata catalogue using the ${self.attr.template} interface</Description>
   <Tags>medin portal metadata marine</Tags>
   <Contact>enquiries@oceannet.org</Contact>
   <Url type="application/atom+xml"
-       template="http://example.com/?q={searchTerms}&amp;pw={startPage?}&amp;format=atom"/>
+       template="${script_root}/${self.attr.template}/catalogue.atom?q={searchTerms}"/>
   <Url type="application/rss+xml"
-       template="http://example.com/?q={searchTerms}&amp;pw={startPage?}&amp;format=rss"/>
+       template="${script_root}/${self.attr.template}/catalogue.rss?q={searchTerms}"/>
   <Url type="text/html" 
-       template="http://example.com/?q={searchTerms}&amp;pw={startPage?}"/>
-  <LongName>Marine Environmental Data Initiative Metadata (MEDIN) Catalogue Search</LongName>
+       template="${script_root}/${self.attr.template}/catalogue?q={searchTerms}"/>
   <Image height="64" width="64" type="image/png">${http_root}/medin-icon.png</Image>
   <Image height="16" width="16" type="image/vnd.microsoft.icon">${http_root}/favicon.ico</Image>
   <Query role="example" searchTerms="cat" />
