@@ -45,7 +45,10 @@ def template_lookup(environ):
     from mako.lookup import TemplateLookup
 
     template_dir = get_template_dir(environ)
-    _template_lookup = TemplateLookup(directories=[template_dir], filesystem_checks=False)
+    _template_lookup = TemplateLookup(directories=[template_dir],
+                                      input_encoding='utf-8',
+                                      output_encoding='utf-8',
+                                      filesystem_checks=False)
 
     return _template_lookup
 

@@ -1,21 +1,146 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/basic_page.dwt" codeOutsideHTMLIsLocked="false" -->
   <head profile="http://a9.com/-/spec/opensearch/1.1/">
-    <title>MEDIN - ${title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- InstanceBeginEditable name="doctitle" -->
+    <title>>MEDIN - ${title}</title>
+    <!-- InstanceEndEditable -->
+
+    <!-- InstanceBeginEditable name="head" -->
+    <meta name="Keywords" content="data,marine,portal,discovery,prototype,MEDIN,find,search,map,BODC,BGS,DASSH,UKHO,archive,centre" />
+    <meta name="Description" content="finding marine data using the MEDIN data discovery portal" />
+    <!-- InstanceEndEditable -->
+    <meta http-equiv="Window-target" content="_top" />
+    <meta http-equiv="Content-Language" content="en-GB" />
+    <meta http-equiv="pics-label" content='(pics-1.1 "http://www.icra.org/ratingsv02.html" l gen true for "http://www.oceannet.org" r (nz 1 vz 1 lz 1 oz 1 cz 1))' />
+    <meta name="Robots" content="all" />
+    <meta name="Distribution" content="Global" />
+    <meta name="Revisit-After" content="30 days" />
+    <meta name="Rating" content="General" />
+    <meta name="Classification" content="Science" />
+    <meta name="Owner" content="Marine Environmental Data and Information Network (MEDIN)" />
+    <meta name="Author" content="British Oceanographic Data Centre" />
+    <meta name="Reply-to" content="&#101;&#110;&#113;&#117;&#105;&#114;&#105;&#101;&#115;&#064;&#111;&#099;&#101;&#097;&#110;&#110;&#101;&#116;&#046;&#111;&#114;&#103;" />
+    <meta name="Copyright" content="© Marine Environmental Data and Information Network (MEDIN)" />
+    <meta name="MSSmartTagsPreventParsing" content="TRUE" />
+
+    <meta http-equiv="Page-Enter" content="blendTrans(Duration=0.0)" />
+    <meta http-equiv="Page-Exit" content="blendTrans(Duration=0.0)" />
+    <link rel="P3Pv1" href="/w3c/p3p.xml" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="search"
           type="application/opensearchdescription+xml" 
           href="${script_root}/opensearch/catalogue/full.xml"
           title="MEDIN Catalogue" />
+    <link href="/css/site.css" rel="stylesheet" type="text/css" />
+    <!--[if IE]>
+        <link href="ie.css" rel="stylesheet" type="text/css" />
+        <![endif]--> 
+    <script type="text/javascript" src="/js/site.js"></script>
+    <!-- InstanceBeginEditable name="custom_css_and_js" -->
+    <!-- InstanceEndEditable -->
   </head>
-  <body>
-    <h1>${title}</h1>
 
-    ${self.body()}
+  <body onload="P7_TMopen();">
+    <!-- SwishCommand noindex -->
+    <div id="frame">
+      <div id="header"><!-- #BeginLibraryItem "/Library_Files/top_menu.lbi" --><div id="topmenu">
 
-    <pre>
-${environ}
-    </pre>
+        <ul>
+          <li><a href="/about_us/" id="about_us" tabindex="1">about us</a></li>
+          <li>|</li>
+          <li><a href="/joining_medin/" id="joining_medin" tabindex="2">joining MEDIN</a></li>
+          <li>|</li>				
+          <li><a href="/marine_data_newsletter/" id="marine_data_newsletter" tabindex="3">subscribe to Marine Data Newsletter</a></li>
+          <li>|</li>				
+          <li><a href="/contact_us/" id="contact_us" tabindex="4">contact us</a></li>
+
+          <li>|</li>				
+          <li><a href="/site_map/" id="site_map" tabindex="5">site map</a></li>
+        </ul>
+      </div><!-- #EndLibraryItem -->
+      <div id="homelink"><a href="/"><img src="/images/log.gif" width="300" height="100" class="image_no_border" alt="MEDIN . Marine Environmental Data and Information Network" title="MEDIN . Marine Environmental Data and Information Network" /></a></div>
+      <form action="/search/" method="post" id="searching" onsubmit="return Search_Validator(this);"><div id="search"><label for="searchquery" title="Enter search query"><input id="searchquery" name="query" type="text" size="20" /></label>&nbsp;<input id="submit" type="submit" value="Search" /></div></form>
+      <div class="clear"></div>
+      </div>
+      <div id="main">
+
+        <div id="lh_col"><!-- #BeginLibraryItem "/Library_Files/lh_menu.lbi" --><div id="p7TMnav">
+          <div class="p7bottom"><a href="/" id="home" tabindex="6">Home</a></div>
+          <div class="p7bottom"><a href="/data_discovery_portal/" id="data_discovery_portal" tabindex="7">Data discovery portal</a></div>
+          <div class="p7bottom"><a href="/online_data_by_theme/" id="online_data_by_theme" tabindex="8" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Online data by theme</a>
+          <div><a href="/online_data_by_theme/tide_and_sea_level/" tabindex="9">Tide and sea level ></a></div>
+          <div><a href="/online_data_by_theme/oceanography/" tabindex="10">Oceanography ></a></div>
+
+          <div><a href="/online_data_by_theme/waves/" tabindex="11">Waves ></a></div>
+          <div><a href="/online_data_by_theme/currents/" tabindex="12">Currents ></a></div>
+          <div><a href="/online_data_by_theme/marine_geology_and_bathymetry/" tabindex="13">Marine geology and bathymetry ></a></div>
+          <div><a href="/online_data_by_theme/ocean_met_data/" tabindex="14">Ocean met data ></a></div>
+          <div><a href="/online_data_by_theme/time_series/" tabindex="15">Time series data ></a></div>
+          <div><a href="/online_data_by_theme/ship_operations/" tabindex="16">Ship operations ></a></div>
+
+          <div><a href="/online_data_by_theme/international_data_initiatives/" tabindex="17">International data initiatives ></a></div>
+          <div><a href="/online_data_by_theme/data_centres/" tabindex="18">Data centres ></a></div>
+          <div><a href="/online_data_by_theme/uk_marine_responsible_agencies/" tabindex="19">UK marine responsible agencies ></a></div>
+          <div><a href="/online_data_by_theme/uk_commercial_organisations/" tabindex="20">UK commercial organisations ></a></div>
+          <div><a href="/online_data_by_theme/uk_university_departments/" tabindex="21">UK university departments ></a></div>
+          <div><a href="/online_data_by_theme/european_organisations/" tabindex="22">European organisations ></a></div>
+
+          <div><a href="/online_data_by_theme/acronyms/" tabindex="23">Acronyms ></a></div>
+          <div><a href="/online_data_by_theme/monitoring_programmes/" tabindex="24">Monitoring programmes ></a></div>
+          <div><a href="/online_data_by_theme/marine_environmental_data_sets/" tabindex="25">Marine environmental data sets ></a></div>
+          <div><a href="/online_data_by_theme/marine_plants_and_animals/" tabindex="26">Marine plants and animals ></a></div>
+          <div><a href="/online_data_by_theme/marine_portals/" tabindex="27">Marine portals ></a></div>
+          </div>
+
+          <div class="p7bottom"><a href="/data_submission/" id="data_submission" tabindex="28">Data submission</a></div>
+          <div class="p7bottom"><a href="/marine_data_standards/" id="marine_data_standards" tabindex="29" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Marine data standards</a>
+          <div><a href="/marine_data_standards/medin_approved_standards/" tabindex="30">MEDIN approved standards ></a></div>
+          <div><a href="/marine_data_standards/other_marine_data_standards/" tabindex="31">Other marine data standards ></a></div>
+          </div>
+          <div class="p7vbottom"><a href="/library/" id="library" tabindex="32" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Library</a>
+
+          <div><a href="/library/meetings/" tabindex="33">Meetings ></a></div>
+          <div><a href="/library/publications/" tabindex="34">Publications ></a></div>
+          <div><a href="/library/work_stream_documents/" tabindex="35">Work stream documents ></a></div>
+          </div>
+        </div><!-- #EndLibraryItem -->
+        <div class="clear"></div>				
+        </div>
+
+        <div id="bodycontent_wide">
+
+          <!-- SwishCommand index -->
+          <!-- InstanceBeginEditable name="bodytext" -->
+          <h1>${title}</h1>
+
+          ${self.body()}
+
+          <pre>
+            ${environ}
+          </pre>
+          <!-- InstanceEndEditable -->
+          <!-- SwishCommand noindex -->
+        </div>		
+      </div>
+      <div class="clear"><div id="copyright">©2009. Last updated : <!-- #BeginDate format:Am1 -->May 18, 2009<!-- #EndDate -->.<br />Hosted by the <a href="http://www.bodc.ac.uk/">British Oceanographic Data Centre (BODC)</a>.</div>
+
+      </div>
+    </div>
+    <script src="/js/dd_external_links.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      if (window.location.host=="www.oceannet.org") {
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+      }
+    </script>
+    <script type="text/javascript">
+      if (window.location.host=="www.oceannet.org") {
+      try {
+      var pageTracker = _gat._getTracker("UA-8045808-1");
+      pageTracker._trackPageview();
+      } catch(err) {}
+    }</script>
   </body>
-</html>
+<!-- InstanceEnd --></html>
