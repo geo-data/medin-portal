@@ -134,7 +134,8 @@ class ErrorHandler(errata.ErrorHandler):
         self.add(errata.HTTPError, self.handleHTTPError)
 
         from mako.exceptions import TopLevelLookupException
-        self.add(TopLevelLookupException, self.handleMakoError)
+        self.add(TopLevelLookupException, self.handleTemplateLookupException)
+        self.add(Exception, self.handleException)
 
     def handleHTTPError(self, exception, environ, start_response):
         """Handler for HTTPErrors"""
@@ -142,7 +143,7 @@ class ErrorHandler(errata.ErrorHandler):
         renderer = ErrorRenderer(exception)
         return renderer(environ, start_response)
 
-    def handleMakoError(self, exception, environ, start_response):
+    def handleTemplateLookupException(self, exception, environ, start_response):
         from mako.exceptions import TopLevelLookupException
         
         message = 'The template could not be found: %s' % str(exception)
@@ -155,6 +156,23 @@ class ErrorHandler(errata.ErrorHandler):
             message = 'The template you specified does not exist.'
             e = errata.HTTPError('404 Not Found', message)
             return self.handleHTTPError(e, environ, start_response)
+
+    def handleException(self, exception, environ, start_response):
+        from mako.exceptions import RichTraceback
+        from cStringIO import StringIO
+        
+        traceback = RichTraceback()
+        buf = StringIO()
+        
+        for (filename, lineno, function, line) in traceback.traceback:
+            buf.write("File %s, line %s, in %s\n" % (filename, lineno, function))
+            buf.write(line)
+            buf.write("\n")
+        buf.write("%s: %s\n" % (str(traceback.error.__class__.__name__), traceback.error))
+        output = buf.getvalue()
+        
+        start_response('500 Internal Server Error', [('Content-type', 'text/plain')])
+        return [output]
 
 # The WSGI Applications
 
