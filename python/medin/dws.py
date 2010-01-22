@@ -3,6 +3,9 @@ import os
 # Third party modules
 import suds                             # for the SOAP client
 
+class DWSError(Exception):
+    pass
+
 class Query(object):
     """Stores OpenSearch query parameters"""
 
@@ -11,14 +14,15 @@ class Query(object):
 
         self.params = {}
         for k, v in cgi.parse_qsl(qsl):
-            self[k] = v
+            self.append(k, v)
 
     def __getitem__(self, k):
         return self.params[k]
 
     def __setitem__(self, k, v):
+        """Sets the value of the FIRST item"""
         try:
-            self.params[k].append(v)
+            self.params[k][0] = v
         except KeyError:
             self.params[k] = [v]
 
@@ -31,6 +35,53 @@ class Query(object):
 
         return '&'.join(params)
 
+    def append(self, k, v):
+        try:
+            self.params[k].append(v)
+        except KeyError:
+            self.params[k] = [v]
+
+class SearchQuery(Query):
+
+    @property
+    def count(self):
+        try:
+            return int(self['c'][0])
+        except KeyError:
+            self['c'] = 20
+            return self['c'][0]
+
+    @count.setter
+    def count(self, value):
+        self['c'] = value
+
+    @property
+    def start_index(self):
+        try:
+            return int(self['i'][0])
+        except KeyError:
+            self['i'] = 1
+            return self['i'][0]
+
+    @start_index.setter
+    def start_index(self, value):
+        self['i'] = value
+
+    @property
+    def start_page(self):
+        try:
+            p = int(self['p'][0])
+        except KeyError:
+            p = self['p'] = 1
+        if p > 500:
+            p = self['p'] = 500
+
+        return p
+
+    @start_page.setter
+    def start_page(self, value):
+        self['p'] = value
+
 class Request(object):
 
     def __init__(self, wsdl=None):
@@ -42,11 +93,45 @@ class Request(object):
     def __call__(query):
         raise NotImplementedError('The query must be overridden in a subclass')
 
+class SearchResponse(object):
+
+    def __init__(self, hits, results, count, start_page, start_index):
+        self.hits = hits
+        self.results = results
+        self.count = count
+        self.start_page = start_page
+        self.start_index = start_index
+
+        self.end_index = start_index + (count-1)
+        if self.end_index > hits:
+            self.end_index = hits
+
 class Search(Request):
         
     def __call__(self, query):
-        for i in xrange(43):
-            document_id = 'b0de0599-5734-4946-b131-dfc65a16b1de'
-            title = 'Broad Occupational Structure Map of Nepal'
+
+        count = query.count
+        start_page = query.start_page
+        start_index = query.start_index
+        
+        # return some dummy data
+        from random import randint
+
+        status = True
+        message = 'Dummy failure'
+        hits = randint(0, 100)
+
+        if not status and not hits:
+            raise DWSError('The Disovery Web Service failed: %s' % message)
+
+        results = []
+
+        if count < hits:
+            c = count
+        else:
+            c = hits
+        for i in xrange(c):
+            results.append(('b0de0599-5734-4946-b131-dfc65a16b1de',
+                            'Broad Occupational Structure Map of Nepal'))
             
-            yield document_id, title
+        return SearchResponse(hits, results, count, start_page, start_index)

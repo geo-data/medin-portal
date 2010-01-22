@@ -1,6 +1,8 @@
 # System modules
 import os
 
+from errata import HTTPError
+
 # Utility Classes
 
 class MakoApp(object):
@@ -148,21 +150,29 @@ class Results(MakoApp):
         super(Results, self).__init__(['%s', 'catalogue.html'])
 
     def setup(self, environ):
-        from medin.dws import Query, Search
+        from medin.dws import SearchQuery, Search, DWSError
 
         try:
             qsl = environ['QUERY_STRING']
         except KeyError:
             qsl = ''
 
-        q = Query(qsl)
-        req = Search()
-        
+        q = SearchQuery(qsl)
+        try:
+            req = Search()
+        except DWSError:
+            raise HTTPError('500 Internal Server Error', dws.args[0])
+
+        r = req(q)
         results = []
-        for id, title in req(q):
+        for id, title in r.results:
             results.append(dict(id=id, title=title))
-        
-        tvars=dict(results=results)
+
+        tvars=dict(hits=r.hits,
+                   start_index = r.start_index,
+                   end_index = r.end_index,
+                   count = r.count,
+                   results=results)
             
         return TemplateContext('Catalogue Results', tvars=tvars)
 

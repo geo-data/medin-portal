@@ -1,5 +1,31 @@
 <%inherit file="base.html"/>
 
+<p>Your search returned <strong>${hits}</strong>
+% if hits != 1:
+results.
+% else:
+result.
+% endif
+<%
+  if hits == 0:
+    context.write('</p>')
+    return ''
+%>
+ Showing <strong>
+% if hits > count:
+${start_index} - ${end_index}
+% else:
+all results
+% endif
+</strong>:</p>
+
+<table summary="Table of results">
+  <tr>
+    <th>Title</th>
+  </tr>
 % for res in results:
-    <a href="${resource_root}/${res['id']}" title="${res['title']}">${res['title']}</a><br/>
+  <tr>
+    <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
+  </tr>
 % endfor
+</table>

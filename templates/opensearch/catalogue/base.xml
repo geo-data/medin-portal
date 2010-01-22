@@ -8,11 +8,11 @@
   <Tags>medin portal metadata marine</Tags>
   <Contact>enquiries@oceannet.org</Contact>
   <Url type="application/atom+xml"
-       template="${script_root}/${self.attr.template}/catalogue.atom?q={searchTerms}"/>
+       template="${script_root}/${self.attr.template}/catalogue.atom?q={searchTerms}&c={count}&i={startIndex}&p={startPage}"/>
   <Url type="application/rss+xml"
-       template="${script_root}/${self.attr.template}/catalogue.rss?q={searchTerms}"/>
+       template="${script_root}/${self.attr.template}/catalogue.rss?q={searchTerms}&c={count}&i={startIndex}&p={startPage}"/>
   <Url type="text/html" 
-       template="${script_root}/${self.attr.template}/catalogue?q={searchTerms}"/>
+       template="${script_root}/${self.attr.template}/catalogue?q={searchTerms}&c={count}&i={startIndex}&p={startPage}"/>
   <Image height="64" width="64" type="image/png">${http_root}/medin-icon.png</Image>
   <Image height="16" width="16" type="image/vnd.microsoft.icon">${http_root}/favicon.ico</Image>
   <Query role="example" searchTerms="cat" />
