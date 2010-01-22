@@ -23,7 +23,7 @@ application.add('/{template}[/]', GET=medin.Search())
 application.add('/{template}/catalogue[.{format:word}]', GET=medin.Results())
 
 # display the metadata
-application.add('/{template}/catalogue/{gid:digits}', GET=medin.Metadata())
+application.add('/{template}/catalogue/{gid:chunk}', GET=medin.Metadata())
 
 # add our Error handler
 application = medin.error.ErrorHandler(application)

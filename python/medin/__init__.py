@@ -1,20 +1,6 @@
 # System modules
 import os
 
-# Third party modules
-import suds                             # for the SOAP client
-
-# Helper Functions
-
-def parse_qsl(environ):
-    try:
-        qsl = environ['QUERY_STRING']
-    except KeyError:
-        return []
-    
-    import cgi
-    return cgi.parse_qsl(qsl)
-
 # Utility Classes
 
 class MakoApp(object):
@@ -100,14 +86,33 @@ class MakoApp(object):
         def get_script_root(environ):
             return ''.join((get_http_root(environ), environ['SCRIPT_NAME']))
 
-        from pprint import pformat
+        def get_resource_root(environ):
+            try:
+                return get_script_root(environ) + environ['PATH_INFO']
+            except KeyError:
+                 return get_script_root(environ)
+        
+        vars = dict(title=title,
+                    request_uri=environ['REQUEST_URI'],
+                    http_root=get_http_root(environ),
+                    script_root=get_script_root(environ),
+                    resource_root=get_resource_root(environ),
+                    environ=environ)
 
-        kwargs.update(dict(title=title,
-                           request_uri=environ['REQUEST_URI'],
-                           http_root=get_http_root(environ),
-                           script_root=get_script_root(environ),
-                           environ=pformat(environ)))
-        return kwargs
+        # Add some useful environment variables to the template
+        for k in ('REQUEST_URI', 'QUERY_STRING'):
+            kl = k.lower()
+            try:
+                vars[kl] = environ[k]
+            except KeyError:
+                vars[kl] = environ['']
+
+        if vars['query_string']: vars['query_string'] = '?' +  vars['query_string']
+
+        # combine the kwargs and vars, overriding vars keys with
+        # kwargs if present
+        vars.update(kwargs)
+        return vars
 
 class TemplateContext(object):
     def __init__(self, title, headers=None, tvars=None, status='200 OK'):
@@ -143,7 +148,23 @@ class Results(MakoApp):
         super(Results, self).__init__(['%s', 'catalogue.html'])
 
     def setup(self, environ):
-        return TemplateContext('Results')
+        from medin.dws import Query, Search
+
+        try:
+            qsl = environ['QUERY_STRING']
+        except KeyError:
+            qsl = ''
+
+        q = Query(qsl)
+        req = Search()
+        
+        results = []
+        for id, title in req(q):
+            results.append(dict(id=id, title=title))
+        
+        tvars=dict(results=results)
+            
+        return TemplateContext('Catalogue Results', tvars=tvars)
 
 class Metadata(MakoApp):
     def __init__(self):

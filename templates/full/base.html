@@ -79,7 +79,10 @@
           ${self.body()}
 
           <pre>
-            ${environ}
+<%
+from pprint import pformat
+context.write(pformat(context.kwargs))
+%>
           </pre>
           <!-- SwishCommand noindex -->
         </div>		
