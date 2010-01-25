@@ -31,7 +31,7 @@ class Query(object):
         params = []
         for k, v in self.params.items():
             for p in v:
-                params.append('%s=%s' % (k, quote_plus(p)))
+                params.append('%s=%s' % (k, quote_plus(str(p))))
 
         return '&'.join(params)
 
@@ -42,6 +42,13 @@ class Query(object):
             self.params[k] = [v]
 
 class SearchQuery(Query):
+
+    @property
+    def search_term(self):
+        try:
+            return self['q']
+        except KeyError:
+            return []
 
     @property
     def count(self):
@@ -95,31 +102,74 @@ class Request(object):
 
 class SearchResponse(object):
 
-    def __init__(self, hits, results, count, start_page, start_index):
+    def __init__(self, hits, results, query):
+        from math import ceil, floor
+        
         self.hits = hits
         self.results = results
-        self.count = count
-        self.start_page = start_page
-        self.start_index = start_index
+        self.count = query.count
+        self.start_index = query.start_index
 
-        self.end_index = start_index + (count-1)
+        self.page_count = int(ceil(hits / float(self.count)))
+        self.current_page = int(self.page_count - floor((hits - self.start_index) / float(self.count)))
+
+        next_index = self.start_index + self.count
+        self.end_index = next_index - 1
         if self.end_index > hits:
             self.end_index = hits
+
+        next_links = []
+        ic = 0
+        page = self.current_page
+        while next_index < hits and ic < 5:
+            page += 1
+            ic += 1
+            query.start_index = next_index
+            next_links.append({'page': page,
+                               'link': str(query)})
+            next_index += self.count
+        self.next_links = next_links
+
+        if self.current_page < self.page_count:
+            query.start_index = self.start_index + (self.count * (self.page_count - self.current_page))
+            self.last_link = {'page': self.page_count,
+                              'link': str(query)}
+        else:
+            self.last_link = None
+
+        prev_links = []
+        prev_index = self.start_index - self.count
+        ic = 0
+        page = self.current_page
+        while prev_index > 0 and ic < 5:
+            page -= 1
+            ic += 1
+            query.start_index = prev_index
+            prev_links.insert(0, {'page': page,
+                                  'link': str(query)})
+            prev_index -= self.count
+        self.prev_links = prev_links
+
+        if self.current_page > 1:
+            query.start_index = self.start_index - (self.count * (self.current_page-1))
+            self.first_link = {'page': 1,
+                               'link': str(query)}
+        else:
+            self.first_link = None
 
 class Search(Request):
         
     def __call__(self, query):
 
         count = query.count
-        start_page = query.start_page
-        start_index = query.start_index
+        search_term = ' '.join(query.search_term)
         
         # return some dummy data
-        from random import randint
-
+        
         status = True
         message = 'Dummy failure'
-        hits = randint(0, 100)
+        chars = len(''.join((c for c in search_term if not c.isspace())))
+        hits = int(4000 / ((chars * (chars / 2.0)) + 1))
 
         if not status and not hits:
             raise DWSError('The Disovery Web Service failed: %s' % message)
@@ -127,11 +177,15 @@ class Search(Request):
         results = []
 
         if count < hits:
-            c = count
+            left = (hits - query.start_index) + 1
+            if left < count:
+                c = left
+            else:
+                c = count
         else:
             c = hits
         for i in xrange(c):
             results.append(('b0de0599-5734-4946-b131-dfc65a16b1de',
                             'Broad Occupational Structure Map of Nepal'))
             
-        return SearchResponse(hits, results, count, start_page, start_index)
+        return SearchResponse(hits, results, query)

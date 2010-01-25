@@ -172,6 +172,12 @@ class Results(MakoApp):
                    start_index = r.start_index,
                    end_index = r.end_index,
                    count = r.count,
+                   next_links = r.next_links,
+                   prev_links = r.prev_links,
+                   last_link = r.last_link,
+                   first_link = r.first_link,
+                   current_page = r.current_page,
+                   page_count = r.page_count,
                    results=results)
             
         return TemplateContext('Catalogue Results', tvars=tvars)
