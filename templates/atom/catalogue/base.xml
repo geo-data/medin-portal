@@ -1,0 +1,62 @@
+<%!
+    template_ = ""
+    from datetime import datetime
+%>\
+<%def name="iso_now()">\
+${datetime.utcnow().isoformat()}Z\
+</%def><?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" 
+      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+  <title>MEDIN - ${title | x}</title> 
+  <link href="${script_root}/${self.attr.template}/catalogue${query_string | x}"/>
+  <updated>${iso_now()}</updated>
+  <author> 
+    <name>MEDIN partnership</name>
+  </author> 
+  <id>${resource_root}${query_string | x}</id>
+  <opensearch:totalResults>${hits}</opensearch:totalResults>
+  <opensearch:startIndex>${start_index}</opensearch:startIndex>
+  <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
+  <opensearch:Query role="request" searchTerms="${search_term | x}" startIndex="${start_index}" count="${count}" />
+  <link rel="alternate" href="${script_root}/${self.attr.template}/catalogue${query_string | x}" type="text/html"/>
+  <link rel="alternate" href="${script_root}/${self.attr.template}/catalogue.rss${query_string | x}" type="application/rss+xml"/>
+  <link rel="self" href="${resource_root}${query_string | x}" type="application/atom+xml"/>
+% if first_link:
+  <link rel="first" href="${resource_root}?${first_link['link'] | x}" type="application/atom+xml"/>
+% else:
+  <link rel="first" href="${resource_root}${query_string | x}" type="application/atom+xml"/>
+% endif
+% if prev_links:
+  <link rel="previous" href="${resource_root}?${prev_links[-1]['link'] | x}" type="application/atom+xml"/>
+% endif
+% if next_links:
+  <link rel="next" href="${resource_root}?${next_links[0]['link'] | x}" type="application/atom+xml"/>
+% endif
+% if last_link:
+  <link rel="last" href="${resource_root}?${last_link['link'] | x}" type="application/atom+xml"/>
+% endif
+  <link rel="search" type="application/opensearchdescription+xml" href="${script_root}/opensearch/catalogue/${self.attr.template}.xml"/>
+% for result in results:
+  <entry>
+    <title>${result['title'] | x}</title>
+    <updated>${iso_now()}</updated>
+    <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
+    <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
+  </entry>
+% endfor
+% if not results:
+% if not hits:
+  <entry>
+    <title>No Results Found</title>
+    <updated>${iso_now()}</updated>
+    <content type="text">The following search produced no results: ${search_term | x}</content>
+  </entry>
+% else:
+  <entry>
+    <title>Results Out Of Range</title>
+    <updated>${iso_now()}</updated>
+    <content type="text">The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link'] | x}</content>
+  </entry>
+% endif
+% endif
+</feed>

@@ -146,6 +146,11 @@ class Search(MakoApp):
         return TemplateContext('Search')
 
 class Results(MakoApp):
+
+    def __init__(self, path, headers):
+        self.headers = headers
+        super(Results, self).__init__(path)
+    
     def setup(self, environ):
         from medin.dws import SearchQuery, Search, DWSError
 
@@ -189,15 +194,22 @@ class Results(MakoApp):
         else:
             title = 'Catalogue'
             
-        return TemplateContext(title, tvars=tvars)
+        return TemplateContext(title, tvars=tvars, headers=self.headers)
 
 class HTMLResults(Results):
     def __init__(self):
-        super(HTMLResults, self).__init__(['%s', 'catalogue.html'])
+        headers = [('Content-type', 'text/html')]
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers)
 
 class RSSResults(Results):
     def __init__(self):
-        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'])
+        headers = [('Content-type', 'application/rss+xml')]
+        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'], headers)
+
+class AtomResults(Results):
+    def __init__(self):
+        headers = [('Content-type', 'application/atom+xml')]
+        super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], headers)
 
 class ResultFormat(object):
 

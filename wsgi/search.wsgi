@@ -20,7 +20,8 @@ application.add('/opensearch/catalogue/{template}.xml', GET=medin.OpenSearch())
 application.add('/{template}[/]', GET=medin.Search())
 
 # create the app to return the required formats
-result_formats = medin.ResultFormat(medin.HTMLResults, {'rss': medin.RSSResults})
+result_formats = medin.ResultFormat(medin.HTMLResults, {'rss': medin.RSSResults,
+                                                        'atom': medin.AtomResults})
 
 # display and navigate through the result set
 application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)

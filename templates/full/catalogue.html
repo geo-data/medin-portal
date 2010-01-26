@@ -31,6 +31,10 @@ ${query_string}\
           type="application/rss+xml"
           href="${resource_root}.rss${start_link()}"
           title="MEDIN - ${title}">
+    <link rel="alternate"
+          type="application/atom+xml"
+          href="${resource_root}.atom${start_link()}"
+          title="MEDIN - ${title}">
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
@@ -100,4 +104,5 @@ ${result_links()}
 </table>
 ${result_links()}
 
-<p><a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a>
+<p><a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
+<a href="${resource_root}.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
