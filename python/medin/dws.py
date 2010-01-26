@@ -103,55 +103,72 @@ class Request(object):
 class SearchResponse(object):
 
     def __init__(self, hits, results, query):
-        from math import ceil, floor
-        
         self.hits = hits
         self.results = results
         self.count = query.count
-        self.start_index = query.start_index
+        self.start_index = query.start_index - 1 # we use zero based indexing
 
-        self.page_count = int(ceil(hits / float(self.count)))
-        self.current_page = int(self.page_count - floor((hits - self.start_index) / float(self.count)))
-
-        next_index = self.start_index + self.count
-        self.end_index = next_index - 1
+        # set the index of the final result in this page
+        self.end_index = self.start_index + self.count
         if self.end_index > hits:
             self.end_index = hits
 
+        self._setPageCounts()
+        self._setFirstLink(query)
+        self._setLastLink(query)
+        self._setPrevLinks(query)
+        self._setNextLinks(query)
+
+        # bump the start index back to where people expect it to be
+        self.start_index += 1
+
+    def _setPageCounts(self):
+        from math import ceil
+        
+        pages_before = self.start_index / float(self.count)
+        self.current_page = int(ceil(pages_before)) + 1
+        pages_after = (self.hits - self.start_index) / float(self.count)
+        self.page_count = int(ceil(pages_before) + ceil(pages_after))
+
+    def _setNextLinks(self, query):
         next_links = []
+        next_index = self.start_index + self.count
         ic = 0
         page = self.current_page
-        while next_index < hits and ic < 5:
+        while page < self.page_count and ic < 5:
             page += 1
             ic += 1
-            query.start_index = next_index
+            query.start_index = next_index + 1
             next_links.append({'page': page,
                                'link': str(query)})
             next_index += self.count
         self.next_links = next_links
 
+    def _setLastLink(self, query):
         if self.current_page < self.page_count:
-            query.start_index = self.start_index + (self.count * (self.page_count - self.current_page))
+            query.start_index = 1 + self.start_index + (self.count * (self.page_count - self.current_page))
             self.last_link = {'page': self.page_count,
                               'link': str(query)}
         else:
             self.last_link = None
 
+    def _setPrevLinks(self, query):
         prev_links = []
         prev_index = self.start_index - self.count
         ic = 0
         page = self.current_page
-        while prev_index > 0 and ic < 5:
+        while page > 1 and ic < 5:
             page -= 1
             ic += 1
-            query.start_index = prev_index
+            query.start_index = prev_index + 1
             prev_links.insert(0, {'page': page,
                                   'link': str(query)})
             prev_index -= self.count
         self.prev_links = prev_links
 
+    def _setFirstLink(self, query):
         if self.current_page > 1:
-            query.start_index = self.start_index - (self.count * (self.current_page-1))
+            query.start_index = 1 + self.start_index - (self.count * (self.current_page-1))
             self.first_link = {'page': 1,
                                'link': str(query)}
         else:
@@ -163,6 +180,10 @@ class Search(Request):
 
         count = query.count
         search_term = ' '.join(query.search_term)
+
+        # do a sanity check on the start index
+        if query.start_index < (1 - count):
+            query.start_index = 1
         
         # return some dummy data
         
@@ -176,14 +197,18 @@ class Search(Request):
 
         results = []
 
-        if count < hits:
-            left = (hits - query.start_index) + 1
+        start_index = query.start_index        
+        if start_index < 1:
+            c = count + start_index - 1
+        elif count < hits:
+            left = (hits - start_index) + 1
             if left < count:
                 c = left
             else:
                 c = count
         else:
             c = hits
+            
         for i in xrange(c):
             results.append(('b0de0599-5734-4946-b131-dfc65a16b1de',
                             'Broad Occupational Structure Map of Nepal'))

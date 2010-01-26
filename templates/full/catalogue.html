@@ -11,31 +11,14 @@ result.
     context.write('</p>')
     return ''
 %>
- Showing <strong>
-% if hits > count:
-${start_index} - ${end_index}
-% else:
-all results
-% endif
-</strong>:</p>
 
-<table summary="Table of results">
-  <tr>
-    <th colspan="2">Title</th>
-  </tr>
-% for i, res in enumerate(results):
-  <tr>
-    <td>${start_index+i}.</td>
-    <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
-  </tr>
-% endfor
-</table>
-
+<%def name="result_links()">
+<p>
 % if first_link:
-<a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">First</a>
+<a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
 % if prev_links:
-<a href="${resource_root}?${prev_links[-1]['link']}" title="Results page ${prev_links[-1]['page']}">Previous</a> 
+<a href="${resource_root}?${prev_links[-1]['link']}" title="Results page ${prev_links[-1]['page']}">&lsaquo;&nbsp;Previous</a> 
 % for link in prev_links:
 <a href="${resource_root}?${link['link']}" title="Results page ${link['page']}">${link['page']}</a> 
 % endfor
@@ -47,8 +30,31 @@ all results
 % for link in next_links:
 <a href="${resource_root}?${link['link']}" title="Results page ${link['page']}">${link['page']}</a> 
 % endfor
-<a href="${resource_root}?${next_links[0]['link']}" title="Results page ${next_links[0]['page']}">Next</a> 
+<a href="${resource_root}?${next_links[0]['link']}" title="Results page ${next_links[0]['page']}">Next&nbsp;&rsaquo;</a> 
 % endif
 % if last_link:
-<a href="${resource_root}?${last_link['link']}" title="Results page ${last_link['page']}">Last</a>
+<a href="${resource_root}?${last_link['link']}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
 % endif
+</p>
+</%def>
+
+ Showing <strong>
+% if hits > count:
+${start_index} - ${end_index}
+% else:
+all results
+% endif
+</strong>:</p>
+${result_links()}
+<table summary="Table of results">
+  <tr>
+    <th colspan="2">Title</th>
+  </tr>
+% for i, res in enumerate(results):
+  <tr>
+    <td>${start_index+i}.</td>
+    <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
+  </tr>
+% endfor
+</table>
+${result_links()}

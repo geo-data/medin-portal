@@ -168,8 +168,12 @@ class Results(MakoApp):
         for id, title in r.results:
             results.append(dict(id=id, title=title))
 
+        start_index = r.start_index
+        if start_index < 1:
+            start_index = 1
+
         tvars=dict(hits=r.hits,
-                   start_index = r.start_index,
+                   start_index = start_index,
                    end_index = r.end_index,
                    count = r.count,
                    next_links = r.next_links,
