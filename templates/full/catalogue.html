@@ -1,5 +1,13 @@
 <%inherit file="base.html"/>
 
+<%def name="start_link()">\
+% if first_link:
+?${first_link['link']}\
+% else:
+${query_string}\
+% endif
+</%def>
+
 <%def name="header()">
 % if first_link:
     <link rel="Start"
@@ -19,6 +27,11 @@
           href="${resource_root}?${next_links[0]['link']}"
           title="Results page ${next_links[0]['page']}" />
 % endif
+    <link rel="alternate"
+          type="application/rss+xml"
+          href="${resource_root}.rss${start_link()}"
+          title="MEDIN - ${title}">
+
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
     <meta name="itemsPerPage" content="${count}"/>
@@ -86,3 +99,5 @@ ${result_links()}
 % endfor
 </table>
 ${result_links()}
+
+<p><a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a>

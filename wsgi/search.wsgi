@@ -19,8 +19,11 @@ application.add('/opensearch/catalogue/{template}.xml', GET=medin.OpenSearch())
 # the default entry point for the search
 application.add('/{template}[/]', GET=medin.Search())
 
+# create the app to return the required formats
+result_formats = medin.ResultFormat(medin.HTMLResults, {'rss': medin.RSSResults})
+
 # display and navigate through the result set
-application.add('/{template}/catalogue[.{format:word}]', GET=medin.Results())
+application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)
 
 # display the metadata
 application.add('/{template}/catalogue/{gid:chunk}', GET=medin.Metadata())

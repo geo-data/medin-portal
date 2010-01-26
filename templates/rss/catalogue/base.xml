@@ -1,0 +1,36 @@
+<%!
+    template_ = ""
+%><?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" 
+     xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MEDIN - ${title}</title>
+    <link>${script_root}/${self.attr.template}/catalogue${query_string}</link>
+    <description>MEDIN catalogue search results for ${search_term}</description>
+    <opensearch:totalResults>${hits}</opensearch:totalResults>
+    <opensearch:startIndex>${start_index}</opensearch:startIndex>
+    <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
+    <atom:link rel="search" type="application/opensearchdescription+xml" href="${script_root}/opensearch/catalogue/${self.attr.template}.xml"/>
+    <opensearch:Query role="request" searchTerms="${search_term}" startIndex="${start_index}" count="${count}" />
+% for result in results:
+    <item>
+      <title>${result['title']}</title>
+      <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | u}</link>
+    </item>
+% endfor
+% if not results:
+% if not hits:
+    <item>
+      <title>No Results Found</title>
+      <description>The following search produced no results: ${search_term}</description>
+    </item>
+% else:
+    <item>
+      <title>Results Out Of Range</title>
+      <description>The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link']}</description>
+    </item>
+% endif
+% endif
+  </channel>
+</rss>

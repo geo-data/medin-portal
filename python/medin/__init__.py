@@ -146,9 +146,6 @@ class Search(MakoApp):
         return TemplateContext('Search')
 
 class Results(MakoApp):
-    def __init__(self):
-        super(Results, self).__init__(['%s', 'catalogue.html'])
-
     def setup(self, environ):
         from medin.dws import SearchQuery, Search, DWSError
 
@@ -193,6 +190,37 @@ class Results(MakoApp):
             title = 'Catalogue'
             
         return TemplateContext(title, tvars=tvars)
+
+class HTMLResults(Results):
+    def __init__(self):
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'])
+
+class RSSResults(Results):
+    def __init__(self):
+        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'])
+
+class ResultFormat(object):
+
+    def __init__(self, default, formats):
+        self.default = default
+        self.formats = formats
+
+    def __call__(self, environ, start_response):
+        try:
+            fmt = environ['selector.vars']['format']
+        except KeyError:
+            app_class = self.default
+        else:
+            if fmt is not None:
+                try:
+                    app_class = self.formats[fmt]
+                except KeyError:
+                    raise HTTPError('404 Not Found', 'The format is not supported: %s' % fmt)
+            else:
+                app_class = self.default
+
+        app = app_class()
+        return app(environ, start_response)
 
 class Metadata(MakoApp):
     def __init__(self):
