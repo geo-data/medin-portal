@@ -5,30 +5,51 @@
      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
      xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>MEDIN - ${title}</title>
-    <link>${script_root}/${self.attr.template}/catalogue${query_string}</link>
-    <description>MEDIN catalogue search results for ${search_term}</description>
+    <title>MEDIN - ${title | x}</title>
+    <link>${script_root}/${self.attr.template}/catalogue${query_string | x}</link>
+    <description>MEDIN catalogue search results for ${search_term | x}</description>
     <opensearch:totalResults>${hits}</opensearch:totalResults>
     <opensearch:startIndex>${start_index}</opensearch:startIndex>
     <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
     <atom:link rel="search" type="application/opensearchdescription+xml" href="${script_root}/opensearch/catalogue/${self.attr.template}.xml"/>
-    <opensearch:Query role="request" searchTerms="${search_term}" startIndex="${start_index}" count="${count}" />
+    <atom:link rel="self" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+    <atom:link rel="alternate" href="${script_root}/${self.attr.template}/catalogue${query_string | x}" type="text/html"/>
+    <atom:link rel="alternate" href="${script_root}/${self.attr.template}/catalogue.atom${query_string | x}" type="application/atom+xml"/>
+    <atom:link rel="self" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+% if first_link:
+    <atom:link rel="first" href="${resource_root}?${first_link['link'] | x}" type="application/rss+xml"/>
+% else:
+    <atom:link rel="first" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+% endif
+% if prev_links:
+    <atom:link rel="previous" href="${resource_root}?${prev_links[-1]['link'] | x}" type="application/rss+xml"/>
+% endif
+% if next_links:
+    <atom:link rel="next" href="${resource_root}?${next_links[0]['link'] | x}" type="application/rss+xml"/>
+% endif
+% if last_link:
+    <atom:link rel="last" href="${resource_root}?${last_link['link'] | x}" type="application/rss+xml"/>
+% endif
+    <opensearch:Query role="request" searchTerms="${search_term | x}" startIndex="${start_index}" count="${count}" />
 % for result in results:
     <item>
-      <title>${result['title']}</title>
-      <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | u}</link>
+      <title>${result['title'] | x}</title>
+      <guid>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</guid>
+      <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</link>
     </item>
 % endfor
 % if not results:
 % if not hits:
     <item>
       <title>No Results Found</title>
-      <description>The following search produced no results: ${search_term}</description>
+      <guid>${script_root}/${self.attr.template}/catalogue-not-found${query_string | x}</guid>
+      <description>The following search produced no results: ${search_term | x}</description>
     </item>
 % else:
     <item>
       <title>Results Out Of Range</title>
-      <description>The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link']}</description>
+      <guid>${script_root}/${self.attr.template}/catalogue-bad-range${query_string | x}</guid>
+      <description>The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link'] | x}</description>
     </item>
 % endif
 % endif
