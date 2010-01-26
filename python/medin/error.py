@@ -46,7 +46,7 @@ class ErrorHandler(errata.ErrorHandler):
         
         for (filename, lineno, function, line) in traceback.traceback:
             buf.write("File %s, line %s, in %s\n" % (filename, lineno, function))
-            buf.write(line)
+            buf.write(str(line))
             buf.write("\n")
         buf.write("%s: %s\n" % (str(traceback.error.__class__.__name__), traceback.error))
         output = buf.getvalue()
