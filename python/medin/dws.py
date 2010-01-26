@@ -206,6 +206,8 @@ class Search(Request):
                 c = left
             else:
                 c = count
+        elif start_index > hits:
+            c = 0
         else:
             c = hits
             

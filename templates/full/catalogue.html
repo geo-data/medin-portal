@@ -30,11 +30,15 @@ results.
 % else:
 result.
 % endif
-<%
-  if hits == 0:
-    context.write('</p>')
-    return ''
-%>
+
+% if not results:
+% if hits:
+ However, the results specified are out of range of the original search.
+ Try browsing at <a href="${resource_root}?${first_link['link']}" title="The first result set">the beginning of the results</a>.
+% endif
+</p>
+<% return '' %>
+% endif
 
 <%def name="result_links()">
 <p>
