@@ -106,6 +106,7 @@ class SearchResponse(object):
         self.hits = hits
         self.results = results
         self.count = query.count
+        self.search_term = query.search_term
         self.start_index = query.start_index - 1 # we use zero based indexing
 
         # set the index of the final result in this page

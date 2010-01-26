@@ -172,7 +172,10 @@ class Results(MakoApp):
         if start_index < 1:
             start_index = 1
 
+        search_term = ' '.join(r.search_term)
+
         tvars=dict(hits=r.hits,
+                   search_term = search_term,
                    start_index = start_index,
                    end_index = r.end_index,
                    count = r.count,
@@ -183,8 +186,13 @@ class Results(MakoApp):
                    current_page = r.current_page,
                    page_count = r.page_count,
                    results=results)
+
+        if search_term:
+            title = 'Catalogue: %s' % search_term
+        else:
+            title = 'Catalogue'
             
-        return TemplateContext('Catalogue Results', tvars=tvars)
+        return TemplateContext(title, tvars=tvars)
 
 class Metadata(MakoApp):
     def __init__(self):
