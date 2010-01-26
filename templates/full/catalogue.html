@@ -19,6 +19,9 @@
           href="${resource_root}?${next_links[0]['link']}"
           title="Results page ${next_links[0]['page']}" />
 % endif
+    <meta name="totalResults" content="${hits}"/>
+    <meta name="startIndex" content="${start_index}"/>
+    <meta name="itemsPerPage" content="${count}"/>
 </%def>
 
 <p>Your search returned <strong>${hits}</strong>
