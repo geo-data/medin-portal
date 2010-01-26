@@ -1,5 +1,26 @@
 <%inherit file="base.html"/>
 
+<%def name="header()">
+% if first_link:
+    <link rel="Start"
+          type="text/html" 
+          href="${resource_root}?${first_link['link']}"
+          title="Results page ${first_link['page']}" />
+% endif
+% if prev_links:
+    <link rel="Prev"
+          type="text/html" 
+          href="${resource_root}?${prev_links[-1]['link']}"
+          title="Results page ${prev_links[-1]['page']}" />
+% endif
+% if next_links:
+    <link rel="Next"
+          type="text/html" 
+          href="${resource_root}?${next_links[0]['link']}"
+          title="Results page ${next_links[0]['page']}" />
+% endif
+</%def>
+
 <p>Your search returned <strong>${hits}</strong>
 % if hits != 1:
 results.
