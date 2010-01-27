@@ -1,4 +1,4 @@
-<%!
+<%namespace import="rfc822format, content, description" file="/common/feeds.xml"/><%!
     template_ = ""
 %><?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" 
@@ -7,7 +7,8 @@
   <channel>
     <title>MEDIN - ${title | x}</title>
     <link>${script_root}/${self.attr.template}/catalogue${query_string | x}</link>
-    <description>MEDIN catalogue search results for ${search_term | x}</description>
+    <description>${description()}</description>
+    <lastBuildDate>${rfc822format(updated)}</lastBuildDate>
     <opensearch:totalResults>${hits}</opensearch:totalResults>
     <opensearch:startIndex>${start_index}</opensearch:startIndex>
     <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
@@ -35,7 +36,9 @@
     <item>
       <title>${result['title'] | x}</title>
       <guid>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</guid>
+      <pubDate>${rfc822format(result['updated'])}</pubDate>
       <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</link>
+      <description>${content(result)}</description>
     </item>
 % endfor
 % if not results:

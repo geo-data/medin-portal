@@ -1,0 +1,30 @@
+## Common functions for Atom and RSS feeds
+
+<%!
+    from datetime import datetime
+%>
+
+<%def name="isoformat(ts=datetime.utcnow())">\
+${ts.isoformat()}Z\
+</%def>\
+
+<%def name="rfc822format(ts=datetime.utcnow())">\
+${ts.strftime("%a, %d %b %Y %H:%M:%S")} GMT\
+</%def>\
+
+<%def name="dateformat(ts)">\
+${ts.strftime("%A, %d %B %Y")}\
+</%def>
+
+<%def name="description()">
+% if search_term:
+MEDIN catalogue search results for ${search_term | x}.
+% else:
+MEDIN catalogue entries.
+% endif
+</%def>
+
+<%def name="content(entry)">
+&lt;strong&gt;Originator:&lt;/strong&gt; ${entry['originator'] | x}&lt;br/&gt;
+&lt;strong&gt;Last updated:&lt;/strong&gt; ${dateformat(entry['updated']) | x}
+</%def>

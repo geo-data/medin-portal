@@ -1,19 +1,16 @@
-<%!
+<%namespace import="isoformat, content, description" file="/common/feeds.xml"/><%!
     template_ = ""
-    from datetime import datetime
-%>\
-<%def name="iso_now()">\
-${datetime.utcnow().isoformat()}Z\
-</%def><?xml version="1.0" encoding="UTF-8"?>
+%><?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" 
       xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
   <title>MEDIN - ${title | x}</title> 
   <link href="${script_root}/${self.attr.template}/catalogue${query_string | x}"/>
-  <updated>${iso_now()}</updated>
+  <updated>${isoformat(updated)}</updated>
   <author> 
     <name>MEDIN partnership</name>
   </author> 
   <id>${resource_root}${query_string | x}</id>
+  <subtitle>${description()}</subtitle>
   <opensearch:totalResults>${hits}</opensearch:totalResults>
   <opensearch:startIndex>${start_index}</opensearch:startIndex>
   <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
@@ -39,22 +36,25 @@ ${datetime.utcnow().isoformat()}Z\
 % for result in results:
   <entry>
     <title>${result['title'] | x}</title>
-    <updated>${iso_now()}</updated>
+    <updated>${isoformat(result['updated'])}</updated>
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
     <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
+    <content type="html">${content(result)}</content>
   </entry>
 % endfor
 % if not results:
 % if not hits:
   <entry>
     <title>No Results Found</title>
-    <updated>${iso_now()}</updated>
+    <updated>${isoformat()}</updated>
+    <id>${script_root}/${self.attr.template}/catalogue-not-found${query_string | x}</id>
     <content type="text">The following search produced no results: ${search_term | x}</content>
   </entry>
 % else:
   <entry>
     <title>Results Out Of Range</title>
-    <updated>${iso_now()}</updated>
+    <updated>${isoformat()}</updated>
+    <id>${script_root}/${self.attr.template}/catalogue-bad-range${query_string | x}</id>
     <content type="text">The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link'] | x}</content>
   </entry>
 % endif

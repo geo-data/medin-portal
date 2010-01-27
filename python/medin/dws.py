@@ -109,6 +109,11 @@ class SearchResponse(object):
         self.search_term = query.search_term
         self.start_index = query.start_index - 1 # we use zero based indexing
 
+        self.updated = max((r[-1] for r in results))
+        if not self.updated:
+            from datetime import datetime
+            self.updated = datetime.utcnow()
+
         # set the index of the final result in this page
         self.end_index = self.start_index + self.count
         if self.end_index > hits:
@@ -178,6 +183,7 @@ class SearchResponse(object):
 class Search(Request):
         
     def __call__(self, query):
+        from datetime import datetime
 
         count = query.count
         search_term = ' '.join(query.search_term)
@@ -214,6 +220,8 @@ class Search(Request):
             
         for i in xrange(c):
             results.append(('b0de0599-5734-4946-b131-dfc65a16b1de',
-                            'Broad Occupational Structure Map of Nepal'))
-            
+                            'Broad Occupational Structure Map of Nepal',
+                            'MENRIS, ICIMOD',
+                            datetime.utcnow()))
+
         return SearchResponse(hits, results, query)

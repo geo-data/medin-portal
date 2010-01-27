@@ -167,8 +167,11 @@ class Results(MakoApp):
 
         r = req(q)
         results = []
-        for id, title in r.results:
-            results.append(dict(id=id, title=title))
+        for id, title, originator, updated in r.results:
+            results.append(dict(id=id,
+                                title=title,
+                                originator=originator,
+                                updated=updated))
 
         start_index = r.start_index
         if start_index < 1:
@@ -187,13 +190,17 @@ class Results(MakoApp):
                    first_link = r.first_link,
                    current_page = r.current_page,
                    page_count = r.page_count,
+                   updated = r.updated,
                    results=results)
 
         if search_term:
             title = 'Catalogue: %s' % search_term
         else:
             title = 'Catalogue'
-            
+
+        # propagate the result update time to the HTTP layer
+        self.headers.append(('Last-Modified', r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")))
+
         return TemplateContext(title, tvars=tvars, headers=self.headers)
 
 class HTMLResults(Results):
