@@ -27,7 +27,11 @@ result_formats = medin.ResultFormat(medin.HTMLResults, {'rss': medin.RSSResults,
 application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)
 
 # display the metadata
-application.add('/{template}/catalogue/{gid:chunk}', GET=medin.Metadata())
+application.add('/{template}/catalogue/{gid:segment}', GET=medin.Metadata())
+
+# download the metadata
+application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=medin.metadata_download)
+
 
 # add our Error handler
 application = medin.error.ErrorHandler(application)

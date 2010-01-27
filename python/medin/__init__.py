@@ -266,11 +266,50 @@ class Metadata(MakoApp):
         super(Metadata, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
+        from dws import MetadataRequest
+
         gid = environ['selector.vars']['gid'] # the global metadata identifier
-        title = 'Metadata %s' % gid
-        tvars = dict(gid=gid)
+
+        try:
+            req = MetadataRequest()
+        except DWSError:
+            raise HTTPError('500 Internal Server Error', dws.args[0])
+
+        r = req(gid)
+
+        title = 'Metadata: %s' % r.title
+        tvars = dict(gid=r.id,
+                     mtitle=r.title,
+                     abstract=r.abstract)
 
         return TemplateContext(title, tvars=tvars)
+
+def metadata_download(environ, start_response):
+    from dws import MetadataRequest
+    from os.path import splitext
+
+    gid = environ['selector.vars']['gid'] # the global metadata identifier
+    fmt = environ['selector.vars']['format'] # the global metadata identifier
+
+    try:
+        req = MetadataRequest()
+    except DWSError:
+        raise HTTPError('500 Internal Server Error', dws.args[0])
+
+    if fmt not in req.getMetadataFormats():
+        raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
+
+    r = req(gid)
+
+    filename = r.id
+    if not splitext(filename)[1]:
+        filename += '.xml'
+        
+    headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
+               ('Content-Type', 'application/xml')]
+
+    start_response('200 OK', headers)
+    return [r.document]
 
 class TemplateChoice(MakoApp):
     def __init__(self):
