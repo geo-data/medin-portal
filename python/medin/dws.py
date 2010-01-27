@@ -59,6 +59,27 @@ class SearchQuery(Query):
             return []
 
     @property
+    def sort(self):
+        try:
+            s = self['s'][0].split(',', 1)
+        except KeyError, AttributeError:
+            s = ('updated', '1')
+            self['s'] = ','.join(s)
+        
+        try:
+            field, asc = s
+            asc = int(asc)
+        except ValueError:
+            del self['s']
+            return (None, None)
+
+        return field, asc
+
+    @sort.setter
+    def sort(self, value):
+        self['s'] = ','.join((str(i) for i in value))
+
+    @property
     def count(self):
         try:
             return int(self['c'][0])
@@ -126,18 +147,21 @@ class SearchResponse(object):
         self.search_term = query.search_term
         self.start_index = query.start_index - 1 # we use zero based indexing
 
-        # we make a copy as the query object is modified later
-        self.query = deepcopy(query)
+        # set the index of the final result in this page
+        self.end_index = self.start_index + self.count
+        if self.end_index > hits:
+            self.end_index = hits
 
         self.updated = max((r[-1] for r in results))
         if not self.updated:
             from datetime import datetime
             self.updated = datetime.utcnow()
 
-        # set the index of the final result in this page
-        self.end_index = self.start_index + self.count
-        if self.end_index > hits:
-            self.end_index = hits
+        # The functionality from here down should move to the
+        # medin.Result object
+
+        #we make a copy as the query object is modified later
+        self.query = deepcopy(query)
 
         self._setPageCounts()
         self._setFirstLink(query)

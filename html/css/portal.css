@@ -2,3 +2,10 @@
     padding-right: 0.3em;
     vertical-align: top;
 }
+.sort {
+    font-size: 120%;
+    float: right;
+}
+.selected {
+    color: #37C5F5;
+}

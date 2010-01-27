@@ -209,6 +209,25 @@ class HTMLResults(Results):
         headers = [('Content-type', 'text/html')]
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers)
 
+    def setup(self, environ):
+        from copy import deepcopy
+
+        # create the data structure for the template sort logic
+        ctxt = super(HTMLResults, self).setup(environ)
+        query = deepcopy(ctxt.tvars['query'])
+
+        sorts = {}
+        cur_sort, cur_asc = query.sort
+        for sort in ('title', 'originator', 'updated'):
+            query.sort = (sort, 1)
+            asc = (str(query), (sort == cur_sort and cur_asc == 1))
+            query.sort = (sort, 0)
+            desc = (str(query), (sort == cur_sort and cur_asc == 0))
+            sorts[sort] = dict(asc=asc, desc=desc)
+        ctxt.tvars['sort'] = sorts
+
+        return ctxt
+
 class RSSResults(Results):
     def __init__(self):
         headers = [('Content-type', 'application/rss+xml')]

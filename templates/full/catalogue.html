@@ -91,11 +91,30 @@ all results
 </strong>:</p>
 
 ${result_links()}
+
+<%def name="sort_links(field)">
+<%
+  fsort = sort[field]
+%>
+<span class="sort">\
+% if not fsort['asc'][1]:
+<a href="${resource_root}?${fsort['asc'][0]}" title="Sort by ascending ${field}">&and;</a>\
+% else:
+<span class="selected" title="Currently sorted by ascending ${field}">&and;</span>\
+% endif
+% if not fsort['desc'][1]:
+<a href="${resource_root}?${fsort['desc'][0]}" title="Sort by descending ${field}">&or;</a>\
+% else:
+<span class="selected" title="Currently sorted by descending ${field}">&or;</span>\
+% endif
+</span>
+</%def>
+
 <table summary="Table of results" class="tabulate">
   <tr>
-    <th colspan="2">Title</th>
-    <th>Originator</th>
-    <th>Last updated</th>
+    <th colspan="2">Title ${sort_links('title')}</th>
+    <th>Originator ${sort_links('originator')}</th>
+    <th>Last updated ${sort_links('updated')}</th>
   </tr>
 % for i, res in enumerate(results):
   <tr>
