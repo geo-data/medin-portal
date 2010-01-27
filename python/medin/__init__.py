@@ -150,7 +150,7 @@ class Results(MakoApp):
     def __init__(self, path, headers):
         self.headers = headers
         super(Results, self).__init__(path)
-    
+
     def setup(self, environ):
         from medin.dws import SearchQuery, Search, DWSError
 
@@ -180,6 +180,7 @@ class Results(MakoApp):
         search_term = ' '.join(r.search_term)
 
         tvars=dict(hits=r.hits,
+                   query=r.query,
                    search_term = search_term,
                    start_index = start_index,
                    end_index = r.end_index,

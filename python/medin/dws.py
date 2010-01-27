@@ -16,6 +16,9 @@ class Query(object):
         for k, v in cgi.parse_qsl(qsl):
             self.append(k, v)
 
+    def __delitem__(self, k):
+        del self.params[k]
+
     def __getitem__(self, k):
         return self.params[k]
 
@@ -41,6 +44,11 @@ class Query(object):
         except KeyError:
             self.params[k] = [v]
 
+    def iterall(self):
+        for k, v in self.params.iteritems():
+            for p in v:
+                yield (k, p)
+
 class SearchQuery(Query):
 
     @property
@@ -61,6 +69,13 @@ class SearchQuery(Query):
     @count.setter
     def count(self, value):
         self['c'] = value
+
+    @count.deleter
+    def count(self):
+        try:
+            del self['c']
+        except KeyError:
+            pass
 
     @property
     def start_index(self):
@@ -103,11 +118,16 @@ class Request(object):
 class SearchResponse(object):
 
     def __init__(self, hits, results, query):
+        from copy import deepcopy
+
         self.hits = hits
         self.results = results
         self.count = query.count
         self.search_term = query.search_term
         self.start_index = query.start_index - 1 # we use zero based indexing
+
+        # we make a copy as the query object is modified later
+        self.query = deepcopy(query)
 
         self.updated = max((r[-1] for r in results))
         if not self.updated:

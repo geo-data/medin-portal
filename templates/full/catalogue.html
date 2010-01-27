@@ -47,7 +47,6 @@ results.
 % else:
 result.
 % endif
-
 % if not results:
 % if hits:
  However, the results specified are out of range of the original search.
@@ -90,6 +89,7 @@ ${start_index} - ${end_index}
 all results
 % endif
 </strong>:</p>
+
 ${result_links()}
 <table summary="Table of results" class="tabulate">
   <tr>
@@ -108,5 +108,26 @@ ${result_links()}
 </table>
 ${result_links()}
 
-<p><a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
+<form action="${resource_root}" method="get">
+<p>
+  <select name="c">
+% for c in (10, 15, 20, 30, 50, 100, 200):
+    <option value="${c}"\
+% if c == count:
+selected="selected"\
+% endif
+>${c}</option>
+% endfor
+  </select>
+## Iterate over all query parameters except count
+% for (k, v) in [i for i in query.iterall() if i[0] != 'c']:
+  <input type="hidden" name="${k}" value="${v | h}"/>
+% endfor
+  <button type="submit">Change</button> the number of results per page.
+</p>
+</form>
+
+<p>
+<a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
 <a href="${resource_root}.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
+</p>
