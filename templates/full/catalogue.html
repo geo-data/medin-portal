@@ -57,6 +57,9 @@ result.
 % endif
 
 <%def name="result_links()">
+% if page_count == 1:
+<% return '' %>
+% endif
 <p>
 % if first_link:
 <a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
@@ -83,7 +86,7 @@ result.
 </%def>
 
  Showing <strong>
-% if hits > count:
+% if hits > count or page_count > 1:
 ${start_index} - ${end_index}
 % else:
 all results
