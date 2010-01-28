@@ -261,12 +261,12 @@ class Search(Request):
             c = 0
         else:
             c = hits
-            
+
         for i in xrange(c):
-            results.append(('b0de0599-5734-4946-b131-dfc65a16b1de',
-                            'Broad Occupational Structure Map of Nepal',
-                            'MENRIS, ICIMOD',
-                            datetime.utcnow()))
+            results.append(('ff940020-1aa0-4abb-b9fc-c05c98eee863',
+                            'Knock Deep Area TE 11 HI995',
+                            'United Kingdom Hydrographic Office',
+                            datetime.strptime('2009-05-20', '%Y-%m-%d')))
 
         return SearchResponse(hits, results, query)
 
@@ -300,7 +300,10 @@ class MetadataResponse(object):
             try:
                 code = self.xpath.xpathEval('.//gmd:MD_KeywordTypeCode/@codeListValue')[0].content
             except IndexError:
-                code = 'general'
+                try:
+                    code = self.xpath.xpathEval('.//gmd:title/gco:CharacterString/text()')[0].content 
+                except IndexError:
+                    code = 'general'
 
             try:
                 keywords[code].append(words)
@@ -326,413 +329,424 @@ class MetadataRequest(Request):
         if not status:
             raise DWSError('The Disovery Web Service failed: %s' % message)
 
-        gid = 'b0de0599-5734-4946-b131-dfc65a16b1de'
-        title = 'Broad Occupational Structure Map of Nepal'
+        gid = 'ff940020-1aa0-4abb-b9fc-c05c98eee863'
+        title = 'Knock Deep Area TE 11 HI995'
 
-        abstract = """The map was prepared based on CBS 1991 Data, showing Broad Occupational Structure of Nepal by district."""
+        abstract = """SeaZone Digital Survey Bathymetry (DSB). Survey bathymetry data processed to form a
+  dataset providing elevation at discrete points. The elevation and shape of the seabed."""
 
-        document = """<?xml version="1.0" encoding="UTF-8"?>
-<gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:geonet="http://www.fao.org/geonetwork">
+        document = """<?xml version="1.0" encoding="utf-8"?>
+<gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmx ../XSD_Schemas/ISO_19139_Schemas/gmx/gmx.xsd">
   <gmd:fileIdentifier>
-    <gco:CharacterString xmlns:srv="http://www.isotc211.org/2005/srv">b0de0599-5734-4946-b131-dfc65a16b1de</gco:CharacterString>
+    <gco:CharacterString>ff940020-1aa0-4abb-b9fc-c05c98eee863</gco:CharacterString>
   </gmd:fileIdentifier>
+  <!-- Metadata Language -->
   <gmd:language>
-    <gco:CharacterString>eng</gco:CharacterString>
+    <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/php/code_list.php" codeListValue="eng">English</gmd:LanguageCode>
   </gmd:language>
-  <gmd:characterSet>
-    <gmd:MD_CharacterSetCode codeListValue="utf8" codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_CharacterSetCode"/>
-  </gmd:characterSet>
+  <!-- Resource Type -->
+  <gmd:hierarchyLevel>
+    <gmd:MD_ScopeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#MD_ScopeCode" codeListValue="dataset">dataset</gmd:MD_ScopeCode>
+  </gmd:hierarchyLevel>
+  <!-- Metadata Point of Contact -->
   <gmd:contact>
     <gmd:CI_ResponsibleParty>
-      <gmd:individualName>
-        <gco:CharacterString>Mr. Govinda Joshi</gco:CharacterString>
-      </gmd:individualName>
       <gmd:organisationName>
-        <gco:CharacterString>MENRIS, ICIMOD</gco:CharacterString>
+        <gco:CharacterString>SeaZone Solutions Limited</gco:CharacterString>
       </gmd:organisationName>
-      <gmd:positionName>
-        <gco:CharacterString>Sr. Cartographer/GIS Analyst</gco:CharacterString>
-      </gmd:positionName>
       <gmd:contactInfo>
         <gmd:CI_Contact>
           <gmd:phone>
             <gmd:CI_Telephone>
               <gmd:voice>
-                <gco:CharacterString>977-1-5003222</gco:CharacterString>
+                <gco:CharacterString>0870 013 0607</gco:CharacterString>
               </gmd:voice>
-              <gmd:facsimile>
-                <gco:CharacterString>977-1-5003299</gco:CharacterString>
-              </gmd:facsimile>
             </gmd:CI_Telephone>
           </gmd:phone>
-          <gmd:address>
-            <gmd:CI_Address>
-              <gmd:deliveryPoint>
-                <gco:CharacterString>Khumaltar</gco:CharacterString>
-              </gmd:deliveryPoint>
-              <gmd:city>
-                <gco:CharacterString>Lalitpur</gco:CharacterString>
-              </gmd:city>
-              <gmd:administrativeArea>
-                <gco:CharacterString>Kathmandu</gco:CharacterString>
-              </gmd:administrativeArea>
-              <gmd:postalCode>
-                <gco:CharacterString>3226</gco:CharacterString>
-              </gmd:postalCode>
-              <gmd:country>
-                <gco:CharacterString>Nepal</gco:CharacterString>
-              </gmd:country>
-              <gmd:electronicMailAddress>
-                <gco:CharacterString>metadata@icimod.org</gco:CharacterString>
-              </gmd:electronicMailAddress>
-            </gmd:CI_Address>
-          </gmd:address>
         </gmd:CI_Contact>
       </gmd:contactInfo>
       <gmd:role>
-        <gmd:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#CI_RoleCode" codeListValue="pointOfContact"/>
+        <gmd:CI_RoleCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact">pointOfContact</gmd:CI_RoleCode>
       </gmd:role>
     </gmd:CI_ResponsibleParty>
   </gmd:contact>
+  <!-- Date of Update of Metadata -->
   <gmd:dateStamp>
-    <gco:DateTime xmlns:srv="http://www.isotc211.org/2005/srv">2008-07-11T12:49:49</gco:DateTime>
+    <gco:Date>2009-05-20</gco:Date>
   </gmd:dateStamp>
+  <!-- Metadata Standard Name -->
   <gmd:metadataStandardName>
-    <gco:CharacterString xmlns:srv="http://www.isotc211.org/2005/srv">ISO 19115:2003/19139</gco:CharacterString>
+    <gco:CharacterString>MEDIN Discovery Metadata Standard</gco:CharacterString>
   </gmd:metadataStandardName>
+  <!-- Metadata Standard Version -->
   <gmd:metadataStandardVersion>
-    <gco:CharacterString xmlns:srv="http://www.isotc211.org/2005/srv">1.0</gco:CharacterString>
+    <gco:CharacterString>Version 2.3</gco:CharacterString>
   </gmd:metadataStandardVersion>
+  <!-- Spatial Reference System - Recommend using EPSG URN -->
   <gmd:referenceSystemInfo>
     <gmd:MD_ReferenceSystem>
       <gmd:referenceSystemIdentifier>
         <gmd:RS_Identifier>
-          <gmd:code gco:nilReason="missing">
-            <gco:CharacterString/>
+          <gmd:code>
+            <gco:CharacterString>urn:ogc:def:crs:EPSG::4326</gco:CharacterString>
           </gmd:code>
+          <gmd:codeSpace>
+            <gco:CharacterString>OGP</gco:CharacterString>
+          </gmd:codeSpace>
         </gmd:RS_Identifier>
       </gmd:referenceSystemIdentifier>
     </gmd:MD_ReferenceSystem>
   </gmd:referenceSystemInfo>
   <gmd:identificationInfo>
-    <gmd:MD_DataIdentification>
+    <gmd:MD_DataIdentification id="szsl_dsb_100081">
       <gmd:citation>
         <gmd:CI_Citation>
+          <!-- Resource Title -->
           <gmd:title>
-            <gco:CharacterString>Broad Occupational Structure Map of Nepal</gco:CharacterString>
+            <gco:CharacterString>Knock Deep Area TE 11 HI995</gco:CharacterString>
           </gmd:title>
-          <gmd:alternateTitle gco:nilReason="missing">
-            <gco:CharacterString/>
+          <!-- Alternative Resource Title -->
+          <gmd:alternateTitle>
+            <gco:CharacterString>SeaZone Digital Survey Bathymetry</gco:CharacterString>
           </gmd:alternateTitle>
+          <!-- Temporal Reference Date - Publication -->
           <gmd:date>
             <gmd:CI_Date>
               <gmd:date>
-                <gco:DateTime>2008-07-11T13:09:00</gco:DateTime>
+                <gco:Date>
+       2005-11-16
+      </gco:Date>
               </gmd:date>
               <gmd:dateType>
-                <gmd:CI_DateTypeCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#CI_DateTypeCode" codeListValue="publication"/>
+                <gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">publication</gmd:CI_DateTypeCode>
               </gmd:dateType>
             </gmd:CI_Date>
           </gmd:date>
-          <gmd:edition>
-            <gco:CharacterString>First</gco:CharacterString>
-          </gmd:edition>
+          <!-- Unique Resource Identifier -->
           <gmd:identifier>
-            <gmd:MD_Identifier>
+            <gmd:RS_Identifier>
               <gmd:code>
-                <gco:CharacterString>np</gco:CharacterString>
+                <gco:CharacterString>100081</gco:CharacterString>
               </gmd:code>
-            </gmd:MD_Identifier>
+              <gmd:codeSpace>
+                <gco:CharacterString>http://www.seazone.com/dsb</gco:CharacterString>
+              </gmd:codeSpace>
+            </gmd:RS_Identifier>
           </gmd:identifier>
-          <gmd:presentationForm>
-            <gmd:CI_PresentationFormCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#CI_PresentationFormCode" codeListValue="mapDigital"/>
-          </gmd:presentationForm>
         </gmd:CI_Citation>
       </gmd:citation>
+      <!-- Resource Abstract -->
       <gmd:abstract>
-        <gco:CharacterString>The map was prepared based on CBS 1991 Data, showing Broad Occupational Structure of Nepal by district.</gco:CharacterString>
+        <gco:CharacterString>
+  SeaZone Digital Survey Bathymetry (DSB). Survey bathymetry data processed to form a
+  dataset providing elevation at discrete points. The elevation and shape of the seabed.
+</gco:CharacterString>
       </gmd:abstract>
-      <gmd:purpose>
-        <gco:CharacterString>The map was prepared under joint collaboration between ICIMOD/MENRIS and Central Bureau of Statistics (CBS), for the publication: Districts of Nepal, Indicators of Development Update 2003.</gco:CharacterString>
-      </gmd:purpose>
-      <gmd:status>
-        <gmd:MD_ProgressCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_ProgressCode" codeListValue="completed"/>
-      </gmd:status>
+      <!-- Data Point of Contact - Point of Contact -->
       <gmd:pointOfContact>
         <gmd:CI_ResponsibleParty>
-          <gmd:individualName>
-            <gco:CharacterString>Basanta Shrestha</gco:CharacterString>
-          </gmd:individualName>
           <gmd:organisationName>
-            <gco:CharacterString>MENRIS-ICIMOD</gco:CharacterString>
+            <gco:CharacterString>SeaZone Solutions Limited</gco:CharacterString>
           </gmd:organisationName>
-          <gmd:positionName>
-            <gco:CharacterString>MENRIS, Division Head</gco:CharacterString>
-          </gmd:positionName>
           <gmd:contactInfo>
             <gmd:CI_Contact>
               <gmd:phone>
                 <gmd:CI_Telephone>
                   <gmd:voice>
-                    <gco:CharacterString>977-1-5003222</gco:CharacterString>
+                    <gco:CharacterString>0870 013 0607</gco:CharacterString>
                   </gmd:voice>
-                  <gmd:facsimile>
-                    <gco:CharacterString>977-1-5003299</gco:CharacterString>
-                  </gmd:facsimile>
                 </gmd:CI_Telephone>
               </gmd:phone>
               <gmd:address>
                 <gmd:CI_Address>
                   <gmd:deliveryPoint>
-                    <gco:CharacterString>Khumaltar</gco:CharacterString>
+                    <gco:CharacterString>Red Lion House</gco:CharacterString>
                   </gmd:deliveryPoint>
                   <gmd:city>
-                    <gco:CharacterString>Lalitpur</gco:CharacterString>
+                    <gco:CharacterString>Bentley</gco:CharacterString>
                   </gmd:city>
-                  <gmd:administrativeArea>
-                    <gco:CharacterString>Kathmandu</gco:CharacterString>
-                  </gmd:administrativeArea>
                   <gmd:postalCode>
-                    <gco:CharacterString>3226</gco:CharacterString>
+                    <gco:CharacterString>GU10 5HY</gco:CharacterString>
                   </gmd:postalCode>
                   <gmd:country>
-                    <gco:CharacterString>Nepal</gco:CharacterString>
+                    <gco:CharacterString>UK</gco:CharacterString>
                   </gmd:country>
                   <gmd:electronicMailAddress>
-                    <gco:CharacterString>metadata@icimod.org</gco:CharacterString>
+                    <gco:CharacterString>info@seazone.com</gco:CharacterString>
                   </gmd:electronicMailAddress>
                 </gmd:CI_Address>
               </gmd:address>
             </gmd:CI_Contact>
           </gmd:contactInfo>
           <gmd:role>
-            <gmd:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#CI_RoleCode" codeListValue="pointOfContact"/>
+            <gmd:CI_RoleCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact">pointOfContact</gmd:CI_RoleCode>
           </gmd:role>
         </gmd:CI_ResponsibleParty>
       </gmd:pointOfContact>
+      <!-- Data Point of Contact - Originator -->
+      <gmd:pointOfContact>
+        <gmd:CI_ResponsibleParty>
+          <gmd:organisationName>
+            <gco:CharacterString>United Kingdom Hydrographic Office</gco:CharacterString>
+          </gmd:organisationName>
+          <gmd:contactInfo>
+            <gmd:CI_Contact>
+              <gmd:phone>
+                <gmd:CI_Telephone>
+                  <gmd:voice>
+                    <gco:CharacterString>+44 (0) 1823 337900</gco:CharacterString>
+                  </gmd:voice>
+                  <gmd:facsimile>
+                    <gco:CharacterString>+44 (0) 1823 284077</gco:CharacterString>
+                  </gmd:facsimile>
+                </gmd:CI_Telephone>
+              </gmd:phone>
+              <gmd:address>
+                <gmd:CI_Address>
+                  <gmd:deliveryPoint>
+                    <gco:CharacterString>Admiralty Way</gco:CharacterString>
+                  </gmd:deliveryPoint>
+                  <gmd:city>
+                    <gco:CharacterString>Taunton</gco:CharacterString>
+                  </gmd:city>
+                  <gmd:postalCode>
+                    <gco:CharacterString>TA1 2DN</gco:CharacterString>
+                  </gmd:postalCode>
+                  <gmd:country>
+                    <gco:CharacterString>UK</gco:CharacterString>
+                  </gmd:country>
+                </gmd:CI_Address>
+              </gmd:address>
+            </gmd:CI_Contact>
+          </gmd:contactInfo>
+          <gmd:role>
+            <gmd:CI_RoleCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="originator">originator</gmd:CI_RoleCode>
+          </gmd:role>
+        </gmd:CI_ResponsibleParty>
+      </gmd:pointOfContact>
+      <!-- Frequency of Update -->
       <gmd:resourceMaintenance>
         <gmd:MD_MaintenanceInformation>
           <gmd:maintenanceAndUpdateFrequency>
-            <gmd:MD_MaintenanceFrequencyCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_MaintenanceFrequencyCode" codeListValue="asNeeded"/>
+            <gmd:MD_MaintenanceFrequencyCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="notPlanned">notPlanned</gmd:MD_MaintenanceFrequencyCode>
           </gmd:maintenanceAndUpdateFrequency>
         </gmd:MD_MaintenanceInformation>
       </gmd:resourceMaintenance>
-      <gmd:graphicOverview>
-        <gmd:MD_BrowseGraphic>
-          <gmd:fileName>
-            <gco:CharacterString>snv19_s.png</gco:CharacterString>
-          </gmd:fileName>
-          <gmd:fileDescription>
-            <gco:CharacterString>thumbnail</gco:CharacterString>
-          </gmd:fileDescription>
-          <gmd:fileType>
-            <gco:CharacterString>png</gco:CharacterString>
-          </gmd:fileType>
-        </gmd:MD_BrowseGraphic>
-      </gmd:graphicOverview>
-      <gmd:graphicOverview>
-        <gmd:MD_BrowseGraphic>
-          <gmd:fileName>
-            <gco:CharacterString>snv19.png</gco:CharacterString>
-          </gmd:fileName>
-          <gmd:fileDescription>
-            <gco:CharacterString>large_thumbnail</gco:CharacterString>
-          </gmd:fileDescription>
-          <gmd:fileType>
-            <gco:CharacterString>png</gco:CharacterString>
-          </gmd:fileType>
-        </gmd:MD_BrowseGraphic>
-      </gmd:graphicOverview>
+      <!-- Data Format -->
+      <gmd:resourceFormat>
+        <gmd:MD_Format>
+          <gmd:name>
+            <gco:CharacterString>
+     Comma separated text. Longitude (Decimal Degrees), Latitude
+     (Decimal Degrees), Elevation (Metres, positive up)
+    </gco:CharacterString>
+          </gmd:name>
+          <gmd:version gco:nilReason="inapplicable"/>
+        </gmd:MD_Format>
+      </gmd:resourceFormat>
+      <!-- Keyword - Proposal for NERC OAI Harvesting -->
       <gmd:descriptiveKeywords>
         <gmd:MD_Keywords>
           <gmd:keyword>
-            <gco:CharacterString>Broad Occupational structure</gco:CharacterString>
+            <gmx:Anchor xlink:href="http://vocab.ndg.nerc.ac.uk/term/N010/0" xlink:title="NERC OAI Harvesting">NDGO0001</gmx:Anchor>
           </gmd:keyword>
-          <gmd:type>
-            <gmd:MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_KeywordTypeCode" codeListValue="theme"/>
-          </gmd:type>
         </gmd:MD_Keywords>
       </gmd:descriptiveKeywords>
+      <!-- Keyword - for datasets claiming to be INSPIRE themes -->
       <gmd:descriptiveKeywords>
         <gmd:MD_Keywords>
           <gmd:keyword>
-            <gco:CharacterString>Nepal</gco:CharacterString>
+            <gco:CharacterString>BathyDep</gco:CharacterString>
           </gmd:keyword>
-          <gmd:type>
-            <gmd:MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_KeywordTypeCode" codeListValue="place"/>
-          </gmd:type>
+          <gmd:thesaurusName>
+            <gmd:CI_Citation>
+              <gmd:title>
+                <gco:CharacterString>SeaDataNet BODC Vocabulary (P011)</gco:CharacterString>
+              </gmd:title>
+              <gmd:date>
+                <gmd:CI_Date>
+                  <gmd:date>
+                    <gco:Date>2009-05-20</gco:Date>
+                  </gmd:date>
+                  <gmd:dateType>
+                    <gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="revision">revision</gmd:CI_DateTypeCode>
+                  </gmd:dateType>
+                </gmd:CI_Date>
+              </gmd:date>
+            </gmd:CI_Citation>
+          </gmd:thesaurusName>
         </gmd:MD_Keywords>
       </gmd:descriptiveKeywords>
+      <!-- Conditions Applying to Access and Use -->
+      <gmd:resourceConstraints>
+        <gmd:MD_Constraints>
+          <gmd:useLimitation>
+            <gco:CharacterString>Not suitable for navigation</gco:CharacterString>
+          </gmd:useLimitation>
+        </gmd:MD_Constraints>
+      </gmd:resourceConstraints>
+      <!-- Limitations on Public Access -->
       <gmd:resourceConstraints>
         <gmd:MD_LegalConstraints>
           <gmd:accessConstraints>
-            <gmd:MD_RestrictionCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_RestrictionCode" codeListValue="copyright"/>
+            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#MD_RestrictionCode" codeListValue="license">license</gmd:MD_RestrictionCode>
           </gmd:accessConstraints>
-          <gmd:useConstraints>
-            <gmd:MD_RestrictionCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_RestrictionCode" codeListValue="otherRestrictions"/>
-          </gmd:useConstraints>
-          <gmd:otherConstraints>
-            <gco:CharacterString>The content of this website can be accessed, printed and downloaded in an unaltered form (altered including being stretched, compressed, coloured or altered in any way so as to distort content from its original proportions or format) with copyright acknowledged, on a temporary basis for personal study that is not for a direct or indirect commercial use and any non-commercial use. Any content printed or downloaded may not be sold, licensed, transferred, copied or reproduced in whole or in part in any manner or in or on any media to any person without the prior written consent of the ICIMOD</gco:CharacterString>
-          </gmd:otherConstraints>
+          <gmd:accessConstraints>
+            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#MD_RestrictionCode" codeListValue="restricted">restricted</gmd:MD_RestrictionCode>
+          </gmd:accessConstraints>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
-      <gmd:spatialRepresentationType>
-        <gmd:MD_SpatialRepresentationTypeCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_SpatialRepresentationTypeCode" codeListValue="grid"/>
-      </gmd:spatialRepresentationType>
+      <!-- Spatial Resolution using representative fraction -->
       <gmd:spatialResolution>
         <gmd:MD_Resolution>
           <gmd:equivalentScale>
             <gmd:MD_RepresentativeFraction>
               <gmd:denominator>
-                <gco:Integer>250000</gco:Integer>
+                <gco:Integer>25000</gco:Integer>
               </gmd:denominator>
             </gmd:MD_RepresentativeFraction>
           </gmd:equivalentScale>
         </gmd:MD_Resolution>
       </gmd:spatialResolution>
+      <!-- Resource Language -->
       <gmd:language>
-        <gco:CharacterString>eng</gco:CharacterString>
+        <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/php/code_list.php" codeListValue="eng">English</gmd:LanguageCode>
       </gmd:language>
-      <gmd:characterSet>
-        <gmd:MD_CharacterSetCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_CharacterSetCode" codeListValue="utf8"/>
-      </gmd:characterSet>
+      <!-- Topic Category -->
       <gmd:topicCategory>
-        <gmd:MD_TopicCategoryCode>economy</gmd:MD_TopicCategoryCode>
+        <gmd:MD_TopicCategoryCode>elevation</gmd:MD_TopicCategoryCode>
       </gmd:topicCategory>
+      <gmd:topicCategory>
+        <gmd:MD_TopicCategoryCode>oceans</gmd:MD_TopicCategoryCode>
+      </gmd:topicCategory>
+      <gmd:topicCategory>
+        <gmd:MD_TopicCategoryCode>imageryBaseMapsEarthCover</gmd:MD_TopicCategoryCode>
+      </gmd:topicCategory>
+      <!-- Extent -->
       <gmd:extent>
         <gmd:EX_Extent>
+          <gmd:geographicElement>
+            <gmd:EX_GeographicDescription>
+              <!-- Extent - by Identifier -->
+              <gmd:geographicIdentifier>
+                <gmd:MD_Identifier>
+                  <gmd:authority>
+                    <gmd:CI_Citation>
+                      <gmd:title>
+                        <gco:CharacterString>ICES Regions</gco:CharacterString>
+                      </gmd:title>
+                      <gmd:date>
+                        <gmd:CI_Date>
+                          <gmd:date>
+                            <gco:Date>2006-01-01</gco:Date>
+                          </gmd:date>
+                          <gmd:dateType>
+                            <gmd:CI_DateTypeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="revision">revision</gmd:CI_DateTypeCode>
+                          </gmd:dateType>
+                        </gmd:CI_Date>
+                      </gmd:date>
+                    </gmd:CI_Citation>
+                  </gmd:authority>
+                  <gmd:code>
+                    <gco:CharacterString>IVc</gco:CharacterString>
+                  </gmd:code>
+                </gmd:MD_Identifier>
+              </gmd:geographicIdentifier>
+            </gmd:EX_GeographicDescription>
+          </gmd:geographicElement>
+          <!-- Geographic Bounding Box -->
+          <gmd:geographicElement>
+            <gmd:EX_GeographicBoundingBox>
+              <gmd:westBoundLongitude>
+                <gco:Decimal>1.42</gco:Decimal>
+              </gmd:westBoundLongitude>
+              <gmd:eastBoundLongitude>
+                <gco:Decimal>1.69</gco:Decimal>
+              </gmd:eastBoundLongitude>
+              <gmd:southBoundLatitude>
+                <gco:Decimal>51.57</gco:Decimal>
+              </gmd:southBoundLatitude>
+              <gmd:northBoundLatitude>
+                <gco:Decimal>51.80</gco:Decimal>
+              </gmd:northBoundLatitude>
+            </gmd:EX_GeographicBoundingBox>
+          </gmd:geographicElement>
+          <!-- Temporal Extent -->
           <gmd:temporalElement>
             <gmd:EX_TemporalExtent>
               <gmd:extent>
-                <gml:TimePeriod gml:id="foo">
-                  <gml:beginPosition/>
-                  <gml:endPosition/>
+                <gml:TimePeriod gml:id="ID1">
+                  <gml:beginPosition>2002-05-02</gml:beginPosition>
+                  <gml:endPosition>2002-05-09</gml:endPosition>
                 </gml:TimePeriod>
               </gmd:extent>
             </gmd:EX_TemporalExtent>
           </gmd:temporalElement>
+          <!-- Vertical Extent - Hard coded Vertical CRS Information -->
+          <gmd:verticalElement>
+            <gmd:EX_VerticalExtent>
+              <gmd:minimumValue>
+                <gco:Real>-30.7</gco:Real>
+              </gmd:minimumValue>
+              <gmd:maximumValue>
+                <gco:Real>1.0</gco:Real>
+              </gmd:maximumValue>
+              <gmd:verticalCRS>
+                <gml:VerticalCRS gml:id="metadata-crs-001">
+                  <gml:identifier codeSpace="MEDIN">metadata-crs-001</gml:identifier>
+                  <gml:name>Chart Datum Height</gml:name>
+                  <gml:scope>Defines the vertical CRS of the minimum and maximum extent
+values.</gml:scope>
+                  <gml:verticalCS>
+                    <gml:VerticalCS gml:id="metadata-cs-001">
+                      <gml:identifier codeSpace="MEDIN">metadata-cs-001</gml:identifier>
+                      <gml:name>Vertical coordinate system orientated up</gml:name>
+                      <gml:axis>
+                        <gml:CoordinateSystemAxis gml:id="metadata-axis-001" uom="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/uom/ gmxUom.xml#m">
+                          <gml:identifier codeSpace="MEDIN">metadata-axis-001</gml:identifier>
+                          <gml:axisAbbrev>Z</gml:axisAbbrev>
+                          <gml:axisDirection codeSpace="MEDIN">up</gml:axisDirection>
+                        </gml:CoordinateSystemAxis>
+                      </gml:axis>
+                    </gml:VerticalCS>
+                  </gml:verticalCS>
+                  <gml:verticalDatum>
+                    <gml:VerticalDatum gml:id="metadata-datum-001">
+                      <gml:identifier codeSpace="MEDIN">metadata-datum-001</gml:identifier>
+                      <gml:name>Chart Datum</gml:name>
+                      <gml:scope>Hydrographic survey and charting</gml:scope>
+                      <gml:anchorDefinition>Approximation of Lowest Astronomical Tide at the local tide
+station</gml:anchorDefinition>
+                    </gml:VerticalDatum>
+                  </gml:verticalDatum>
+                </gml:VerticalCRS>
+              </gmd:verticalCRS>
+            </gmd:EX_VerticalExtent>
+          </gmd:verticalElement>
         </gmd:EX_Extent>
       </gmd:extent>
-      <gmd:extent>
-        <gmd:EX_Extent>
-          <gmd:geographicElement>
-            <gmd:EX_GeographicBoundingBox>
-              <gmd:westBoundLongitude>
-                <gco:Decimal>80.0522</gco:Decimal>
-              </gmd:westBoundLongitude>
-              <gmd:eastBoundLongitude>
-                <gco:Decimal>88.1946</gco:Decimal>
-              </gmd:eastBoundLongitude>
-              <gmd:southBoundLatitude>
-                <gco:Decimal>26.3684</gco:Decimal>
-              </gmd:southBoundLatitude>
-              <gmd:northBoundLatitude>
-                <gco:Decimal>30.4247</gco:Decimal>
-              </gmd:northBoundLatitude>
-            </gmd:EX_GeographicBoundingBox>
-          </gmd:geographicElement>
-        </gmd:EX_Extent>
-      </gmd:extent>
-      <gmd:supplementalInformation>
-        <gco:CharacterString>Projection: UTM, Zone 44/45 (Spheroid Everest)
-Base Map: Topographical Zonal Map (1:250,000), Topological Survey Branch, Department of Survey 1988.
-Data: Population Census 1991</gco:CharacterString>
-      </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>
-  <gmd:distributionInfo>
-    <gmd:MD_Distribution>
-      <gmd:distributor>
-        <gmd:MD_Distributor>
-          <gmd:distributorContact>
-            <gmd:CI_ResponsibleParty>
-              <gmd:individualName>
-                <gco:CharacterString>Mr. Govinda Joshi</gco:CharacterString>
-              </gmd:individualName>
-              <gmd:organisationName>
-                <gco:CharacterString>MENRIS-ICIMOD</gco:CharacterString>
-              </gmd:organisationName>
-              <gmd:positionName>
-                <gco:CharacterString>Sr. Cartographer/GIS Analyst</gco:CharacterString>
-              </gmd:positionName>
-              <gmd:contactInfo>
-                <gmd:CI_Contact>
-                  <gmd:phone>
-                    <gmd:CI_Telephone>
-                      <gmd:voice>
-                        <gco:CharacterString>977-1-5003222</gco:CharacterString>
-                      </gmd:voice>
-                      <gmd:facsimile>
-                        <gco:CharacterString>977-1-5003299</gco:CharacterString>
-                      </gmd:facsimile>
-                    </gmd:CI_Telephone>
-                  </gmd:phone>
-                  <gmd:address>
-                    <gmd:CI_Address>
-                      <gmd:deliveryPoint>
-                        <gco:CharacterString>Khumaltar</gco:CharacterString>
-                      </gmd:deliveryPoint>
-                      <gmd:city>
-                        <gco:CharacterString>Lalitpur</gco:CharacterString>
-                      </gmd:city>
-                      <gmd:administrativeArea>
-                        <gco:CharacterString>Kathmandu</gco:CharacterString>
-                      </gmd:administrativeArea>
-                      <gmd:postalCode>
-                        <gco:CharacterString>3226</gco:CharacterString>
-                      </gmd:postalCode>
-                      <gmd:country>
-                        <gco:CharacterString>Nepal</gco:CharacterString>
-                      </gmd:country>
-                      <gmd:electronicMailAddress>
-                        <gco:CharacterString>metadata@icimod.org</gco:CharacterString>
-                      </gmd:electronicMailAddress>
-                    </gmd:CI_Address>
-                  </gmd:address>
-                </gmd:CI_Contact>
-              </gmd:contactInfo>
-              <gmd:role>
-                <gmd:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#CI_RoleCode" codeListValue="distributor"/>
-              </gmd:role>
-            </gmd:CI_ResponsibleParty>
-          </gmd:distributorContact>
-        </gmd:MD_Distributor>
-      </gmd:distributor>
-      <gmd:transferOptions>
-        <gmd:MD_DigitalTransferOptions>
-          <gmd:onLine>
-            <gmd:CI_OnlineResource>
-              <gmd:linkage xmlns:srv="http://www.isotc211.org/2005/srv">
-                <gmd:URL>http://arcsde.icimod.org.np:8080/geonetwork/srv/en/resources.get?id=277&amp;fname=snv19.jpg&amp;access=private</gmd:URL>
-              </gmd:linkage>
-              <gmd:protocol>
-                <gco:CharacterString>WWW:DOWNLOAD-1.0-http--download</gco:CharacterString>
-              </gmd:protocol>
-              <gmd:name>
-                <gco:CharacterString>snv19.jpg</gco:CharacterString>
-              </gmd:name>
-              <gmd:description gco:nilReason="missing">
-                <gco:CharacterString/>
-              </gmd:description>
-            </gmd:CI_OnlineResource>
-          </gmd:onLine>
-        </gmd:MD_DigitalTransferOptions>
-      </gmd:transferOptions>
-    </gmd:MD_Distribution>
-  </gmd:distributionInfo>
+  <!-- Lineage -->
   <gmd:dataQualityInfo>
     <gmd:DQ_DataQuality>
+      <!-- Scope - Required by ISO 19115 -->
       <gmd:scope>
         <gmd:DQ_Scope>
           <gmd:level>
-            <gmd:MD_ScopeCode codeList="http://www.isotc211.org/2005/resources/codeList.xml#MD_ScopeCode" codeListValue="dataset"/>
+            <gmd:MD_ScopeCode codeList="http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/ Codelist/gmxCodelists.xml#MD_ScopeCode" codeListValue="dataset">dataset</gmd:MD_ScopeCode>
           </gmd:level>
         </gmd:DQ_Scope>
       </gmd:scope>
+      <!-- Lineage -->
       <gmd:lineage>
         <gmd:LI_Lineage>
           <gmd:statement>
-            <gco:CharacterString>From Various Sources</gco:CharacterString>
+            <gco:CharacterString>
+       Survey platform NP 1016. Horizontal datum of source
+       data: World Geodetic System 1984. Vertical datum of source data: Lowest
+       Astronomical Tide. Survey type: SINGLE BEAM.
+      </gco:CharacterString>
           </gmd:statement>
         </gmd:LI_Lineage>
       </gmd:lineage>
