@@ -278,8 +278,9 @@ class Metadata(MakoApp):
         r = req(gid)
 
         title = 'Metadata: %s' % r.title
+        keywords = r.keywords()
         tvars = dict(gid=r.id,
-                     mtitle=r.title,
+                     keywords=keywords,
                      abstract=r.abstract)
 
         return TemplateContext(title, tvars=tvars)
@@ -299,17 +300,22 @@ def metadata_download(environ, start_response):
     if fmt not in req.getMetadataFormats():
         raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-    r = req(gid)
+    try:
+        r = req(gid)
+    except DWSError:
+        raise HTTPError('500 Internal Server Error', dws.args[0]) 
 
     filename = r.id
     if not splitext(filename)[1]:
         filename += '.xml'
+
+    document = str(r.document)
         
     headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
                ('Content-Type', 'application/xml')]
 
     start_response('200 OK', headers)
-    return [r.document]
+    return [document]
 
 class TemplateChoice(MakoApp):
     def __init__(self):

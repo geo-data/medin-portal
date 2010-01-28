@@ -2,6 +2,15 @@
     padding-right: 0.3em;
     vertical-align: top;
 }
+table.mini {
+    margin-left: 2em;
+    margin-top: 0;
+    padding-top: 0;
+}
+#bodycontent_wide .no-bottom {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
 .sort {
     font-size: 120%;
     float: right;

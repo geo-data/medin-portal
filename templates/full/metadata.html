@@ -1,8 +1,19 @@
 <%inherit file="base.html"/>
 
-<p>The unique metadata id is <strong>${gid}</strong>.</p>
+<h2>Overview</h2>
 
-<p>${abstract}</p>
+<p><strong>Abstract:</strong> ${abstract}</p>
+% if keywords:
+<p class="no-bottom"><strong>Keywords:</strong></p>
+<table summary="Keywords by category" class="tabulate mini">
+  % for category, words in keywords.items():
+  <tr>
+    <td><strong>${category}</strong></td>
+    <td>${', '.join(words)}</td>
+  </tr>
+  % endfor
+</table>
+% endif
 
 <h2>Download</h2>
 <p>The metadata is available for downloading in the following XML

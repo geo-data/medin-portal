@@ -273,10 +273,43 @@ class Search(Request):
 class MetadataResponse(object):
 
     def __init__(self, gid, title, abstract, document):
+        import libxml2
+        
         self.id = gid
         self.title = title
         self.abstract = abstract
-        self.document = document
+
+        try:
+            self.document = libxml2.parseMemory(document, len(document))
+        except libxml2.parserError, e:
+            raise DWSError('The metadata document could not be parsed: %s' % str(e))
+
+        xpath = self.xpath = self.document.xpathNewContext()
+        xpath.xpathRegisterNs('gmd', 'http://www.isotc211.org/2005/gmd')
+        xpath.xpathRegisterNs('gco', 'http://www.isotc211.org/2005/gco')
+
+    def keywords(self):
+        keywords = {}
+        for node in self.xpath.xpathEval('//gmd:descriptiveKeywords/gmd:MD_Keywords'):
+            self.xpath.setContextNode(node)
+            try:
+                words = self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text()')[0].content
+            except IndexError:
+                continue
+
+            try:
+                code = self.xpath.xpathEval('.//gmd:MD_KeywordTypeCode/@codeListValue')[0].content
+            except IndexError:
+                code = 'general'
+
+            try:
+                keywords[code].append(words)
+            except KeyError:
+                keywords[code] = [words]
+
+        self.xpath.setContextNode(self.document)
+
+        return keywords
 
 class MetadataRequest(Request):
 
@@ -293,14 +326,10 @@ class MetadataRequest(Request):
         if not status:
             raise DWSError('The Disovery Web Service failed: %s' % message)
 
-        gid = 'badc.nerc.ac.uk__DIF__dataent_claus.xml'
-        title = 'Cloud Archive User Service data (CLAUS)'
+        gid = 'b0de0599-5734-4946-b131-dfc65a16b1de'
+        title = 'Broad Occupational Structure Map of Nepal'
 
-        abstract = """Global Brightness Temperature imagery from the 
-Cloud Archive User Service project. This project produced a long 
-time-series of global thermal infra-red imagery of the Earth using 
-data from operational meteorological satellites, which was used in 
-validating atmospheric General Circulation Models"""
+        abstract = """The map was prepared based on CBS 1991 Data, showing Broad Occupational Structure of Nepal by district."""
 
         document = """<?xml version="1.0" encoding="UTF-8"?>
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:geonet="http://www.fao.org/geonetwork">
