@@ -16,11 +16,49 @@
 % endif
 
 <h2>Download</h2>
-<p>The metadata is available for downloading in the following XML
-  metadata formats:</p>
+<p>The complete metadata is available for downloading in the following
+  XML metadata formats:</p>
 <ul>
   <li><a href="${resource_root}/DC">Dublin Core format</a></li>
   <li><a href="${resource_root}/DIF_v9.4">GCMD DIF format</a> (version 9.4)</li>
   <li><a href="${resource_root}/MEDIN_v2.3.1">MEDIN format</a> (version 2.3.1)</li>
   <li><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</li>
 </ul>
+
+<h2>Details</h2>
+<p class="no-bottom">Details for the metadata are as follows:</p>
+
+<table summary="Metadata details" class="tabulate mini">
+  % if linkage:
+  <tr>
+    <td><strong>Resource locator</strong></td>
+    <td>
+      % for resource in linkage:
+      <div>
+        <a href="${resource['link']}" title="External link">
+          % if resource['name']:
+          ${resource['name']}
+          % else:
+          ${resource['link']}
+          % endif
+          </a>
+        % if resource['description']:
+        - ${resource['description']}
+        % endif
+      </div>
+      % endfor
+    </td>
+  </tr>
+  % endif
+
+  % for name, details in metadata:
+  <tr>
+    <td><strong>${name}</strong></td>
+    <td>
+      % for detail in details:
+      <div>${detail}</div>
+      % endfor
+    </td>
+  </tr>
+  % endfor
+</table>

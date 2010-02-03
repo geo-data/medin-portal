@@ -279,8 +279,12 @@ class Metadata(MakoApp):
 
         title = 'Metadata: %s' % r.title
         keywords = r.keywords()
+        metadata = r.allElements()
+        linkage = r.online_resource()
         tvars = dict(gid=r.id,
                      keywords=keywords,
+                     metadata=metadata,
+                     linkage=linkage,
                      abstract=r.abstract)
 
         return TemplateContext(title, tvars=tvars)
