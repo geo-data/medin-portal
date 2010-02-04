@@ -877,22 +877,28 @@ class MetadataResponse(object):
         except KeyError:
             return [code]
 
-    def metadata_update(self):
+    def last_updated(self):
+        try:
+            return self._updated
+        except AttributeError:
+            pass
+
         try:
             date = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:Date')[0].content
         except IndexError:
             pass
         else:
-            date = self.formatDate(date)
-            return [date]
+            return self.formatDate(date)
 
         try:
             datetime = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:DateTime')[0].content
         except IndexError:
             return []
-        datetime = self.formatDatetime(datetime)
-        return [datetime]
+        return self.formatDatetime(datetime)
 
+    def metadata_update(self):
+        return [self.last_updated()]
+    
     def metadata_name(self):
         try:
             name = self.xpath.xpathEval('//gmd:MD_Metadata/gmd:metadataStandardName/gco:CharacterString')[0].content

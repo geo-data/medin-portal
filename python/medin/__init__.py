@@ -311,6 +311,17 @@ def metadata_image(environ, start_response):
     except DWSError:
         raise HTTPError('500 Internal Server Error', dws.args[0]) 
 
+    # Check if the client needs a new version
+    etag = r.last_updated()
+    try:
+        client_etag = environ['HTTP_IF_NONE_MATCH']
+    except KeyError:
+        pass
+    else:
+        if etag == client_etag:
+            start_response('304 Not Modified', [])
+            return []
+
     try:
         minx, miny, maxx, maxy = r.bbox()
     except ValueError:
@@ -351,7 +362,8 @@ def metadata_image(environ, start_response):
     # serialise the image
     bytes = image.tostring('png')
 
-    headers = [('Content-Type', 'image/png')]
+    headers = [('Content-Type', 'image/png'),
+               ('Etag', etag)]
 
     start_response('200 OK', headers)
     return [bytes]
