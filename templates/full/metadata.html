@@ -31,10 +31,14 @@
 <table summary="Metadata details" class="tabulate mini">
   % if linkage:
   <tr>
-    <td><strong>Resource locator</strong></td>
-    <td>
-      % for resource in linkage:
+    <td class="heading"><strong>Resource locator</strong></td>
+    <td class="content">
+      % for i, resource in enumerate(linkage):
+      % if i:
+      <div class="sibling">
+      % else:
       <div>
+      % endif
         <a href="${resource['link']}" title="External link">
           % if resource['name']:
           ${resource['name']}
@@ -53,10 +57,15 @@
 
   % for name, details in metadata:
   <tr>
-    <td><strong>${name}</strong></td>
-    <td>
-      % for detail in details:
-      <div>${detail}</div>
+    <td class="heading"><strong>${name}</strong></td>
+    <td class="content">
+      % for i, detail in enumerate(details):
+      % if i:
+      <div class="sibling">
+      % else:
+      <div>
+      % endif
+      ${detail}</div>
       % endfor
     </td>
   </tr>

@@ -7,9 +7,20 @@ table.mini {
     margin-top: 0;
     padding-top: 0;
 }
+td.heading {
+    background-color: #DAD8FF;
+    padding-left: 0.5em;
+}
+td.content {
+    background-color: #EBF9FF;
+    padding-left: 0.5em;
+}
 #bodycontent_wide .no-bottom {
     margin-bottom: 0;
     padding-bottom: 0;
+}
+div.sibling {
+    border-top: 1px solid #DAD8FF;
 }
 .sort {
     font-size: 120%;
