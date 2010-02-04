@@ -7,6 +7,9 @@ table.mini {
     margin-top: 0;
     padding-top: 0;
 }
+table.metadata {
+    clear: both;
+}
 td.heading {
     background-color: #DAD8FF;
     padding-left: 0.5em;

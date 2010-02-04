@@ -5,6 +5,42 @@ from errata import HTTPError
 
 # Utility Classes
 
+class TemplateLookup(object):
+
+    def __init__(self, environ):
+        try:
+            self.template_dir = self.__class__._template_dir
+            self.doc_root = self.__class__._doc_root
+            return
+        except AttributeError:
+            pass
+
+        try:
+            doc_root = environ['DOCUMENT_ROOT']
+        except KeyError:
+            raise EnvironmentError('The DOCUMENT_ROOT environment variable is not available')
+
+        self.doc_root = self.__class__._doc_root = os.path.dirname(doc_root)
+        self.template_dir = self.__class__._template_dir = os.path.join(self.doc_root, 'templates')
+        if not os.path.exists(self.template_dir):
+            raise RuntimeError('The template directory does not exist: %s' % self.template_dir)
+
+    def lookup(self):
+        try:
+            return self.__class_._template_lookup
+        except AttributeError:
+            pass
+
+        from mako.lookup import TemplateLookup
+
+        module_dir = os.path.join(self.doc_root, 'tmp')
+        self.__class__._template_lookup = TemplateLookup(directories=[self.template_dir],
+                                                         input_encoding='utf-8',
+                                                         output_encoding='utf-8',
+                                                         filesystem_checks=False,
+                                                         module_directory=module_dir)
+        return self.__class__._template_lookup
+    
 class MakoApp(object):
     """Base class creating WSGI application for rendering Mako templates"""
 
@@ -31,42 +67,8 @@ class MakoApp(object):
         return [output]
 
     def get_template(self, environ, path, expand=True):
-        def template_lookup(environ):
-            try:
-                return MakoApp._template_lookup
-            except AttributeError:
-                pass
-
-            def get_template_dir(environ):
-                try:
-                    return MakoApp._template_dir
-                except AttributeError:
-                    pass
-
-                try:
-                    doc_root = environ['DOCUMENT_ROOT']
-                except KeyError:
-                    raise EnvironmentError('The DOCUMENT_ROOT environment variable is not available')
-
-                template_dir = os.path.join(os.path.dirname(doc_root), 'templates')
-                if not os.path.exists(template_dir):
-                    raise RuntimeError('The template directory does not exist: %s' % template_dir)
-
-                MakoApp._template_dir = template_dir
-                return template_dir
-
-            from mako.lookup import TemplateLookup
-
-            template_dir = get_template_dir(environ)
-            _template_lookup = TemplateLookup(directories=[template_dir],
-                                              input_encoding='utf-8',
-                                              output_encoding='utf-8',
-                                              filesystem_checks=False)
-
-            MakoApp._template_lookup = _template_lookup
-            return _template_lookup
-        
-        lookup = template_lookup(environ)
+        template_lookup = TemplateLookup(environ)
+        lookup = template_lookup.lookup()
         path = os.path.join(os.path.sep, *path)
         if expand:
             try:
@@ -281,20 +283,85 @@ class Metadata(MakoApp):
         keywords = r.keywords()
         metadata = r.allElements()
         linkage = r.online_resource()
+        bbox = r.bbox()
         tvars = dict(gid=r.id,
                      keywords=keywords,
                      metadata=metadata,
                      linkage=linkage,
+                     bbox=bbox,
                      abstract=r.abstract)
 
         return TemplateContext(title, tvars=tvars)
+
+def metadata_image(environ, start_response):
+    from dws import MetadataRequest
+    import os.path
+    from json import dumps as tojson
+    import mapnik
+
+    gid = environ['selector.vars']['gid'] # the global metadata identifier
+
+    try:
+        req = MetadataRequest()
+    except DWSError:
+        raise HTTPError('500 Internal Server Error', dws.args[0])
+
+    try:
+        r = req(gid)
+    except DWSError:
+        raise HTTPError('500 Internal Server Error', dws.args[0]) 
+
+    try:
+        minx, miny, maxx, maxy = r.bbox()
+    except ValueError:
+        raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
+
+    # create the bounding box as a json string
+    bbox = dict(type='Polygon',
+                coordinates=[[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]])
+    json = tojson(bbox)
+
+    # get the mapfile template
+    template_lookup = TemplateLookup(environ)
+    lookup = template_lookup.lookup()
+    mappath = os.path.join('config', 'metadata-extent.xml')
+    data_dir = os.path.join(template_lookup.doc_root, 'data')
+    template = lookup.get_template(mappath)
+    mapfile = template.render(data_dir=data_dir)
+
+    # instantiate the map
+    m = mapnik.Map(250, 250)
+    mapnik.load_map_from_string(m, mapfile)
+
+    # set the datasource for the last layer to show the bounding box
+    datasource = mapnik.Ogr(file=json, layer='OGRGeoJSON')
+    m.layers[-1].datasource = datasource
+
+    # create an image of the area of interest with a border
+    border = 35.0                       # percentage border
+    dx = (maxx - minx) * (border / 100)
+    minx -= dx; maxx += dx
+    dy = (maxy - miny) * (border / 100)
+    miny -= dy; maxy += dy
+    bbox = mapnik.Envelope(mapnik.Coord(minx, miny), mapnik.Coord(maxx, maxy))
+    m.zoom_to_box(bbox)
+    image = mapnik.Image(m.width, m.height)
+    mapnik.render(m, image)
+    
+    # serialise the image
+    bytes = image.tostring('png')
+
+    headers = [('Content-Type', 'image/png')]
+
+    start_response('200 OK', headers)
+    return [bytes]
 
 def metadata_download(environ, start_response):
     from dws import MetadataRequest
     from os.path import splitext
 
     gid = environ['selector.vars']['gid'] # the global metadata identifier
-    fmt = environ['selector.vars']['format'] # the global metadata identifier
+    fmt = environ['selector.vars']['format'] # the requested format
 
     try:
         req = MetadataRequest()

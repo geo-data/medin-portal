@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE Map>
+<Map bgcolor="steelblue" srs="+proj=latlong +datum=WGS84">
+
+  <Style name="AreaOfInterest">
+    <Rule>
+      <PolygonSymbolizer>
+        <CssParameter name="fill">#ca0000</CssParameter>
+		<CssParameter name="fill-opacity">0.25</CssParameter>
+      </PolygonSymbolizer>
+      <LineSymbolizer>
+        <CssParameter name="stroke">#ca0000</CssParameter>
+        <CssParameter name="stroke-width">1.5</CssParameter>
+      </LineSymbolizer>
+    </Rule>
+  </Style>
+
+  <Style name="Raster">
+    <Rule>
+      <RasterSymbolizer>
+        <CssParameter name="opacity">0.75</CssParameter>
+        <CssParameter name="scaling">bilinear</CssParameter>
+      </RasterSymbolizer>
+    </Rule>
+  </Style>
+  
+  <Layer name="Background" srs="+proj=latlong +datum=WGS84">
+    <StyleName>Raster</StyleName>
+    <Datasource>
+      <Parameter name="type">gdal</Parameter>
+      <Parameter name="file">${data_dir}/raster/background-wms.xml</Parameter>
+    </Datasource>
+  </Layer>
+  
+  <Layer name="Area Of Interest" srs="+proj=latlong +datum=WGS84">
+    <StyleName>AreaOfInterest</StyleName>
+  </Layer>
+  
+</Map>

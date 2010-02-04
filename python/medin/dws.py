@@ -311,7 +311,6 @@ class MetadataResponse(object):
                     ('Resource language', self.resource_language),
                     ('Topic category', self.topic_category),
                     ('Spatial data service type', self.service_type),
-                    ('Geographical bounding box', self.bbox),
                     ('Extent', self.extent),
                     ('Vertical extent information', self.vertical_extent),
                     ('Spatial reference system', self.srs),
@@ -484,13 +483,13 @@ class MetadataResponse(object):
         
         ordinates = []
 
-        for direction, latlon in (('north', 'latitude'), ('east', 'longitude'), ('south', 'latitude'), ('west', 'longitude')):
+        for direction, latlon in (('west', 'longitude'), ('south', 'latitude'), ('east', 'longitude'), ('north', 'latitude')):
             try:
                 
                 ordinate = self.xpath.xpathEval('./gmd:%sBound%s/gco:Decimal/text()' % (direction, latlon.capitalize()))[0].content
             except IndexError:
                 return []
-            ordinates.append('%s-bound %s: %s' % (direction.capitalize(), latlon, ordinate))
+            ordinates.append(float(ordinate))
             
         return ordinates
 

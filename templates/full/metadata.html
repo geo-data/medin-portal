@@ -1,5 +1,22 @@
 <%inherit file="base.html"/>
 
+% if bbox:
+<div style="float: right; width: 260px; margin:auto">
+  <h2>Geographic Extent</h2>
+  <img width="250" height="250" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" style="border: 3px solid #DAD8FF"/>
+  <p>
+  The metadata covers the area West - East from ${bbox[0]}&deg; to
+  ${bbox[2]}&deg; and North - South from ${bbox[3]}&deg; to
+  ${bbox[1]}&deg;.
+
+  <a
+  href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}"
+  title="Area search for metadata">Search</a> for all metadata within
+  this area.
+  </p>
+</div>
+% endif
+
 <h2>Overview</h2>
 
 <p><strong>Abstract:</strong> ${abstract}</p>
@@ -28,7 +45,7 @@
 <h2>Details</h2>
 <p class="no-bottom">Details for the metadata are as follows:</p>
 
-<table summary="Metadata details" class="tabulate mini">
+<table summary="Metadata details" class="tabulate mini metadata">
   % if linkage:
   <tr>
     <td class="heading"><strong>Resource locator</strong></td>
