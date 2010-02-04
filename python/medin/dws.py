@@ -637,6 +637,20 @@ class MetadataResponse(object):
 
         return details
 
+    def formatDate(self, date):
+        import datetime
+        try:
+            return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%A %d %B %Y')
+        except ValueError:
+            return date
+
+    def formatDatetime(self, timestamp):
+        import datetime
+        try:
+            return datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S').strftime('%A %d %B %Y at %H:%M:%S')
+        except ValueError:
+            return timestamp
+
     @_assignContext
     def temporal_reference(self):
         try:
@@ -645,12 +659,15 @@ class MetadataResponse(object):
         except IndexError:
             return []
 
-        details = ['The data spans the period %s to %s' % (begin, end)]
+        begin = self.formatDate(begin)
+        end = self.formatDate(end)
+
+        details = ['The data spans the period from %s to %s inclusive.' % (begin, end)]
 
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date'):
             self.xpath.setContextNode(node)
             try:
-                date = self.xpath.xpathEval('./gmd:date/gco:Date')[0].content
+                date = self.xpath.xpathEval('./gmd:date/gco:Date')[0].content.strip()
             except IndexError:
                 continue
 
@@ -659,7 +676,8 @@ class MetadataResponse(object):
             except IndexError:
                 continue
 
-            details.append('%s date is %s' % (code.capitalize(), date))
+            date = self.formatDate(date)
+            details.append('%s date was %s' % (code.capitalize(), date))
 
         return details
 
@@ -861,27 +879,20 @@ class MetadataResponse(object):
             return [code]
 
     def metadata_update(self):
-        import datetime
         try:
             date = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:Date')[0].content
         except IndexError:
             pass
         else:
-            try:
-                date = datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%A %m %B %Y')
-            except Exception:
-                pass
+            date = self.formatDate(date)
             return [date]
 
         try:
             datetime = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:DateTime')[0].content
         except IndexError:
             return []
-        try:
-            date = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').strftime('%A %m %B %Y at %H:%M:%S')
-        except Exception:
-            pass
-        return [date]
+        datetime = self.formatDatetime(datetime)
+        return [datetime]
 
     def metadata_name(self):
         try:
