@@ -3,7 +3,8 @@
 %><?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" 
      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
-     xmlns:atom="http://www.w3.org/2005/Atom">
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:georss="http://www.georss.org/georss">
   <channel>
     <title>MEDIN - ${title | x}</title>
     <link>${script_root}/${self.attr.template}/catalogue${query_string | x}</link>
@@ -39,6 +40,7 @@
       <pubDate>${rfc822format(result['updated'])}</pubDate>
       <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</link>
       <description>${content(result)}</description>
+      <georss:box>${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]}</georss:box>
     </item>
 % endfor
 % if not results:

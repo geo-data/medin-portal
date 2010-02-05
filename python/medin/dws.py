@@ -152,7 +152,7 @@ class SearchResponse(object):
         if self.end_index > hits:
             self.end_index = hits
 
-        self.updated = max((r[-1] for r in results))
+        self.updated = max((r[-2] for r in results))
         if not self.updated:
             from datetime import datetime
             self.updated = datetime.utcnow()
@@ -266,7 +266,8 @@ class Search(Request):
             results.append(('ff940020-1aa0-4abb-b9fc-c05c98eee863',
                             'Knock Deep Area TE 11 HI995',
                             'United Kingdom Hydrographic Office',
-                            datetime.strptime('2009-05-20', '%Y-%m-%d')))
+                            datetime.strptime('2009-05-20', '%Y-%m-%d'),
+                            [1.42, 51.57, 1.69, 51.8]))
 
         return SearchResponse(hits, results, query)
 

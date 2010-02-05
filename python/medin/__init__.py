@@ -169,11 +169,12 @@ class Results(MakoApp):
 
         r = req(q)
         results = []
-        for id, title, originator, updated in r.results:
+        for id, title, originator, updated, bbox in r.results:
             results.append(dict(id=id,
                                 title=title,
                                 originator=originator,
-                                updated=updated))
+                                updated=updated,
+                                bbox=bbox))
 
         start_index = r.start_index
         if start_index < 1:

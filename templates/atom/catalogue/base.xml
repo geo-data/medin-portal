@@ -2,7 +2,8 @@
     template_ = ""
 %><?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" 
-      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+      xmlns:georss="http://www.georss.org/georss">
   <title>MEDIN - ${title | x}</title> 
   <link href="${script_root}/${self.attr.template}/catalogue${query_string | x}"/>
   <updated>${isoformat(updated)}</updated>
@@ -40,6 +41,7 @@
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
     <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
     <content type="html">${content(result)}</content>
+    <georss:box>${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]}</georss:box>
   </entry>
 % endfor
 % if not results:
