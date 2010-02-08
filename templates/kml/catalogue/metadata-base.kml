@@ -1,0 +1,48 @@
+<%!
+    template = ""
+%><?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>MEDIN - Metadata: ${title | x}</name>
+    <atom:link href="${script_root}/${self.attr.template}/catalogue/${gid | x}"/>
+    <Style id="metadataExtent">
+      <LineStyle>
+        <color>ff0000ca</color>
+        <width>5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>400000ca</color>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <styleUrl>#metadataExtent</styleUrl>
+      <name>${title | x}</name>
+      <description>
+        <![CDATA[
+        <p>
+          ${abstract | x}
+        </p>
+
+        <p>Further metadata details are available <a href="${script_root}/${self.attr.template}/catalogue/${gid | x}" title="Full metadata details">here</a>.</p>
+
+        ]]>
+      </description>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              ${bbox[0]},${bbox[1]}
+              ${bbox[2]},${bbox[1]}
+              ${bbox[2]},${bbox[3]}
+              ${bbox[0]},${bbox[3]}
+              ${bbox[0]},${bbox[1]}
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

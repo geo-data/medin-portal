@@ -1,0 +1,4 @@
+<%!
+    template = "light"
+%>
+<%inherit file="metadata-base.kml"/>

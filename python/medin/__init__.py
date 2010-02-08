@@ -265,8 +265,6 @@ class ResultFormat(object):
         return app(environ, start_response)
 
 class Metadata(MakoApp):
-    def __init__(self):
-        super(Metadata, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
         from dws import MetadataRequest
@@ -278,7 +276,14 @@ class Metadata(MakoApp):
         except DWSError:
             raise HTTPError('500 Internal Server Error', dws.args[0])
 
-        r = req(gid)
+        return req(gid)
+
+class MetadataHTML(Metadata):
+    def __init__(self):
+        super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
+
+    def setup(self, environ):
+        r = super(MetadataHTML, self).setup(environ)
 
         title = 'Metadata: %s' % r.title
         keywords = r.keywords()
@@ -293,6 +298,22 @@ class Metadata(MakoApp):
                      abstract=r.abstract)
 
         return TemplateContext(title, tvars=tvars)
+
+class MetadataKML(Metadata):
+    def __init__(self):
+        super(MetadataKML, self).__init__(['kml', 'catalogue', 'metadata-%s.kml'])
+
+    def setup(self, environ):
+        r = super(MetadataKML, self).setup(environ)
+
+        bbox = r.bbox()
+        tvars = dict(gid=r.id,
+                     bbox=bbox,
+                     abstract=r.abstract)
+
+        headers = [('Content-type', 'application/vnd.google-earth.kml+xml')]
+
+        return TemplateContext(r.title, tvars=tvars, headers=headers)
 
 def metadata_image(environ, start_response):
     from dws import MetadataRequest

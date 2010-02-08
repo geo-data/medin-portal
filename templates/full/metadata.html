@@ -1,5 +1,12 @@
 <%inherit file="base.html"/>
 
+<%def name="header()">
+    <link rel="alternate"
+          type="application/vnd.google-earth.kml+xml"
+          href="${resource_root}/kml"
+          title="MEDIN - ${title}">
+</%def>
+
 % if bbox:
 <div style="float: right; width: 260px; margin:auto">
   <h2>Geographic Extent</h2>
@@ -12,7 +19,9 @@
   <a
   href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}"
   title="Area search for metadata">Search</a> for all metadata within
-  this area.
+  this area.<br/>
+
+  <a style="float: right" href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="image_no_border"> KML</a>
   </p>
 </div>
 % endif

@@ -30,7 +30,10 @@ result_formats = medin.ResultFormat(medin.HTMLResults, {'rss': medin.RSSResults,
 application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)
 
 # display the metadata
-application.add('/{template}/catalogue/{gid:segment}', GET=medin.Metadata())
+application.add('/{template}/catalogue/{gid:segment}', GET=medin.MetadataHTML())
+
+# get the metadata as in KML format
+application.add('/{template}/catalogue/{gid:segment}/kml', GET=medin.MetadataKML())
 
 # get an image representing the metadata bounds.
 application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=medin.metadata_image)
