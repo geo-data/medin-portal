@@ -1,6 +1,11 @@
 from medin import MakoApp, TemplateContext
 import errata                           # for the error handling
 
+# Specialised exception classes
+class HTTPNotModified(errata.HTTPError):
+    def __init__(self):
+        super(HTTPNotModified, self).__init__('304 Not Modified', '')
+
 # The error handler
 class ErrorHandler(errata.ErrorHandler):
     """WSGI post-processor for handling errors using Mako templates.
@@ -11,11 +16,18 @@ class ErrorHandler(errata.ErrorHandler):
     def __init__(self, *args, **kwargs):
         super(ErrorHandler, self).__init__(*args, **kwargs)
 
+        self.add(HTTPNotModified, self.handleHTTPNotModified)
         self.add(errata.HTTPError, self.handleHTTPError)
 
         from mako.exceptions import TopLevelLookupException
         self.add(TopLevelLookupException, self.handleTemplateLookupException)
         self.add(Exception, self.handleException)
+
+    def handleHTTPNotModified(self, exception, environ, start_response):
+        """Handler for HTTPNotModified exceptions"""
+
+        start_response('304 Not Modified', [])
+        return []
 
     def handleHTTPError(self, exception, environ, start_response):
         """Handler for HTTPErrors"""

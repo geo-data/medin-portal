@@ -1,7 +1,40 @@
+# The medin version string. When changes are made to the application
+# this version number should be incremented. It is used in caching to
+# ensure the client gets the latest version of a resource.
+__version__ = 0.1
+
 # System modules
 import os
 
 from errata import HTTPError
+
+# Utility functions
+
+def check_etag(environ, etag):
+    """Checks whether a client Etag is valid
+
+    If the client etag is valid then a HTTPNotModified exception is
+    raised. This exception must be caught and dealt with
+    appropriately.
+
+    The argument etag is modified to include application version
+    information. This modified etag is returned and should be used as
+    the value for the HTTP Etag header."""
+    
+    from error import HTTPNotModified
+
+    # format the etag to include the application version
+    server_etag = '"%s (v%s)"' % (etag, str(__version__))
+    
+    try:
+        client_etag = environ['HTTP_IF_NONE_MATCH']
+    except KeyError:
+        pass
+    else:
+        if server_etag == client_etag:
+            raise HTTPNotModified
+
+    return server_etag
 
 # Utility Classes
 
@@ -155,6 +188,7 @@ class Results(MakoApp):
 
     def setup(self, environ):
         from medin.dws import SearchQuery, Search, DWSError
+        from copy import copy
 
         try:
             qsl = environ['QUERY_STRING']
@@ -168,6 +202,10 @@ class Results(MakoApp):
             raise HTTPError('500 Internal Server Error', dws.args[0])
 
         r = req(q)
+
+        timestamp = r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        etag = check_etag(environ, timestamp)
+        
         results = []
         for id, title, author, abstract, updated, bbox in r.results:
             results.append(dict(id=id,
@@ -203,10 +241,15 @@ class Results(MakoApp):
         else:
             title = 'Catalogue'
 
+        # modify the headers. We need a local copy of the base headers
+        # so we don't alter the instance
+        headers = copy(self.headers)
+        
         # propagate the result update time to the HTTP layer
-        self.headers.append(('Last-Modified', r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")))
+        headers.append(('Last-Modified', timestamp))
+        headers.append(('Etag', etag))
 
-        return TemplateContext(title, tvars=tvars, headers=self.headers)
+        return TemplateContext(title, tvars=tvars, headers=headers)
 
 class HTMLResults(Results):
     def __init__(self):
@@ -277,14 +320,20 @@ class Metadata(MakoApp):
         except DWSError:
             raise HTTPError('500 Internal Server Error', dws.args[0])
 
-        return req(gid)
+        r = req(gid)
+
+        # Check if the client needs a new version
+        etag = check_etag(environ, r.last_updated())
+        headers = [('Etag', etag)]
+
+        return r, headers
 
 class MetadataHTML(Metadata):
     def __init__(self):
         super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
-        r = super(MetadataHTML, self).setup(environ)
+        r, headers = super(MetadataHTML, self).setup(environ)
 
         title = 'Metadata: %s' % r.title
         keywords = r.keywords()
@@ -299,14 +348,16 @@ class MetadataHTML(Metadata):
                      bbox=bbox,
                      abstract=r.abstract)
 
-        return TemplateContext(title, tvars=tvars)
+        headers.append(('Content-type', 'text/html'))
+
+        return TemplateContext(title, tvars=tvars, headers=headers)
 
 class MetadataKML(Metadata):
     def __init__(self):
         super(MetadataKML, self).__init__(['kml', 'catalogue', 'metadata-%s.kml'])
 
     def setup(self, environ):
-        r = super(MetadataKML, self).setup(environ)
+        r, headers = super(MetadataKML, self).setup(environ)
 
         bbox = r.bbox()
         tvars = dict(gid=r.id,
@@ -314,7 +365,7 @@ class MetadataKML(Metadata):
                      author=r.author,
                      abstract=r.abstract)
 
-        headers = [('Content-type', 'application/vnd.google-earth.kml+xml')]
+        headers.append(('Content-type', 'application/vnd.google-earth.kml+xml'))
 
         return TemplateContext(r.title, tvars=tvars, headers=headers)
 
@@ -337,15 +388,7 @@ def metadata_image(environ, start_response):
         raise HTTPError('500 Internal Server Error', dws.args[0]) 
 
     # Check if the client needs a new version
-    etag = r.last_updated()
-    try:
-        client_etag = environ['HTTP_IF_NONE_MATCH']
-    except KeyError:
-        pass
-    else:
-        if etag == client_etag:
-            start_response('304 Not Modified', [])
-            return []
+    etag = check_etag(environ, r.last_updated())
 
     try:
         minx, miny, maxx, maxy = r.bbox()
@@ -413,6 +456,9 @@ def metadata_download(environ, start_response):
     except DWSError:
         raise HTTPError('500 Internal Server Error', dws.args[0]) 
 
+    # Check if the client needs a new version
+    etag = check_etag(environ, r.last_updated())
+
     filename = r.id
     if not splitext(filename)[1]:
         filename += '.xml'
@@ -420,7 +466,8 @@ def metadata_download(environ, start_response):
     document = str(r.document)
         
     headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-               ('Content-Type', 'application/xml')]
+               ('Content-Type', 'application/xml'),
+               ('Etag', etag)]
 
     start_response('200 OK', headers)
     return [document]
