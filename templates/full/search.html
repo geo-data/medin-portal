@@ -1,8 +1,21 @@
 <%inherit file="base.html"/>
 
-Search the MEDIN Data Archive Centres.
+<p>Search the MEDIN Data Archive Centres.</p>
 
-<form method="GET" action="${request_uri}/catalogue">
-  <input type="text" name="q"/>
+<form method="GET" action="${resource_root}/catalogue">
+  <input type="text" name="q"\
+  %if search_term:
+ value="${search_term}"
+  %endif
+/>
+  %if sort:
+  <input name="s" type="hidden" value="${sort}" />
+  %endif
+  %if count:
+  <input name="c" type="hidden" value="${count}" />
+  %endif
+  %if bbox:
+  <input name="bbox" type="hidden" value="${','.join(bbox)}" />
+  %endif
   <input type="submit" value="search"/>
 </form>

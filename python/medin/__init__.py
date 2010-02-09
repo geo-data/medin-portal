@@ -36,6 +36,17 @@ def check_etag(environ, etag):
 
     return server_etag
 
+def get_query(environ):
+    """Returns an object encapsulating the OpenSearch query parameters"""
+    from medin.query import Query
+
+    try:
+        qsl = environ['QUERY_STRING']
+    except KeyError:
+        qsl = ''
+
+    return Query(qsl)
+
 # Utility Classes
 
 class TemplateLookup(object):
@@ -178,7 +189,22 @@ class Search(MakoApp):
         super(Search, self).__init__(['%s', 'search.html'])
 
     def setup(self, environ):
-        return TemplateContext('Search')
+        q = get_query(environ)
+
+        search_term = ' '.join(q.search_term)
+        count = q.count
+        try:
+            sort = ','.join((str(i) for i in q.sort))
+        except TypeError:
+            sort = None
+        bbox = q.bbox
+
+        tvars=dict(search_term=search_term,
+                   count=q.count,
+                   sort=sort,
+                   bbox=bbox)
+        
+        return TemplateContext('Search', tvars=tvars)
 
 class Results(MakoApp):
 
@@ -187,15 +213,11 @@ class Results(MakoApp):
         super(Results, self).__init__(path)
 
     def setup(self, environ):
-        from medin.dws import SearchQuery, Search, DWSError
+        from medin.dws import Search, DWSError
         from copy import copy
 
-        try:
-            qsl = environ['QUERY_STRING']
-        except KeyError:
-            qsl = ''
+        q = get_query(environ)
 
-        q = SearchQuery(qsl)
         try:
             req = Search()
         except DWSError:
@@ -236,10 +258,9 @@ class Results(MakoApp):
                    updated = r.updated,
                    results=results)
 
+        title = 'Catalogue page %d of %d' % (r.current_page, r.page_count)
         if search_term:
-            title = 'Catalogue: %s' % search_term
-        else:
-            title = 'Catalogue'
+            title += ' for: %s' % search_term
 
         # modify the headers. We need a local copy of the base headers
         # so we don't alter the instance
