@@ -5,6 +5,11 @@
      xmlns:atom="http://www.w3.org/2005/Atom">
   <Document>
     <name>MEDIN - Metadata: ${title | x}</name>
+    % if author:
+    <atom:author>      
+      <atom:name>${author | x}</atom:name>
+    </atom:author>
+    % endif
     <atom:link href="${script_root}/${self.attr.template}/catalogue/${gid | x}"/>
     <Style id="metadataExtent">
       <LineStyle>

@@ -169,10 +169,11 @@ class Results(MakoApp):
 
         r = req(q)
         results = []
-        for id, title, originator, updated, bbox in r.results:
+        for id, title, author, abstract, updated, bbox in r.results:
             results.append(dict(id=id,
                                 title=title,
-                                originator=originator,
+                                author=author,
+                                abstract=abstract,
                                 updated=updated,
                                 bbox=bbox))
 
@@ -221,7 +222,7 @@ class HTMLResults(Results):
 
         sorts = {}
         cur_sort, cur_asc = query.sort
-        for sort in ('title', 'originator', 'updated'):
+        for sort in ('title', 'author', 'updated'):
             query.sort = (sort, 1)
             asc = (str(query), (sort == cur_sort and cur_asc == 1))
             query.sort = (sort, 0)
@@ -291,6 +292,7 @@ class MetadataHTML(Metadata):
         linkage = r.online_resource()
         bbox = r.bbox()
         tvars = dict(gid=r.id,
+                     author=r.author,
                      keywords=keywords,
                      metadata=metadata,
                      linkage=linkage,
@@ -309,6 +311,7 @@ class MetadataKML(Metadata):
         bbox = r.bbox()
         tvars = dict(gid=r.id,
                      bbox=bbox,
+                     author=r.author,
                      abstract=r.abstract)
 
         headers = [('Content-type', 'application/vnd.google-earth.kml+xml')]

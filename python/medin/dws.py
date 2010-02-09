@@ -266,6 +266,9 @@ class Search(Request):
             results.append(('ff940020-1aa0-4abb-b9fc-c05c98eee863',
                             'Knock Deep Area TE 11 HI995',
                             'United Kingdom Hydrographic Office',
+                            """SeaZone Digital Survey Bathymetry
+  (DSB). Survey bathymetry data processed to form a dataset providing
+  elevation at discrete points. The elevation and shape of the seabed.""",
                             datetime.strptime('2009-05-20', '%Y-%m-%d'),
                             [1.42, 51.57, 1.69, 51.8]))
 
@@ -301,6 +304,13 @@ class MetadataResponse(object):
         xpath.xpathRegisterNs('srv', 'http://www.isotc211.org/2005/srv')
         xpath.xpathRegisterNs('xlink', 'http://www.w3.org/1999/xlink')
         xpath.xpathRegisterNs('gml', 'http://www.opengis.net/gml/3.2')
+
+    @property
+    def author(self):
+        try:
+            return self.xpath.xpathEval("//gmd:CI_ResponsibleParty/gmd:role/gmd:CI_RoleCode[@codeListValue='originator']/../../gmd:organisationName/gco:CharacterString")[0].content
+        except IndexError:
+            return None
 
     def allElements(self):
         # Elements implemented according to

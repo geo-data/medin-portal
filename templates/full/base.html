@@ -17,7 +17,11 @@
     <meta name="Rating" content="General" />
     <meta name="Classification" content="Science" />
     <meta name="Owner" content="Marine Environmental Data and Information Network (MEDIN)" />
-    <meta name="Author" content="GeoData Institute" />
+    % if author:
+    <meta name="Author" content="${author | h}" />
+    % else:
+    <meta name="Author" content="MEDIN partnership" />
+    % endif
     <meta name="Reply-to" content="enquiries@oceannet.org" />
     <meta name="Copyright" content="© Marine Environmental Data and Information Network (MEDIN)" />
     <meta name="MSSmartTagsPreventParsing" content="TRUE" />
