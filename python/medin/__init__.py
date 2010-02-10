@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.1
+__version__ = 0.2
 
 # System modules
 import os
@@ -88,19 +88,27 @@ class TemplateLookup(object):
 class MakoApp(object):
     """Base class creating WSGI application for rendering Mako templates"""
 
-    def __init__(self, path, expand=True):
+    def __init__(self, path, expand=True, check_etag=True):
         self.path = path
         self.expand = expand
+        self.check_etag = check_etag
 
     def setup(self, environ):
         return TemplateContext('')
 
     def __call__(self, environ, start_response):
         """The standard WSGI interface"""
+
+        headers = []
+        # check whether the etag is valid
+        if self.check_etag:
+            etag = check_etag(environ, ''.join(self.path))
+            headers.append(('Etag', etag))
         
         template = self.get_template(environ, self.path, self.expand)
 
         ctxt = self.setup(environ)
+        ctxt.headers.extend(headers)    # add the etag
         
         kwargs = self.get_template_vars(environ, ctxt.title)
         kwargs.update(ctxt.tvars)
@@ -210,7 +218,7 @@ class Results(MakoApp):
 
     def __init__(self, path, headers):
         self.headers = headers
-        super(Results, self).__init__(path)
+        super(Results, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
         from medin.dws import Search, DWSError
@@ -267,7 +275,6 @@ class Results(MakoApp):
         headers = copy(self.headers)
         
         # propagate the result update time to the HTTP layer
-        headers.append(('Last-Modified', timestamp))
         headers.append(('Etag', etag))
 
         return TemplateContext(title, tvars=tvars, headers=headers)
@@ -330,6 +337,9 @@ class ResultFormat(object):
         return app(environ, start_response)
 
 class Metadata(MakoApp):
+
+    def __init__(self, path):
+        super(Metadata, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
         from dws import MetadataRequest
