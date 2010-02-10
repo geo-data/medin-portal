@@ -3,6 +3,7 @@ import selector                        # for URI based dispatch
 
 # Custom modules
 import medin, medin.error
+from medin.spatial import tilecache
 
 class Selector(selector.Selector):
     status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
@@ -12,6 +13,10 @@ class Selector(selector.Selector):
 # applications are added is important; the most specific URL matches
 # must be before the more generic ones.
 application = Selector(consume_path=False)
+
+# provide the Tile Mapping Service
+application.parser.patterns['tms'] = r'/.*'
+application.add('/spatial/tms[{req:tms}]', _ANY_=tilecache) # for TMS requests to tilecache
 
 # provide a choice of templates
 application.add('[/]', GET=medin.TemplateChoice())

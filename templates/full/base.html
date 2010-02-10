@@ -28,6 +28,18 @@
 
     <title>MEDIN - ${title}</title>
 
+    <link href="/css/site.css" rel="stylesheet" type="text/css" />
+    <!--[if IE]>
+        <link href="ie.css" rel="stylesheet" type="text/css" />
+        <![endif]--> 
+    <link href="/css/portal.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="/js/site.js"></script>
+    <script type="text/javascript">
+        <!--
+        window.onload = P7_TMopen;
+        // -->
+    </script>
+    
     ${self.header()}
     
     <link rel="P3Pv1" href="/w3c/p3p.xml" />
@@ -37,15 +49,9 @@
           type="application/opensearchdescription+xml" 
           href="${script_root}/opensearch/catalogue/full.xml"
           title="MEDIN Catalogue" />
-    <link href="/css/site.css" rel="stylesheet" type="text/css" />
-    <!--[if IE]>
-        <link href="ie.css" rel="stylesheet" type="text/css" />
-        <![endif]--> 
-    <link href="/css/portal.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="/js/site.js"></script>
   </head>
 
-  <body onload="P7_TMopen();">
+  <body>
     <!-- SwishCommand noindex -->
     <div id="frame">
       <div id="header"><div id="topmenu">
