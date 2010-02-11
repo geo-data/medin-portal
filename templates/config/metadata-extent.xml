@@ -18,7 +18,7 @@
   <Style name="Raster">
     <Rule>
       <RasterSymbolizer>
-        <CssParameter name="opacity">0.75</CssParameter>
+        <CssParameter name="opacity">1</CssParameter>
         <CssParameter name="scaling">bilinear</CssParameter>
       </RasterSymbolizer>
     </Rule>
@@ -28,7 +28,7 @@
     <StyleName>Raster</StyleName>
     <Datasource>
       <Parameter name="type">gdal</Parameter>
-      <Parameter name="file">${data_dir}/raster/background-wms.xml</Parameter>
+      <Parameter name="file">${background_raster}</Parameter>
     </Datasource>
   </Layer>
   

@@ -1,6 +1,18 @@
 # System modules
 import os
 
+def get_http_root(environ):
+    return '%s://%s' % (environ['wsgi.url_scheme'], environ['HTTP_HOST'])
+
+def get_script_root(environ):
+    return ''.join((get_http_root(environ), environ['SCRIPT_NAME']))
+
+def get_resource_root(environ):
+    try:
+        return get_script_root(environ) + environ['PATH_INFO']
+    except KeyError:
+         return get_script_root(environ)
+
 class TemplateLookup(object):
 
     def __init__(self, environ):
@@ -88,19 +100,7 @@ class MakoApp(object):
             path = path % template
         return lookup.get_template(path)
 
-    def get_template_vars(self, environ, title, **kwargs):
-        def get_http_root(environ):
-            return '%s://%s' % (environ['wsgi.url_scheme'], environ['HTTP_HOST'])
-
-        def get_script_root(environ):
-            return ''.join((get_http_root(environ), environ['SCRIPT_NAME']))
-
-        def get_resource_root(environ):
-            try:
-                return get_script_root(environ) + environ['PATH_INFO']
-            except KeyError:
-                 return get_script_root(environ)
-        
+    def get_template_vars(self, environ, title, **kwargs):        
         vars = dict(title=title,
                     request_uri=environ['REQUEST_URI'],
                     http_root=get_http_root(environ),

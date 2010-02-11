@@ -18,12 +18,12 @@ def check_etag(environ, etag):
     The argument etag is modified to include application version
     information. This modified etag is returned and should be used as
     the value for the HTTP Etag header."""
-    
+
     from error import HTTPNotModified
 
     # format the etag to include the application version
     server_etag = '"%s (v%s)"' % (etag, str(__version__))
-    
+
     try:
         client_etag = environ['HTTP_IF_NONE_MATCH']
     except KeyError:
@@ -75,7 +75,7 @@ class Search(MakoApp):
                    count=q.count,
                    sort=sort,
                    bbox=bbox)
-        
+
         return TemplateContext('Search', tvars=tvars)
 
 class Results(MakoApp):
@@ -99,7 +99,7 @@ class Results(MakoApp):
 
         timestamp = r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
-        
+
         results = []
         for id, title, author, abstract, updated, bbox in r.results:
             results.append(dict(id=id,
@@ -137,7 +137,7 @@ class Results(MakoApp):
         # modify the headers. We need a local copy of the base headers
         # so we don't alter the instance
         headers = copy(self.headers)
-        
+
         # propagate the result update time to the HTTP layer
         headers.append(('Etag', etag))
 
@@ -264,11 +264,40 @@ class MetadataKML(Metadata):
 
         return TemplateContext(r.title, tvars=tvars, headers=headers)
 
+def background_raster(template_lookup, environ, doc_root):
+    """Return the background raster filepath
+
+    The filepath is to a temporary file, which is created the first
+    time this function is called."""
+
+    global _bg_raster
+    try:
+        return _bg_raster
+    except NameError:
+        pass
+
+    import os.path
+    from mako.runtime import Context
+    from medin.templates import get_script_root
+
+    raster = 'background-wms.xml'
+    templatepath = os.path.join('config', raster)
+    template = template_lookup.get_template(templatepath)
+    rasterpath = os.path.join(doc_root, 'tmp', raster)
+
+    # render the template to the file
+    fh = open(rasterpath, 'w')
+    ctx = Context(fh, resource_root=get_script_root(environ))
+    template.render_context(ctx)
+    fh.close()
+
+    _bg_raster = rasterpath
+    return rasterpath
+
 def metadata_image(environ, start_response):
     from dws import MetadataRequest
     import os.path
-    from json import dumps as tojson
-    import mapnik
+    import medin.spatial
 
     gid = environ['selector.vars']['gid'] # the global metadata identifier
 
@@ -285,43 +314,24 @@ def metadata_image(environ, start_response):
     # Check if the client needs a new version
     etag = check_etag(environ, r.last_updated())
 
-    try:
-        minx, miny, maxx, maxy = r.bbox()
-    except ValueError:
+    bbox = r.bbox()
+    if not bbox:
         raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
 
-    # create the bounding box as a json string
-    bbox = dict(type='Polygon',
-                coordinates=[[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]])
-    json = tojson(bbox)
-
-    # get the mapfile template
+    # get the path the the background raster datasource
     template_lookup = TemplateLookup(environ)
     lookup = template_lookup.lookup()
+    rasterfile = background_raster(lookup, environ, template_lookup.doc_root)
+
+    # get the mapfile template
     mappath = os.path.join('config', 'metadata-extent.xml')
-    data_dir = os.path.join(template_lookup.doc_root, 'data')
+    tmpdir = os.path.join(template_lookup.doc_root, 'tmp')
     template = lookup.get_template(mappath)
-    mapfile = template.render(data_dir=data_dir)
+    mapfile = template.render(background_raster=rasterfile)
 
-    # instantiate the map
-    m = mapnik.Map(250, 250)
-    mapnik.load_map_from_string(m, mapfile)
+    # create the image
+    image = medin.spatial.metadata_image(bbox, mapfile)
 
-    # set the datasource for the last layer to show the bounding box
-    datasource = mapnik.Ogr(file=json, layer='OGRGeoJSON')
-    m.layers[-1].datasource = datasource
-
-    # create an image of the area of interest with a border
-    border = 35.0                       # percentage border
-    dx = (maxx - minx) * (border / 100)
-    minx -= dx; maxx += dx
-    dy = (maxy - miny) * (border / 100)
-    miny -= dy; maxy += dy
-    bbox = mapnik.Envelope(mapnik.Coord(minx, miny), mapnik.Coord(maxx, maxy))
-    m.zoom_to_box(bbox)
-    image = mapnik.Image(m.width, m.height)
-    mapnik.render(m, image)
-    
     # serialise the image
     bytes = image.tostring('png')
 
@@ -359,7 +369,7 @@ def metadata_download(environ, start_response):
         filename += '.xml'
 
     document = str(r.document)
-        
+
     headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
                ('Content-Type', 'application/xml'),
                ('Etag', etag)]

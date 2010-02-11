@@ -87,3 +87,37 @@ def tilecache (environ, start_response):
         environ['PATH_INFO'] = ''
         
     return wsgiHandler(environ, start_response, _tilecache_service)
+
+def metadata_image(bbox, mapfile):
+    """Create a metadata image"""
+
+    from json import dumps as tojson
+    import mapnik
+
+    minx, miny, maxx, maxy = bbox
+
+    # create the bounding box as a json string
+    bbox = dict(type='Polygon',
+                coordinates=[[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]])
+    json = tojson(bbox)
+
+    # instantiate the map
+    m = mapnik.Map(250, 250)
+    mapnik.load_map_from_string(m, mapfile)
+
+    # set the datasource for the last layer to show the bounding box
+    datasource = mapnik.Ogr(file=json, layer='OGRGeoJSON')
+    m.layers[-1].datasource = datasource
+
+    # create an image of the area of interest with a border
+    border = 80.0                       # percentage border
+    dx = (maxx - minx) * (border / 100)
+    minx -= dx; maxx += dx
+    dy = (maxy - miny) * (border / 100)
+    miny -= dy; maxy += dy
+    bbox = mapnik.Envelope(mapnik.Coord(minx, miny), mapnik.Coord(maxx, maxy))
+    m.zoom_to_box(bbox)
+    image = mapnik.Image(m.width, m.height)
+    mapnik.render(m, image)
+
+    return image
