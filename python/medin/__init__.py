@@ -318,16 +318,15 @@ def metadata_image(environ, start_response):
     if not bbox:
         raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
 
-    # get the path the the background raster datasource
+    # ensure the background raster datasource has been created
     template_lookup = TemplateLookup(environ)
     lookup = template_lookup.lookup()
-    rasterfile = background_raster(lookup, environ, template_lookup.doc_root)
+    rasterpath = background_raster(lookup, environ, template_lookup.doc_root)
 
-    # get the mapfile template
+    # create the mapfile from its template
     mappath = os.path.join('config', 'metadata-extent.xml')
-    tmpdir = os.path.join(template_lookup.doc_root, 'tmp')
     template = lookup.get_template(mappath)
-    mapfile = template.render(background_raster=rasterfile)
+    mapfile = template.render(root_dir=template_lookup.doc_root)
 
     # create the image
     image = medin.spatial.metadata_image(bbox, mapfile)

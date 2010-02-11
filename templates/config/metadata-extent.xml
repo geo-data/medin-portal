@@ -28,7 +28,7 @@
     <StyleName>Raster</StyleName>
     <Datasource>
       <Parameter name="type">gdal</Parameter>
-      <Parameter name="file">${background_raster}</Parameter>
+      <Parameter name="file">${root_dir}/data/raster/background-wms.vrt</Parameter>
     </Datasource>
   </Layer>
   
