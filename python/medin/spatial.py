@@ -54,7 +54,7 @@ def get_tileservice(environ):
     template_lookup = TemplateLookup(environ)
     lookup = template_lookup.lookup()
     mappath = os.path.join('config', 'tilecache.cfg')
-    cache_dir = os.path.join(template_lookup.doc_root, 'tmp')
+    cache_dir = os.path.join(environ.root, 'tmp')
     template = lookup.get_template(mappath)
     cfg = template.render(cache_dir=cache_dir)
 

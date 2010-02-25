@@ -1,35 +1,18 @@
 # System modules
 import os
 
-def get_http_root(environ):
-    return '%s://%s' % (environ['wsgi.url_scheme'], environ['HTTP_HOST'])
-
-def get_script_root(environ):
-    return ''.join((get_http_root(environ), environ['SCRIPT_NAME']))
-
-def get_resource_root(environ):
-    try:
-        return get_script_root(environ) + environ['PATH_INFO']
-    except KeyError:
-         return get_script_root(environ)
-
 class TemplateLookup(object):
 
     def __init__(self, environ):
         try:
             self.template_dir = self.__class__._template_dir
-            self.doc_root = self.__class__._doc_root
+            self.module_dir = self.__class__._module_dir
             return
         except AttributeError:
             pass
-
-        try:
-            doc_root = environ['DOCUMENT_ROOT']
-        except KeyError:
-            raise EnvironmentError('The DOCUMENT_ROOT environment variable is not available')
-
-        self.doc_root = self.__class__._doc_root = os.path.dirname(doc_root)
-        self.template_dir = self.__class__._template_dir = os.path.join(self.doc_root, 'templates')
+        
+        self.template_dir = self.__class__._template_dir = os.path.join(environ.root, 'templates')
+        self.module_dir = self.__class__._module_dir = os.path.join(environ.root, 'tmp')
         if not os.path.exists(self.template_dir):
             raise RuntimeError('The template directory does not exist: %s' % self.template_dir)
 
@@ -41,12 +24,11 @@ class TemplateLookup(object):
 
         from mako.lookup import TemplateLookup
 
-        module_dir = os.path.join(self.doc_root, 'tmp')
         self.__class__._template_lookup = TemplateLookup(directories=[self.template_dir],
                                                          input_encoding='utf-8',
                                                          output_encoding='utf-8',
                                                          filesystem_checks=False,
-                                                         module_directory=module_dir)
+                                                         module_directory=self.module_dir)
         return self.__class__._template_lookup
     
 class MakoApp(object):
@@ -93,7 +75,7 @@ class MakoApp(object):
             except KeyError:
                 try:
                     # try and get the template as the first path entry
-                    template = environ['PATH_INFO'].split('/')[1]
+                    template = environ.get('PATH_INFO', '').split('/')[1]
                 except KeyError, IndexError:
                     raise RuntimeError('No template is specified')
                 
@@ -102,14 +84,14 @@ class MakoApp(object):
 
     def get_template_vars(self, environ, title, **kwargs):        
         vars = dict(title=title,
-                    request_uri=environ['REQUEST_URI'],
-                    http_root=get_http_root(environ),
-                    script_root=get_script_root(environ),
-                    resource_root=get_resource_root(environ),
+                    request_uri=environ.request_uri(),
+                    http_root=environ.http_uri(),
+                    script_root=environ.script_uri(),
+                    resource_root=environ.resource_uri(),
                     environ=environ)
 
         # Add some useful environment variables to the template
-        for k in ('REQUEST_URI', 'QUERY_STRING'):
+        for k in ['QUERY_STRING']:
             kl = k.lower()
             try:
                 vars[kl] = environ[k]

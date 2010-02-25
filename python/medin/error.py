@@ -1,4 +1,4 @@
-from medin import MakoApp, TemplateContext
+from medin.templates import MakoApp, TemplateContext
 import errata                           # for the error handling
 
 # Specialised exception classes

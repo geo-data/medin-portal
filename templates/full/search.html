@@ -27,7 +27,7 @@ function init(){
     
     map = new OpenLayers.Map( $('map'), options);
     layer = new OpenLayers.Layer.TMS( "Bathy", 
-                                      "/search/spatial/tms/",
+                                      "${script_root}/spatial/tms/",
                                       { layername: 'bathymetry', type: 'png' } );
     map.addLayer(layer);
     map.addControl(new OpenLayers.Control.Permalink());

@@ -138,7 +138,7 @@ class Selector(object):
     def __call__(self, environ, start_response):
         """Delegate request to the appropriate WSGI app."""
         app, svars, methods, matched = \
-            self.select(environ['PATH_INFO'], environ['REQUEST_METHOD'])
+            self.select(environ.get('PATH_INFO', ''), environ['REQUEST_METHOD'])
         unnamed, named = [], {}
         for k, v in svars.iteritems():
             if k.startswith('__pos'):
@@ -157,7 +157,7 @@ class Selector(object):
         environ.setdefault('selector.matches', []).append(matched)
         if self.consume_path:
             environ['SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '') + matched
-            environ['PATH_INFO'] = environ['PATH_INFO'][len(matched):]
+            environ['PATH_INFO'] = environ.get('PATH_INFO', '')[len(matched):]
         return app(environ, start_response)
 
     def select(self, path, method):

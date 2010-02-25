@@ -4,7 +4,13 @@
 __version__ = 0.4
 
 from errata import HTTPError
+
+# Custom modules
+import medin.error
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
+
+# Third party modules
+import selector                        # for URI based dispatch
 
 # Utility functions
 
@@ -264,7 +270,91 @@ class MetadataKML(Metadata):
 
         return TemplateContext(r.title, tvars=tvars, headers=headers)
 
-def background_raster(template_lookup, environ, doc_root):
+class EnvironProxy:
+    """
+    Proxy for the environ object providing extra configuration info
+
+    The wrapper provides an interface for accessing portal specific
+    directories and resources as well as the standard environ
+    interface.
+    """
+
+    def __init__(self, environ):
+        try:
+            root = environ['PORTAL_ROOT']
+        except KeyError:
+            raise EnvironmentError('The PORTAL_ROOT environment variable is not set')
+
+        import os.path
+
+        if not os.path.isdir(root):
+            raise EnvironmentError('The PORTAL_ROOT is not a directory')
+
+        self.root = root.rstrip(os.path.sep)
+        
+        self.__environ = environ
+
+    def __getattr__(self, name):
+        """
+        Delegate unhandled attributes to the environment dictionary
+        """
+        
+        return getattr(self.__environ, name)
+
+    def script_path(self):
+        """
+        Returns path info after the script name
+        """
+
+        path_info = self.get('PATH_INFO', '')
+        script_name = self.get('SCRIPT_NAME', '')
+        if path_info.startswith(script_name):
+            return path_info[len(script_name):]
+        return path_info
+
+    # code adapted from http://www.python.org/dev/peps/pep-0333/#url-reconstruction
+    def http_uri(self):
+        url = self['wsgi.url_scheme']+'://'
+
+        try:
+            url += self['HTTP_HOST']
+        except KeyError:
+            url += self['SERVER_NAME']
+
+            if self['wsgi.url_scheme'] == 'https' and self['SERVER_PORT'] != '443':
+                url += ':' + self['SERVER_PORT']
+            elif self['SERVER_PORT'] != '80':
+                url += ':' + self['SERVER_PORT']
+
+        return url
+
+    def script_uri(self):
+        from urllib import quote
+
+        return self.http_uri() + quote(self.get('SCRIPT_NAME',''))
+
+    def resource_uri(self):
+        from urllib import quote
+
+        return self.script_uri() + quote(self.get('PATH_INFO',''))
+
+    def request_uri(self):
+        if self.get('QUERY_STRING'):
+            return self.resource_uri() + '?' + self['QUERY_STRING']
+        return self.resource_uri()
+
+class Config(object):
+    """
+    WSGI middleware that wraps the environment with an Environ instance
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        return self.app(EnvironProxy(environ), start_response)
+
+def background_raster(template_lookup, environ):
     """Return the background raster filepath
 
     The filepath is to a temporary file, which is created the first
@@ -278,16 +368,15 @@ def background_raster(template_lookup, environ, doc_root):
 
     import os.path
     from mako.runtime import Context
-    from medin.templates import get_script_root
 
     raster = 'background-wms.xml'
     templatepath = os.path.join('config', raster)
     template = template_lookup.get_template(templatepath)
-    rasterpath = os.path.join(doc_root, 'tmp', raster)
+    rasterpath = os.path.join(environ.root, 'tmp', raster)
 
     # render the template to the file
     fh = open(rasterpath, 'w')
-    ctx = Context(fh, resource_root=get_script_root(environ))
+    ctx = Context(fh, resource_root=environ.script_uri())
     template.render_context(ctx)
     fh.close()
 
@@ -321,12 +410,12 @@ def metadata_image(environ, start_response):
     # ensure the background raster datasource has been created
     template_lookup = TemplateLookup(environ)
     lookup = template_lookup.lookup()
-    rasterpath = background_raster(lookup, environ, template_lookup.doc_root)
+    rasterpath = background_raster(lookup, environ)
 
     # create the mapfile from its template
     mappath = os.path.join('config', 'metadata-extent.xml')
     template = lookup.get_template(mappath)
-    mapfile = template.render(root_dir=template_lookup.doc_root)
+    mapfile = template.render(root_dir=environ.root)
 
     # create the image
     image = medin.spatial.metadata_image(bbox, mapfile)
@@ -382,3 +471,59 @@ class TemplateChoice(MakoApp):
 
     def setup(self, environ):
         return TemplateContext('Choose Your Search Format')
+
+class Selector(selector.Selector):
+    status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
+
+def wsgi_app():
+    """
+    Return an instance of the Portal's root WSGI application
+    """
+    
+    from medin.spatial import tilecache
+
+    # Create a WSGI application for URI delegation using Selector
+    # (http://lukearno.com/projects/selector/). The order that child
+    # applications are added is important; the most specific URL matches
+    # must be before the more generic ones.
+    application = Selector(consume_path=False)
+
+    # provide the Tile Mapping Service
+    application.parser.patterns['tms'] = r'/.*'
+    application.add('/spatial/tms[{req:tms}]', _ANY_=tilecache) # for TMS requests to tilecache
+
+    # provide a choice of templates
+    application.add('[/]', GET=TemplateChoice())
+
+    # the OpenSearch Description document
+    application.add('/opensearch/catalogue/{template}.xml', GET=OpenSearch())
+
+    # the default entry point for the search
+    application.add('/{template}[/]', GET=Search())
+
+    # create the app to return the required formats
+    result_formats = medin.ResultFormat(HTMLResults, {'rss': RSSResults,
+                                                      'atom': AtomResults})
+
+    # display and navigate through the result set
+    application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)
+
+    # display the metadata
+    application.add('/{template}/catalogue/{gid:segment}', GET=MetadataHTML())
+
+    # get the metadata as in KML format
+    application.add('/{template}/catalogue/{gid:segment}/kml', GET=MetadataKML())
+
+    # get an image representing the metadata bounds.
+    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=metadata_image)
+
+    # download the metadata
+    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=metadata_download)
+
+    # add our Error handler
+    application = medin.error.ErrorHandler(application)
+
+    # add the Environ configuration middleware
+    application = Config(application)
+
+    return application
