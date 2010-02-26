@@ -40,7 +40,7 @@
       <pubDate>${rfc822format(result['updated'])}</pubDate>
       <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</link>
       <description>${content(result)}</description>
-      <georss:polygon>${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][1]}</georss:polygon>
+      <georss:polygon>${result['bbox'][1]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][0]}</georss:polygon>
     </item>
 % endfor
 % if not results:
