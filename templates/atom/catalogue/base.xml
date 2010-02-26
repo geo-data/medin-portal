@@ -42,7 +42,7 @@
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
     <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
     <content type="html">${content(result)}</content>
-    <georss:box>${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]}</georss:box>
+    <georss:polygon>${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][1]}</georss:polygon>
   </entry>
 % endfor
 % if not results:
