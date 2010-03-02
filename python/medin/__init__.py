@@ -241,12 +241,14 @@ class MetadataHTML(Metadata):
         metadata = r.allElements()
         linkage = r.online_resource()
         bbox = r.bbox()
+        topic_category = r.topicCategory()
         tvars = dict(gid=r.id,
                      author=r.author,
                      keywords=keywords,
                      metadata=metadata,
                      linkage=linkage,
                      bbox=bbox,
+                     topic_category=topic_category,
                      abstract=r.abstract)
 
         headers.append(('Content-type', 'text/html'))

@@ -25,6 +25,9 @@ td.content {
 div.sibling {
     border-top: 1px solid #DAD8FF;
 }
+div.subitem {
+    padding-left: 1.5em;
+}
 .sort {
     font-size: 120%;
     float: right;

@@ -31,14 +31,28 @@
 <p><strong>Abstract:</strong> ${abstract}</p>
 % if keywords:
 <p class="no-bottom"><strong>Keywords:</strong></p>
-<table summary="Keywords by category" class="tabulate mini">
-  % for category, words in keywords.items():
-  <tr>
-    <td><strong>${category}</strong></td>
-    <td>${', '.join(words)}</td>
-  </tr>
+  % for title, defns in keywords.items():
+  <div><strong>${title}</strong></div>
+  <div class="subitem">
+    % for i, (keyword, defn) in enumerate(defns.items()):
+      % if i:
+      <div class="sibling">
+      % else:
+      <div>
+      % endif
+        <% if defn: keyword = defn['short'] %>
+        <a href="${script_root}/full/catalogue?kw=${keyword | u}"
+           title="Search for all metadata having the keyword '${keyword | x}'">${keyword | x}</a>
+        % if defn:
+          % if defn['long'] != defn['short']:
+          - ${defn['long'] | x}
+          % endif
+        <br/>Definition: ${defn['defn'] | x}
+        % endif
+      </div>
+    % endfor
+  </div>
   % endfor
-</table>
 % endif
 
 <h2>Download</h2>
@@ -81,6 +95,34 @@
   </tr>
   % endif
 
+  % if topic_category:
+  <tr>
+    <td class="heading">
+      <strong>Topic category</strong>
+    </td>
+    <td class="content">
+      % for i, (keyword, defn) in enumerate(topic_category.items()):
+      % if i:
+      <div class="sibling">
+      % else:
+      <div>
+      % endif
+        % if defn:
+        <a href="${script_root}/full/catalogue?tc=${defn['short'] | u}"
+           title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
+          % if defn['long'] != defn['short']:
+          - ${defn['long'] | x}
+          % endif
+        <br/>Definition: ${defn['defn'] | x}
+        % else:
+        ${keyword | x}
+        % endif
+      </div>
+      % endfor
+    </td>
+  </tr>
+  % endif
+  
   % for name, details in metadata:
   <tr>
     <td class="heading"><strong>${name}</strong></td>

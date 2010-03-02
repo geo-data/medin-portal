@@ -10,7 +10,7 @@ class Request(object):
 
     def __init__(self, wsdl=None):
         if wsdl is None:     
-            wsdl = 'file://%s' % os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl')
+            wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
         self.client = suds.client.Client(wsdl)
 
@@ -167,7 +167,12 @@ def _assignContext(f):
 class MetadataResponse(object):
 
     def __init__(self, gid, title, abstract, document):
+        import re
         import libxml2
+        from terms import Vocabulary
+
+        # instantiate the Vocabulary interface
+        self.vocab = Vocabulary()
         
         self.id = gid
         self.title = title
@@ -186,6 +191,8 @@ class MetadataResponse(object):
         xpath.xpathRegisterNs('xlink', 'http://www.w3.org/1999/xlink')
         xpath.xpathRegisterNs('gml', 'http://www.opengis.net/gml/3.2')
 
+        self._keyword_pattern = re.compile('\(\s*(\w+)\s*\)')
+
     @property
     def author(self):
         try:
@@ -201,7 +208,6 @@ class MetadataResponse(object):
                     ('Unique resource identifier', self.unique_id),
                     ('Coupled resource', None), # TO BE IMPLEMENTED
                     ('Resource language', self.resource_language),
-                    ('Topic category', self.topic_category),
                     ('Spatial data service type', self.service_type),
                     ('Extent', self.extent),
                     ('Vertical extent information', self.vertical_extent),
@@ -233,28 +239,53 @@ class MetadataResponse(object):
 
         return details
 
+    def keywordListFromTitle(self, title):
+        """
+        Parse a keyword title and return the list key if present
+
+        e.g. the title "SeaDataNet BODC Vocabulary (P011)" returns P011
+        """
+
+        match = self._keyword_pattern.search(title)
+        if not match:
+            return None
+
+        return match.groups()[0]
+
     @_assignContext
     def keywords(self):
         keywords = {}
         for node in self.xpath.xpathEval('//gmd:descriptiveKeywords/gmd:MD_Keywords'):
             self.xpath.setContextNode(node)
+            # try and retrieve the keyword
             try:
                 words = self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text()')[0].content
             except IndexError:
                 continue
 
+            # try and get a code and a title for the list to which the
+            # keyword belongs
             try:
                 code = self.xpath.xpathEval('.//gmd:MD_KeywordTypeCode/@codeListValue')[0].content
+                title = code
             except IndexError:
                 try:
-                    code = self.xpath.xpathEval('.//gmd:title/gco:CharacterString/text()')[0].content 
+                    title = self.xpath.xpathEval('.//gmd:title/gco:CharacterString/text()')[0].content 
                 except IndexError:
-                    code = 'general'
+                    code = 'unknown'
+                    title = code
+                else:
+                    code = self.keywordListFromTitle(title)
 
+            # try and get a definition for the term from the list code
+            defn = self.vocab.lookupTerm(code, words)
+
+            # add the definition to the keyword dictionary
             try:
-                keywords[code].append(words)
+                keywords[title][1][words] = defn
             except KeyError:
-                keywords[code] = [words]
+                defns = {words: defn}
+                keywords[title] = defns
 
         return keywords
 
@@ -346,10 +377,15 @@ class MetadataResponse(object):
             
         return [code]
 
-    def topic_category(self):
-        categories = []
+    def topicCategory(self):
+        categories = {}
         for node in self.xpath.xpathEval('//gmd:MD_TopicCategoryCode/text()'):
-            categories.append(node.content)
+            try:
+                defn = self.vocab.lookupTerm('P051', node.content)
+            except LookupError:
+                defn = {}
+            categories[node.content] = defn
+
         return categories
 
     def service_type(self):
