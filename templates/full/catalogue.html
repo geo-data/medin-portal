@@ -116,9 +116,9 @@ ${result_links()}
 
 <table summary="Table of results" class="tabulate">
   <tr>
-    <th colspan="2">Title ${sort_links('title')}</th>
-    <th>Originator ${sort_links('author')}</th>
-    <th>Last updated ${sort_links('updated')}</th>
+    <th colspan="2">${sort_links('title')}Title</th>
+    <th>${sort_links('author')}Originator</th>
+    <th>${sort_links('updated')}Last updated</th>
   </tr>
 % for i, res in enumerate(results):
   <tr>

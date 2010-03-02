@@ -10,6 +10,9 @@ table.mini {
 table.metadata {
     clear: both;
 }
+th {
+    white-space: nowrap;
+}
 td.heading {
     background-color: #DAD8FF;
     padding-left: 0.5em;
@@ -31,6 +34,7 @@ div.subitem {
 .sort {
     font-size: 120%;
     float: right;
+    padding-left: 0.5em;
 }
 .selected {
     color: #37C5F5;
