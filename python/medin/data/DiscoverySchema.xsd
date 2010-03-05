@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v2004 rel. 4 U (http://www.xmlspy.com) by Steve Donegan (NERC Earth Observation Data Centre) -->
+<!--
+		Maurizio Nagni <maurizio.nagni@stcf.ac.uk>
+		(NERC Earth Observation Data Centre)
+	-->
+<xs:schema targetNamespace="http://medin.discovery.services.ndg/schema" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://medin.discovery.services.ndg/schema">
+	<!-- Request elements -->
+	<xs:element name="DoSearch" type="tns:SearchType"/>
+	<xs:element name="DoPresent" type="tns:PresentType"/>
+	<xs:element name="GetListNames" nillable="true"/>
+	<xs:element name="GetList" type="tns:GetListType"/>
+	<xs:complexType name="GetVersion"/>
+	<!-- Response elements -->
+	<xs:element name="DoSearchReturn" type="tns:SearchReturnType"/>
+	<xs:element name="DoPresentReturn" type="tns:PresentReturnType"/>
+	<xs:element name="GetListNamesReturn" type="tns:GetListNamesReturnType"/>
+	<xs:element name="GetListReturn" type="tns:GetListReturnType"/>
+	<xs:complexType name="GetVersionReturn">
+		<xs:complexContent>
+			<xs:extension base="tns:GetVersionReturnType"/>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Request global types -->
+	<xs:complexType name="PresentType">
+		<xs:sequence>
+			<xs:element name="Documents" type="tns:SimpleDocument" maxOccurs="unbounded"/>
+			<xs:element name="RetrieveCriteria" type="tns:RetrieveCriteriaType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Comparison of a date dood  or date range to specified/default dates within metadata.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RetrieveCriteriaType">
+		<xs:sequence>
+			<xs:element name="OrderBy" type="tns:OrderByType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Optional set of field(s) by which to order records in the result set and hence the search response. Direction can be specified alongside each field.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="RecordDetail" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Level of detail to be used for each record in the search response (before initiating doPresent). Values taken from recordDetailList. Default = "id", i.e. just the document id.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="MetadataFormat" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SearchType">
+		<xs:sequence>
+			<xs:element name="SearchCriteria">
+				<xs:annotation>
+					<xs:documentation>Must have at least one of : termSearch, spatialSearch, temporalSearch.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="TermSearch" type="tns:TermSearchType" minOccurs="0" maxOccurs="unbounded">
+							<xs:annotation>
+								<xs:documentation>For multiple TermSearch elements with different TermTargets use the "operator" attribute to define the relationship between successive TermTargets with the "id" attribute providing the ordering information</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="SpatialSearch" type="tns:SpatialType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Comparison of a single search bounding box to spatial coverage(s) of data.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="TemporalSearch" type="tns:TemporalType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Comparison of a date or date range to specified/default dates within metadata.</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="RetrieveCriteria" type="tns:RetrieveCriteriaType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Comparison of a date or date range to specified/default dates within metadata.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Start" type="xs:unsignedInt" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Sequential record number within result set used as first record within returned search response. Useful for pagination.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="HowMany" type="xs:unsignedInt" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>How many records from result set to include in search response.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Scope" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Optional term used to restrict search to records tagged with a data provider "scope" as listed in scopeList. </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="OriginalFormat" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Optional term used to restrict  search to records where original ingested xml format matches that in OriginalFormatList</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GetListType">
+		<xs:sequence>
+			<xs:element name="listName" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Response global types -->
+	<xs:complexType name="PresentReturnType">
+		<xs:sequence>
+			<xs:element name="Status" type="xs:boolean"/>
+			<xs:element name="StatusMessage" type="xs:string"/>
+			<xs:element name="Documents" type="tns:Documents" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SearchReturnType">
+		<xs:sequence>
+			<xs:element name="Status" type="xs:boolean"/>
+			<xs:element name="StatusMessage" type="xs:string"/>
+			<xs:element name="ResultId" type="xs:int" minOccurs="0"/>
+			<xs:element name="Hits" type="xs:int" minOccurs="0"/>
+			<xs:element name="Documents" type="tns:Documents" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GetListNamesReturnType">
+		<xs:sequence maxOccurs="unbounded">
+			<xs:element name="listNames">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="listName" type="xs:string" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GetListReturnType">
+		<xs:sequence>
+			<xs:element name="list" minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="listMember" type="xs:string" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:attribute name="name" type="xs:string" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Other global types-->
+	<xs:complexType name="BoundingBoxType">
+		<xs:all>
+			<xs:element name="LimitNorth" type="xs:float"/>
+			<xs:element name="LimitSouth" type="xs:float"/>
+			<xs:element name="LimitWest" type="xs:float"/>
+			<xs:element name="LimitEast" type="xs:float"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="DateRangeType">
+		<xs:sequence>
+			<xs:element name="Date" type="tns:DateValueType" maxOccurs="2">
+				<xs:annotation>
+					<xs:documentation>Single date, or pair of dates representing a date range, to be used in search against specified date target in metadata.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="DateRangeTarget" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Target date to which date search should be applied (e.g. temporal coverage of data, date of publication). Value to be chosen from dateRangeTargetList. Default = temporalCoverage.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="DocumentsType"/>
+	<xs:simpleType name="OrderByDirectionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="ascending"/>
+			<xs:enumeration value="descending"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="SpatialType">
+		<xs:sequence>
+			<xs:element name="BoundingBox" type="tns:BoundingBoxType">
+				<xs:annotation>
+					<xs:documentation>Bounding box with coordinates by default in EPSG:4326 (lat/lon)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="SpatialOperator" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Operator used to compare search bounding box with spatial coverage in metadata. Values from spatialOperatorList. Default is "overlaps".</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="SpatialReferenceSystem" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Spatial reference system used for search bounding box e.g. EPSG:4326, taken from list spatialReferenceSystemList </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="TermSearchType">
+		<xs:sequence>
+			<xs:element name="Term" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>String(s) used in search. Whitespace between strings interpreted as OR combinations of those strings, unless "+" used to combine them, in which case AND combination. </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="TermTarget" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Metadata field used as target for search. From list termTargetList</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:short" use="required"/>
+		<xs:attribute name="operator" type="xs:string"/>
+	</xs:complexType>
+	<xs:complexType name="TemporalType">
+		<xs:sequence>
+			<xs:element name="DateRange" type="tns:DateRangeType">
+				<xs:annotation>
+					<xs:documentation>Specify start or end date, or both, along with target date field within metadata.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="DocumentReturnType"/>
+	<xs:complexType name="OrderingMetricType">
+		<xs:annotation>
+			<xs:documentation>Intented to allow passing of ordering information
+				at the present level</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="MetricName" type="xs:string"/>
+			<xs:element name="MetricValue" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Specific value of the metric when used in a 1:1 context with a document return</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="DateValueType">
+		<xs:sequence>
+			<xs:element name="DateValue" type="xs:date"/>
+			<xs:element name="TemporalOperator" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Comparison operator taken from temporalOperatorList. Default = "equals"</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="OrderByType">
+		<xs:sequence>
+			<xs:element name="OrderByField" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Field to use for ordering within result set (and hence search response). Value taken from orderByFieldList </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="OrderByDirection" type="tns:OrderByDirectionType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Direction of ordering used in result set and hence search response. Valid values : "ascending" or "descending". Default is descending.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SimpleDocument">
+		<xs:sequence>
+			<xs:element name="DocumentId" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ReturnSimpleType">
+		<xs:complexContent>
+			<xs:extension base="tns:SimpleDocument"/>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="ReturnBriefType">
+		<xs:complexContent>
+			<xs:extension base="tns:ReturnSimpleType">
+				<xs:sequence>
+					<xs:element name="AdditionalInformation" type="tns:CustomInfo"/>
+					<xs:element name="Title" type="xs:string" minOccurs="0"/>
+					<xs:element name="OrderedField" type="tns:OrderingMetricType" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>Name value pair(s) representing field(s) corresoponding to orderBy fields in search request. </xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="ReturnSummaryType">
+		<xs:complexContent>
+			<xs:extension base="tns:ReturnSimpleType">
+				<xs:sequence>
+					<xs:element name="Title" type="xs:string" minOccurs="0"/>
+					<xs:element name="OrderedField" type="tns:OrderingMetricType" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>Name value pair(s) representing field(s) corresoponding to orderBy fields in search request. </xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Abstract" type="xs:string" minOccurs="0"/>
+					<xs:element name="Temporal" type="tns:TemporalType" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element name="Spatial" type="tns:SpatialType" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="ReturnFullType">
+		<xs:complexContent>
+			<xs:extension base="tns:ReturnSimpleType">
+				<xs:sequence>
+					<xs:element name="AdditionalInformation" type="tns:CustomInfo"/>
+					<xs:element name="Title" type="xs:string" minOccurs="0"/>
+					<xs:element name="OrderedField" type="tns:OrderingMetricType" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>Name value pair(s) representing field(s) corresoponding to orderBy fields in search request. </xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Abstract" type="xs:string" minOccurs="0"/>
+					<xs:element name="Temporal" type="tns:TemporalType" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element name="Spatial" type="tns:SpatialType" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element name="Document" type="xs:string">
+						<xs:annotation>
+							<xs:documentation>CDATA content of returned XML document. </xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="GetVersionReturnType">
+		<xs:sequence>
+			<xs:element name="Version" type="xs:string"/>
+			<xs:element name="Comment" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Documents">
+		<xs:complexContent>
+			<xs:extension base="tns:DocumentsType">
+				<xs:choice>
+					<xs:sequence>
+						<xs:element name="DocumentSimple" type="tns:ReturnSimpleType" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:sequence>
+						<xs:element name="DocumentFull" type="tns:ReturnFullType" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:sequence>
+						<xs:element name="DocumentBrief" type="tns:ReturnBriefType" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:sequence>
+						<xs:element name="DocumentSummary" type="tns:ReturnSummaryType" maxOccurs="unbounded"/>
+					</xs:sequence>
+				</xs:choice>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="CustomInfo">
+		<xs:annotation>
+			<xs:documentation>Customizable part of the document</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Authors" type="xs:string"/>
+			<xs:element name="Parameters" type="xs:string"/>
+			<xs:element name="ResourceType" type="xs:string"/>
+			<xs:element name="TopicCategory" type="xs:string"/>
+			<xs:element name="Lineage" type="xs:string"/>
+			<xs:element name="LimitationsPublicAccess" type="xs:string"/>
+			<xs:element name="DataOriginator" type="xs:string"/>
+			<xs:element name="OriginalFormatName" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

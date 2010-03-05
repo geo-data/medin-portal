@@ -1,4 +1,5 @@
 import os
+import re
 
 # Third party modules
 import suds                             # for the SOAP client
@@ -12,7 +13,7 @@ class Request(object):
         if wsdl is None:     
             wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
-        self.client = suds.client.Client(wsdl)
+        self.client = suds.client.Client(wsdl, timeout=15)
 
     def __call__(query):
         raise NotImplementedError('The query must be overridden in a subclass')
@@ -33,8 +34,9 @@ class SearchResponse(object):
         if self.end_index > hits:
             self.end_index = hits
 
-        self.updated = max((r[-2] for r in results))
-        if not self.updated:
+        try:
+            self.updated = max((r[-2] for r in results))
+        except ValueError:
             from datetime import datetime
             self.updated = datetime.utcnow()
 
@@ -105,10 +107,74 @@ class SearchResponse(object):
         else:
             self.first_link = None
 
-class Search(Request):
+class TermParser(object):
+    """
+    Parse a search term into a list of DWS TermSearch objects
+    """
+
+    # The following pattern is designed to parse out the <or>, <not>,
+    # <target> and <word> from a user query string. <or> is a pipe
+    # (|), <not> is a minus sign (-). <target> maps to a search target
+    # and <word> is the actual query word.
+    #
+    # A related pattern which groups <or> and <not> into one operator
+    # <op> is:
+    # r'(?P<op>(?:\|\s*?-)|[-|])?(?(op)\s*?)(?:(?P<target>[a-zA-Z]+):)?(?P<word>[^\s]+)'
+    #
+    # See http://docs.python.org/library/re.html for regular
+    # expression details.
+    pattern = re.compile(r'(?P<or>[|])?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
+    
+    targets = {'': "FullText",
+               'a': "Author",
+               'p': "Parameters",
+               'rt': "ResourceType",
+               'tc': "TopicCategory",
+               'l': "Lineage",
+               'al': "PublicAccessLimits",
+               'o': "DataOriginator",
+               'f': "DataFormat"}
+
+    def __init__(self, client):
+        self.client = client
+
+    def __call__(self, querystr):
+        matches = self.pattern.findall(querystr)
+
+        # If there aren't any matches we need to do a full text search
+        if not matches:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.TermTarget = 'FullText'
+            return [term]
+
+        # Extract all the words and target groups from the query
+        # string, creating TermSearch objects from those components.
+        terms = []
+        for i, (op_or, op_not, target, word) in enumerate(matches):
+            op = ''
+            if i:
+                if op_or and op_not:
+                    op = 'OR_NOT'
+                elif op_not:
+                    op ='AND_NOT'
+                elif op_or:
+                    op = 'OR'
+            elif op_not:
+                op = 'NOT'
+
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = word
+            term.TermTarget = self.targets[target.lower()]
+            term._id = i+1
+            term._operator = op
+            terms.append(term)
+
+        return terms
+
+class SearchRequest(Request):
         
     def __call__(self, query):
-        from datetime import datetime
+        from urllib2 import URLError
 
         count = query.count
         search_term = ' '.join(query.search_term)
@@ -116,52 +182,55 @@ class Search(Request):
         # do a sanity check on the start index
         if query.start_index < (1 - count):
             query.start_index = 1
-        
-        # return some dummy data
-        from itertools import cycle
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'metadata-xml'))
-        paths = cycle(os.listdir(data_dir))
-        
-        status = True
-        message = 'Dummy failure'
-        chars = len(''.join((c for c in search_term if not c.isspace())))
-        hits = int(4000 / ((chars * (chars / 2.0)) + 1))
 
-        if not status and not hits:
-            raise DWSError('The Disovery Web Service failed: %s' % message)
+        # construct the RetrieveCriteria
+        retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
+        retrieve.RecordDetail = 'DocumentBrief' # we want brief results
+
+        # construct the SearchCriteria
+        search = self.client.factory.create('ns0:SearchCriteria')
+
+        # add the terms
+        term_parser = TermParser(self.client)
+        search.TermSearch.extend(term_parser(search_term))
+
+        # add the spatial criteria
+        bbox = query.bbox
+        if bbox:
+            (search.SpatialSearch.BoundingBox.LimitWest,
+             search.SpatialSearch.BoundingBox.LimitSouth,
+             search.SpatialSearch.BoundingBox.LimitEast,
+             search.SpatialSearch.BoundingBox.LimitNorth) = bbox
+            search.SpatialSearch.SpatialOperator = 'Overlaps'
+        
+        # send the query to the DWS
+        try:
+            response = self.client.service.doSearch(search, retrieve, query.start_index, count )
+        except URLError, e:
+            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+
+        status = response.Status
+        message = response.StatusMessage
+        hits = response.Hits
+
+        if not status:
+            if message != 'search.no.results':
+                raise DWSError('The Discovery Web Service failed: %s' % message)
+            documents = []
+        else:
+            documents = response.Documents.DocumentBrief
 
         results = []
-
-        start_index = query.start_index        
-        if start_index < 1:
-            c = count + start_index - 1
-        elif count < hits:
-            left = (hits - start_index) + 1
-            if left < count:
-                c = left
-            else:
-                c = count
-        elif start_index > hits:
-            c = 0
-        else:
-            c = hits
-
-        metadata = {}
-        for i in xrange(c):
-            fname = paths.next()
-            gid = os.path.splitext(fname)[0]
-            try:
-                entry = metadata[gid]
-            except KeyError:
-                xml = open(os.path.join(data_dir, fname)).read()
-                info = Metadata(gid, xml)
-                title = info.title
-                abstract = info.abstract
-                originator = info.originator()
-                date = info.updatedate()
-                bbox = info.bbox()
-                entry = (gid, title, originator, abstract, date, bbox)
-                metadata[gid] = entry
+        from datetime import datetime
+        for result in documents:
+            fields = result.AdditionalInformation
+            gid = result.DocumentId
+            title = result.Title
+            abstract = 'Test'
+            originator = fields.DataOriginator
+            date = datetime.now()
+            bbox = [-180.0, -90.0, 180.0, 90]
+            entry = (gid, title, originator, abstract, date, bbox)
 
             results.append(entry)
 
@@ -906,54 +975,51 @@ class MetadataResponse(object):
 
         return [lang]
 
-# An wrapper around a MetadataResponse to facilitate reading an xml
-# file from disk
-class Metadata(MetadataResponse):
-
-    def __init__(self, gid, document):
-        super(Metadata, self).__init__(gid, 'test', 'test', document)
-        self.title = self._title()
-        self.abstract = self._abstract()
-
-    def _title(self):
-        return self.xpath.xpathEval('//gmd:title/gco:CharacterString/text()')[0].content
-
-    def _abstract(self):
-        return self.xpath.xpathEval('//gmd:abstract/gco:CharacterString/text()')[0].content
-
-    def originator(self):
-        return self.xpath.xpathEval('//gmd:MD_Metadata/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:organisationName/gco:CharacterString')[0].content
-
-    def updatedate(self):
-        try:
-            date = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:Date')[0].content
-        except IndexError:
-            pass
-        else:
-            return self.xsDate2pyDatetime(date)
-
-        try:
-            datetime = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:DateTime')[0].content
-        except IndexError:
-            return None
-        return self.xsDatetime2pyDatetime(datetime)
-
 class MetadataRequest(Request):
 
     def getMetadataFormats(self):
-        response = self.client.service.getList('MetadataFormatList')
+        from urllib2 import URLError
+
+        try:
+            response = self.client.service.getList('MetadataFormatList')
+        except URLError, e:
+            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+
         return response.listMember
         
     def __call__(self, gid):
-        # return some dummy data
+        """
+        Connect to the DWS and retrieve a metadata entry by its ID
+        """
 
-        fname = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'metadata-xml', '%s.xml' % gid))
-        document = open(fname).read()
+        from urllib2 import URLError
+
+        # construct the RetrieveCriteria
+        retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
+        retrieve.RecordDetail = 'DocumentFull' # we want all the info
+        retrieve.MetadataFormat = 'MEDIN_2.3'
+
+        # construct the SimpleDocument
+        simpledoc = self.client.factory.create('ns0:SimpleDocument')
+        simpledoc.DocumentId = gid
         
-        status = True
-        message = 'Dummy failure'
+        # send the query to the DWS
+        try:
+            response = self.client.service.doPresent([simpledoc], retrieve )
+        except URLError, e:
+            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+        
+        status = response.Status
+        message = response.StatusMessage
 
         if not status:
-            raise DWSError('The Disovery Web Service failed: %s' % message)
+            if message != 'present.successful':
+                raise DWSError('The Discovery Web Service failed: %s' % message)
+            return None
 
-        return Metadata(gid, document)
+        document = response.Documents.DocumentFull[0]
+        title = document.Title
+        abstract = document.Abstract
+        xml = document.Document
+        
+        return MetadataResponse(gid, title, abstract, xml)

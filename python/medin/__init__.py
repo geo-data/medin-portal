@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.5
+__version__ = 0.6
 
 from errata import HTTPError
 
@@ -91,17 +91,16 @@ class Results(MakoApp):
         super(Results, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from medin.dws import Search, DWSError
+        from medin.dws import SearchRequest, DWSError
         from copy import copy
 
         q = get_query(environ)
 
         try:
-            req = Search()
-        except DWSError:
-            raise HTTPError('500 Internal Server Error', dws.args[0])
-
-        r = req(q)
+            req = SearchRequest()
+            r = req(q)
+        except DWSError, e:
+            raise HTTPError('500 Internal Server Error', e.args[0])
 
         timestamp = r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
@@ -212,20 +211,21 @@ class Metadata(MakoApp):
         super(Metadata, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from dws import MetadataRequest
+        from dws import MetadataRequest, DWSError
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
 
         try:
             req = MetadataRequest()
-        except DWSError:
-            raise HTTPError('500 Internal Server Error', dws.args[0])
-
-        r = req(gid)
+            r = req(gid)
+        except DWSError, e:
+            raise HTTPError('500 Internal Server Error', e.args[0])
 
         # Check if the client needs a new version
-        etag = check_etag(environ, r.last_updated())
-        headers = [('Etag', etag)]
+        headers = []
+        if r:
+            etag = check_etag(environ, r.last_updated())
+            headers.append(('Etag', etag))
 
         return r, headers
 
@@ -235,6 +235,9 @@ class MetadataHTML(Metadata):
 
     def setup(self, environ):
         r, headers = super(MetadataHTML, self).setup(environ)
+
+        if not r:
+            raise HTTPError('404 Not Found', 'The metadata resource does not exist')
 
         title = 'Metadata: %s' % r.title
         keywords = r.keywords()
@@ -262,15 +265,20 @@ class MetadataKML(Metadata):
     def setup(self, environ):
         r, headers = super(MetadataKML, self).setup(environ)
 
-        bbox = r.bbox()
-        tvars = dict(gid=r.id,
-                     bbox=bbox,
-                     author=r.author,
-                     abstract=r.abstract)
+        if r:
+            title = r.title
+            bbox = r.bbox()
+            tvars = dict(gid=r.id,
+                         bbox=bbox,
+                         author=r.author,
+                         abstract=r.abstract)
+        else:
+            title = ''
+            tvars = {}
 
         headers.append(('Content-type', 'application/vnd.google-earth.kml+xml'))
 
-        return TemplateContext(r.title, tvars=tvars, headers=headers)
+        return TemplateContext(title, tvars=tvars, headers=headers)
 
 class EnvironProxy:
     """
@@ -386,7 +394,7 @@ def background_raster(template_lookup, environ):
     return rasterpath
 
 def metadata_image(environ, start_response):
-    from dws import MetadataRequest
+    from dws import MetadataRequest, DWSError
     import os.path
     import medin.spatial
 
@@ -394,13 +402,9 @@ def metadata_image(environ, start_response):
 
     try:
         req = MetadataRequest()
-    except DWSError:
-        raise HTTPError('500 Internal Server Error', dws.args[0])
-
-    try:
         r = req(gid)
-    except DWSError:
-        raise HTTPError('500 Internal Server Error', dws.args[0]) 
+    except DWSError, e:
+        raise HTTPError('500 Internal Server Error', e.args[0])
 
     # Check if the client needs a new version
     etag = check_etag(environ, r.last_updated())
@@ -432,7 +436,7 @@ def metadata_image(environ, start_response):
     return [bytes]
 
 def metadata_download(environ, start_response):
-    from dws import MetadataRequest
+    from dws import MetadataRequest, DWSError
     from os.path import splitext
 
     gid = environ['selector.vars']['gid'] # the global metadata identifier
@@ -440,16 +444,13 @@ def metadata_download(environ, start_response):
 
     try:
         req = MetadataRequest()
-    except DWSError:
-        raise HTTPError('500 Internal Server Error', dws.args[0])
 
-    if fmt not in req.getMetadataFormats():
-        raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
+        if fmt not in req.getMetadataFormats():
+            raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-    try:
         r = req(gid)
-    except DWSError:
-        raise HTTPError('500 Internal Server Error', dws.args[0]) 
+    except DWSError, e:
+        raise HTTPError('500 Internal Server Error', e.args[0])
 
     # Check if the client needs a new version
     etag = check_etag(environ, r.last_updated())
