@@ -76,10 +76,14 @@ class Search(MakoApp):
         except TypeError:
             sort = None
         bbox = q.bbox
+        start_date = q.start_date
+        end_date = q.end_date
 
         tvars=dict(search_term=search_term,
                    count=q.count,
                    sort=sort,
+                   start_date=start_date,
+                   end_date=end_date,
                    bbox=bbox)
 
         return TemplateContext('Search', tvars=tvars)

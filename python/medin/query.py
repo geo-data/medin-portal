@@ -51,6 +51,26 @@ class Query(GETParams):
         except KeyError:
             return []
 
+    def asDate(self, key):
+        try:
+            date = self[key][0]
+        except KeyError, AttributeError:
+            return None
+
+        import datetime
+        try:
+            return datetime.datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+
+    @property
+    def start_date(self):
+        return self.asDate('sd')
+
+    @property
+    def end_date(self):
+        return self.asDate('ed')
+
     @property
     def bbox(self):
         try:

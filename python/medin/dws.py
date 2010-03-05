@@ -202,6 +202,20 @@ class SearchRequest(Request):
              search.SpatialSearch.BoundingBox.LimitEast,
              search.SpatialSearch.BoundingBox.LimitNorth) = bbox
             search.SpatialSearch.SpatialOperator = 'Overlaps'
+
+        start = query.start_date
+        if start:
+            start_date = self.client.factory.create('ns0:DateValueType')
+            start_date.DateValue = start.strftime('%Y-%m-%d')
+            start_date.TemporalOperator = "OnOrAfter"
+            search.TemporalSearch.DateRange.Date.append(start_date)
+
+        end = query.end_date
+        if end:
+            end_date = self.client.factory.create('ns0:DateValueType')
+            end_date.DateValue = end.strftime('%Y-%m-%d')
+            end_date.TemporalOperator = "OnOrBefore"
+            search.TemporalSearch.DateRange.Date.append(end_date)
         
         # send the query to the DWS
         try:

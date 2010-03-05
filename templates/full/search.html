@@ -68,6 +68,17 @@ window.onload = makeDoubleDelegate(window.onload, init);
  value="${search_term}"
   %endif
 />
+  <div> from <input type="text" name="sd"\
+  %if start_date:
+ value="${start_date.strftime('%Y-%m-%d')}"
+  %endif
+/> to 
+  <input type="text" name="ed"\
+  %if end_date:
+ value="${end_date.strftime('%Y-%m-%d')}"
+  %endif
+/></div>
+
   %if sort:
   <input name="s" type="hidden" value="${sort}" />
   %endif
