@@ -87,18 +87,20 @@ class Search(MakoApp):
 class Results(MakoApp):
 
     def __init__(self, path, headers):
+        from medin.dws import SearchRequest
+        
         self.headers = headers
+        self.request = SearchRequest()
         super(Results, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from medin.dws import SearchRequest, DWSError
+        from medin.dws import DWSError
         from copy import copy
 
         q = get_query(environ)
 
         try:
-            req = SearchRequest()
-            r = req(q)
+            r = self.request(q)
         except DWSError, e:
             raise HTTPError('500 Internal Server Error', e.args[0])
 
@@ -208,16 +210,18 @@ class ResultFormat(object):
 class Metadata(MakoApp):
 
     def __init__(self, path):
+        from medin.dws import MetadataRequest
+
+        self.request = MetadataRequest()
         super(Metadata, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from dws import MetadataRequest, DWSError
+        from medin.dws import DWSError
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
 
         try:
-            req = MetadataRequest()
-            r = req(gid)
+            r = self.request(gid)
         except DWSError, e:
             raise HTTPError('500 Internal Server Error', e.args[0])
 
@@ -393,80 +397,95 @@ def background_raster(template_lookup, environ):
     _bg_raster = rasterpath
     return rasterpath
 
-def metadata_image(environ, start_response):
-    from dws import MetadataRequest, DWSError
-    import os.path
-    import medin.spatial
+class MetadataImage(object):
+    """
+    WSGI app for outputting a metadata image
+    """
 
-    gid = environ['selector.vars']['gid'] # the global metadata identifier
+    def __init__(self):
+        from medin.dws import MetadataRequest
+        self.request = MetadataRequest()
 
-    try:
-        req = MetadataRequest()
-        r = req(gid)
-    except DWSError, e:
-        raise HTTPError('500 Internal Server Error', e.args[0])
+    def __call__(self, environ, start_response):
+        from medin.dws import DWSError
+        import os.path
+        import medin.spatial
 
-    # Check if the client needs a new version
-    etag = check_etag(environ, r.last_updated())
+        gid = environ['selector.vars']['gid'] # the global metadata identifier
 
-    bbox = r.bbox()
-    if not bbox:
-        raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
+        try:
+            r = self.request(gid)
+        except DWSError, e:
+            raise HTTPError('500 Internal Server Error', e.args[0])
 
-    # ensure the background raster datasource has been created
-    template_lookup = TemplateLookup(environ)
-    lookup = template_lookup.lookup()
-    rasterpath = background_raster(lookup, environ)
+        # Check if the client needs a new version
+        etag = check_etag(environ, r.last_updated())
 
-    # create the mapfile from its template
-    mappath = os.path.join('config', 'metadata-extent.xml')
-    template = lookup.get_template(mappath)
-    mapfile = template.render(root_dir=environ.root)
+        bbox = r.bbox()
+        if not bbox:
+            raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
 
-    # create the image
-    image = medin.spatial.metadata_image(bbox, mapfile)
+        # ensure the background raster datasource has been created
+        template_lookup = TemplateLookup(environ)
+        lookup = template_lookup.lookup()
+        rasterpath = background_raster(lookup, environ)
 
-    # serialise the image
-    bytes = image.tostring('png')
+        # create the mapfile from its template
+        mappath = os.path.join('config', 'metadata-extent.xml')
+        template = lookup.get_template(mappath)
+        mapfile = template.render(root_dir=environ.root)
 
-    headers = [('Content-Type', 'image/png'),
-               ('Etag', etag)]
+        # create the image
+        image = medin.spatial.metadata_image(bbox, mapfile)
 
-    start_response('200 OK', headers)
-    return [bytes]
+        # serialise the image
+        bytes = image.tostring('png')
 
-def metadata_download(environ, start_response):
-    from dws import MetadataRequest, DWSError
-    from os.path import splitext
+        headers = [('Content-Type', 'image/png'),
+                   ('Etag', etag)]
 
-    gid = environ['selector.vars']['gid'] # the global metadata identifier
-    fmt = environ['selector.vars']['format'] # the requested format
+        start_response('200 OK', headers)
+        return [bytes]
 
-    try:
-        req = MetadataRequest()
+class MetadataDownload(object):
+    """
+    WSGI app for downloading a metadata format
+    """
 
-        if fmt not in req.getMetadataFormats():
-            raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
+    def __init__(self):
+        from medin.dws import MetadataRequest
+        self.request = MetadataRequest()
 
-        r = req(gid)
-    except DWSError, e:
-        raise HTTPError('500 Internal Server Error', e.args[0])
+    def __call__(self, environ, start_response):
+        from medin.dws import DWSError
+        from os.path import splitext
 
-    # Check if the client needs a new version
-    etag = check_etag(environ, r.last_updated())
+        gid = environ['selector.vars']['gid'] # the global metadata identifier
+        fmt = environ['selector.vars']['format'] # the requested format
 
-    filename = r.id
-    if not splitext(filename)[1]:
-        filename += '.xml'
+        try:
+            if fmt not in self.request.getMetadataFormats():
+                raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-    document = str(r.document)
+            r = self.request(gid)
+        except DWSError, e:
+            raise HTTPError('500 Internal Server Error', e.args[0])
 
-    headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-               ('Content-Type', 'application/xml'),
-               ('Etag', etag)]
+        # Check if the client needs a new version
+        etag = check_etag(environ, r.last_updated())
 
-    start_response('200 OK', headers)
-    return [document]
+        filename = r.id
+        if not splitext(filename)[1]:
+            filename += '.xml'
+
+        document = str(r.document)
+
+        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
+                   ('Content-Type', 'application/xml'),
+                   ('Etag', etag)]
+
+        start_response('200 OK', headers)
+        return [document]
 
 class TemplateChoice(MakoApp):
     def __init__(self):
@@ -518,10 +537,10 @@ def wsgi_app():
     application.add('/{template}/catalogue/{gid:segment}/kml', GET=MetadataKML())
 
     # get an image representing the metadata bounds.
-    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=metadata_image)
+    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=MetadataImage())
 
     # download the metadata
-    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=metadata_download)
+    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=MetadataDownload())
 
     # add our Error handler
     application = medin.error.ErrorHandler(application)
