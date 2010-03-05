@@ -71,7 +71,7 @@ class ErrorHandler(errata.ErrorHandler):
 class ErrorRenderer(MakoApp):
     def __init__(self, exception):
         self.exception = exception
-        super(ErrorRenderer, self).__init__(['%s', 'error.html'])
+        super(ErrorRenderer, self).__init__(['%s', 'error.html'], check_etag=False)
 
     def setup(self, environ):
         title = 'Error - %s' % self.exception.args[0]
