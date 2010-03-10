@@ -39,3 +39,10 @@ div.subitem {
 .selected {
     color: #37C5F5;
 }
+#bodycontent_wide .error {
+    border-style:groove;
+    border-color: #A00000;
+    background-color: #F8B8B8;
+    padding: 0.2em;
+    color: black;
+}

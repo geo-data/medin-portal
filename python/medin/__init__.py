@@ -8,6 +8,7 @@ from errata import HTTPError
 # Custom modules
 import medin.error
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
+from medin.log import msg_info, msg_warn, msg_error
 
 # Third party modules
 import selector                        # for URI based dispatch
@@ -68,19 +69,20 @@ class Search(MakoApp):
 
     def setup(self, environ):
         q = get_query(environ)
-
-        search_term = ' '.join(q.search_term)
-        count = q.count
-        try:
-            sort = ','.join((str(i) for i in q.sort))
-        except TypeError:
-            sort = None
-        bbox = q.bbox
-        start_date = q.start_date
-        end_date = q.end_date
+        errors = q.verify()
+        if errors:
+            for error in errors:
+                msg_error(environ, error)
+        
+        search_term = q.getSearchTerm(cast=False)
+        count = q.getCount()
+        sort = q.getSort(cast=False)
+        bbox = q.getBBOX()
+        start_date = q.getStartDate(cast=False)
+        end_date = q.getEndDate(cast=False)
 
         tvars=dict(search_term=search_term,
-                   count=q.count,
+                   count=count,
                    sort=sort,
                    start_date=start_date,
                    end_date=end_date,
@@ -102,9 +104,13 @@ class Results(MakoApp):
         from copy import copy
 
         q = get_query(environ)
+        errors = q.verify()
+        if errors:
+            for error in errors:
+                msg_error(environ, error)
 
         try:
-            r = self.request(q)
+            r = self.request(q, environ['logging.logger'])
         except DWSError, e:
             raise HTTPError('500 Internal Server Error', e.args[0])
 
@@ -124,8 +130,8 @@ class Results(MakoApp):
         if start_index < 1:
             start_index = 1
 
-        search_term = ' '.join(r.search_term)
-
+        search_term = r.search_term
+        
         tvars=dict(hits=r.hits,
                    query=r.query,
                    search_term = search_term,
@@ -167,11 +173,11 @@ class HTMLResults(Results):
         query = deepcopy(ctxt.tvars['query'])
 
         sorts = {}
-        cur_sort, cur_asc = query.sort
+        cur_sort, cur_asc = query.getSort(default=('',''))
         for sort in ('title', 'author', 'updated'):
-            query.sort = (sort, 1)
+            query.setSort((sort, 1))
             asc = (str(query), (sort == cur_sort and cur_asc == 1))
-            query.sort = (sort, 0)
+            query.setSort((sort, 0))
             desc = (str(query), (sort == cur_sort and cur_asc == 0))
             sorts[sort] = dict(asc=asc, desc=desc)
         ctxt.tvars['sort'] = sorts
@@ -507,6 +513,7 @@ def wsgi_app():
     """
     
     from medin.spatial import tilecache
+    from medin.log import WSGILog
 
     # Create a WSGI application for URI delegation using Selector
     # (http://lukearno.com/projects/selector/). The order that child
@@ -548,6 +555,20 @@ def wsgi_app():
 
     # add our Error handler
     application = medin.error.ErrorHandler(application)
+
+    # add the logging handlers
+    import logging
+    logger = logging.getLogger('medin')
+
+    #from logging.handlers import SMTPHandler
+    #smtp_handler = SMTPHandler(('localhost', 1025),
+    #                           'hrz@geodata.soton.ac.uk',
+    #                           'hrz@geodata.soton.ac.uk',
+    #                           'MEDIN Portal Error')
+    #smtp_handler.setLevel(logging.ERROR)
+    #logger.addHandler(smtp_handler)
+    logger.setLevel(logging.DEBUG)
+    application = WSGILog(application, logger)
 
     # add the Environ configuration middleware
     application = Config(application)

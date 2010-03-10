@@ -65,20 +65,24 @@ class MakoApp(object):
         start_response(ctxt.status, ctxt.headers)
         return [output]
 
+    def get_template_name(self, environ):
+        try:
+            template = environ['selector.vars']['template'] # the template
+        except KeyError:
+            try:
+                # try and get the template as the first path entry
+                template = environ.get('PATH_INFO', '').split('/')[1]
+            except KeyError, IndexError:
+                raise RuntimeError('No template is specified')
+
+        return template
+
     def get_template(self, environ, path, expand=True):
         template_lookup = TemplateLookup(environ)
         lookup = template_lookup.lookup()
         path = os.path.join(os.path.sep, *path)
         if expand:
-            try:
-                template = environ['selector.vars']['template'] # the template
-            except KeyError:
-                try:
-                    # try and get the template as the first path entry
-                    template = environ.get('PATH_INFO', '').split('/')[1]
-                except KeyError, IndexError:
-                    raise RuntimeError('No template is specified')
-                
+            template = self.get_template_name(environ)
             path = path % template
         return lookup.get_template(path)
 
@@ -88,6 +92,7 @@ class MakoApp(object):
                     http_root=environ.http_uri(),
                     script_root=environ.script_uri(),
                     resource_root=environ.resource_uri(),
+                    log=environ['logging.handler'].records(),
                     environ=environ)
 
         # Add some useful environment variables to the template

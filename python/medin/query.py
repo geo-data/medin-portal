@@ -1,3 +1,8 @@
+import re
+
+class QueryError(ValueError):
+    pass
+
 class GETParams(object):
     """Stores HTTP GET query parameters"""
 
@@ -44,107 +49,231 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    @property
-    def search_term(self):
-        try:
-            return self['q']
-        except KeyError:
-            return []
+    def __init__(self, *args, **kwargs):
+        super(Query, self).__init__(*args, **kwargs)
+        self.raise_errors = False
 
-    def asDate(self, key):
+    def verify(self):
+        """
+        Check the validity of the Query, logging any errors
+        """
+
+        errors = []
+        errsetting = self.raise_errors
+        self.raise_errors = True
+            
+        try:
+            try:
+                tokens = self.getSearchTerm()
+            except QueryError, e:
+                errors.append(str(e))
+            
+            try:
+                start_date = self.getStartDate()
+            except QueryError, e:
+                errors.append('There is a problem with the start date. %s' % str(e))
+                start_date = None
+
+            try:
+                end_date = self.getEndDate()
+            except QueryError, e:
+                errors.append('There is a problem with the end date. %s' % str(e))
+                end_date = None
+
+            if start_date and end_date and start_date > end_date:
+                errors.append('The start date cannot be greater than the end date')
+
+            try:
+                self.getBBOX()
+            except QueryError, e:
+                errors.append(str(e))
+
+            try:
+                self.getSort()
+            except QueryError, e:
+                errors.append(str(e))
+
+            try:
+                self.getCount()
+            except QueryError, e:
+                errors.append(str(e))
+
+            try:
+                self.getStartIndex()
+            except QueryError, e:
+                errors.append(str(e))
+                
+        finally:
+            self.raise_errors = errsetting
+            
+        return errors
+
+    def getSearchTerm(self, cast=True, default=''):
+        try:
+            qstring = self['q'][0]
+            if cast:
+                return TermParser()(qstring)
+            return qstring
+        except KeyError:
+            pass
+        except QueryError:
+            if self.raise_errors: raise
+
+        return default
+
+    def getStartDate(self, cast=True, default=''):
+        return self.asDate('sd', cast, default)
+
+    def getEndDate(self, cast=True, default=''):
+        return self.asDate('ed', cast, default)
+
+    def asDate(self, key, cast, default):
         try:
             date = self[key][0]
         except KeyError, AttributeError:
-            return None
+            return default
 
+        if not cast:
+            return date
+        
         import datetime
         try:
             return datetime.datetime.strptime(date, '%Y-%m-%d')
         except ValueError:
-            return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            try:
+                return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+            except ValueError:
+                if self.raise_errors:
+                    raise QueryError('The following date is not recognised: %s. Please specify the date in the format YYYY-MM-DD' % date)
 
-    @property
-    def start_date(self):
-        return self.asDate('sd')
+        return default
 
-    @property
-    def end_date(self):
-        return self.asDate('ed')
-
-    @property
-    def bbox(self):
+    def getBBOX(self, cast=True, default=''):
         try:
-            return self['bbox'][0].split(',', 3)
+            bbox = self['bbox'][0]
         except KeyError, AttributeError:
-            return []
+            return default
 
-    @bbox.setter
-    def bbox(self, box):
+        if not cast:
+            return bbox
+
+        bbox = bbox.split(',', 3)
+        if not len(bbox) == 4:
+            raise QueryError('The bounding box must be in the format minx,miny,maxx,maxy')
+        return bbox
+
+    def setBBOX(self, bbox):
         self['bbox'] = ','.join((str(i) for i in box))
 
-    @property
-    def sort(self):
+    def getSort(self, cast=True, default=''):
         try:
-            s = self['s'][0].split(',', 1)
+            sort = self['s'][0]
         except KeyError, AttributeError:
-            s = ('updated', '1')
-            self['s'] = ','.join(s)
+            return default
+
+        if not cast:
+            return sort
         
         try:
-            field, asc = s
+            field, asc = sort.split(',', 1)
+        except ValueError:
+            if self.raise_errors:
+                raise QueryError('The sort parameter must be in the format field,order')
+            return default
+
+        try:
             asc = int(asc)
         except ValueError:
-            del self['s']
-            return (None, None)
+            if self.raise_errors:
+                raise QueryError('The order must be an integer')
+            return default
 
         return field, asc
 
-    @sort.setter
-    def sort(self, value):
+    def setSort(self, value):
         self['s'] = ','.join((str(i) for i in value))
 
-    @property
-    def count(self):
+    def getCount(self, cast=True, default=20):
         try:
-            return int(self['c'][0])
-        except KeyError:
-            self['c'] = 20
-            return self['c'][0]
+            count = self['c'][0]
+        except KeyError, AttributeError:
+            return default
 
-    @count.setter
-    def count(self, value):
+        if not cast:
+            return count
+
+        try:
+            return int(count)
+        except ValueError:
+            if self.raise_errors:
+                raise QueryError('The number of results to return must be a number')
+
+        return default
+
+    def setCount(self, value):
         self['c'] = value
 
-    @count.deleter
-    def count(self):
+    def getStartIndex(self, cast=True, default=1):
         try:
-            del self['c']
+            idx = self['i'][0]
         except KeyError:
-            pass
+            return default
 
-    @property
-    def start_index(self):
+        if not cast:
+            return idx
+
         try:
-            return int(self['i'][0])
-        except KeyError:
-            self['i'] = 1
-            return self['i'][0]
+            return int(idx)
+        except ValueError:
+            if self.raise_errors:
+                raise QueryError('The result starting index must be a number')
 
-    @start_index.setter
-    def start_index(self, value):
+        return default
+
+    def setStartIndex(self, value):
         self['i'] = value
 
-    @property
-    def start_page(self):
-        try:
-            p = int(self['p'][0])
-        except KeyError:
-            p = self['p'] = 1
-        if p > 500:
-            p = self['p'] = 500
+class TargetError(QueryError):
+    """
+    An error raised when a bad term target is specified
+    """
+    pass
 
-        return p
+class TermParser(object):
+    """
+    Parse a search term into a list of tokens
 
-    @start_page.setter
-    def start_page(self, value):
-        self['p'] = value
+    The returned list contains the <or>, <not>, <target> and <word>
+    for each term.
+    """
+
+    # The following pattern is designed to parse out the <or>, <not>,
+    # <target> and <word> from a user query string. <or> is a pipe
+    # (|), <not> is a minus sign (-). <target> maps to a search target
+    # and <word> is the actual query word.
+    #
+    # A related pattern which groups <or> and <not> into one operator
+    # <op> is:
+    # r'(?P<op>(?:\|\s*?-)|[-|])?(?(op)\s*?)(?:(?P<target>[a-zA-Z]+):)?(?P<word>[^\s]+)'
+    #
+    # See http://docs.python.org/library/re.html for regular
+    # expression details.
+    pattern = re.compile(r'(?P<or>[|])?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
+    
+    targets = set(('', 'a', 'al', 'f', 'l', 'o', 'p', 'rt', 'tc'))
+
+    def __call__(self, querystr):
+        matches = self.pattern.findall(querystr)
+
+        # Extract all the words and target groups from the query
+        # string, creating TermSearch objects from those components.
+        tokens = []
+        for op_or, op_not, target, word in matches:
+            if target not in self.targets:
+                targets = [t for t in self.targets if t]
+                targets.sort()
+                targets = ', '.join(targets)
+                raise TargetError('The following target in the search term is not recognised: %s. Please choose one of: %s' % (target, targets))
+            tokens.append((op_or, op_not, target, word))
+            
+        return tokens

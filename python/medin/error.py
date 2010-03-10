@@ -37,17 +37,24 @@ class ErrorHandler(errata.ErrorHandler):
 
     def handleTemplateLookupException(self, exception, environ, start_response):
         from mako.exceptions import TopLevelLookupException
-        
-        message = 'The template could not be found: %s' % str(exception)
-        e = errata.HTTPError('404 Not Found', message)
+        import sys
+
         try:
-            return self.handleHTTPError(e, environ, start_response)
-        except TopLevelLookupException:
-            # The top level template can't be found, so specify a default
-            environ['selector.vars']['template'] = 'light'
-            message = 'The template you specified does not exist.'
+            exc_info = sys.exc_info()
+            message = 'The template could not be found: %s' % str(exception)
             e = errata.HTTPError('404 Not Found', message)
-            return self.handleHTTPError(e, environ, start_response)
+            try:
+                return self.handleHTTPError(e, environ, start_response)
+                environ['logging.logger'].error('A template could not be found', exc_info=exc_info)
+            except TopLevelLookupException:
+                # The top level template can't be found, so specify a default
+                environ['selector.vars']['template'] = 'light'
+                message = 'The template you specified does not exist.'
+                e = errata.HTTPError('404 Not Found', message)
+                return self.handleHTTPError(e, environ, start_response)
+        finally:
+            # avoid circular references as per http://docs.python.org/library/sys.html#sys.exc_info
+            del exc_info
 
     def handleException(self, exception, environ, start_response):
         from mako.exceptions import RichTraceback
@@ -62,6 +69,8 @@ class ErrorHandler(errata.ErrorHandler):
             buf.write("\n")
         buf.write("%s: %s\n" % (str(traceback.error.__class__.__name__), traceback.error))
         output = buf.getvalue()
+
+        environ['logging.logger'].exception('The application encountered an unhandled exception')
         
         start_response('500 Internal Server Error', [('Content-type', 'text/plain')])
         return [output]

@@ -1,4 +1,4 @@
-<%inherit file="base.html"/>
+<%inherit file="base-ok.html"/>
 
 <%def name="header()">
     <style type="text/css">
@@ -70,12 +70,12 @@ window.onload = makeDoubleDelegate(window.onload, init);
 />
   <div> from <input type="text" name="sd"\
   %if start_date:
- value="${start_date.strftime('%Y-%m-%d')}"
+ value="${start_date}"
   %endif
 /> to 
   <input type="text" name="ed"\
   %if end_date:
- value="${end_date.strftime('%Y-%m-%d')}"
+ value="${end_date}"
   %endif
 /></div>
 

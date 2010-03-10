@@ -1,5 +1,4 @@
 import os
-import re
 
 # Third party modules
 import suds                             # for the SOAP client
@@ -15,8 +14,29 @@ class Request(object):
 
         self.client = suds.client.Client(wsdl, timeout=15)
 
-    def __call__(query):
+    def __call__(query, logger):
         raise NotImplementedError('The query must be overridden in a subclass')
+
+    def _callService(self, method, *args, **kwargs):
+        """
+        Wrap the call to the SOAP service with some error checking
+        """
+
+        try:
+            return method(*args, **kwargs)
+        except URLError, e:
+            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+        except Exception, e:
+            try:
+                status, reason = e.args
+            except ValueError:
+                raise DWSError('The Discovery Web Service failed: %s' % str(e))
+            else:
+                if status == 503:
+                    msg = 'The Discovery Web Service is temorarily unavailable'
+                else:
+                    msg = 'The Discovery Web Service failed: %s' % reason
+                raise DWSError(msg)
 
 class SearchResponse(object):
 
@@ -25,9 +45,9 @@ class SearchResponse(object):
 
         self.hits = hits
         self.results = results
-        self.count = query.count
-        self.search_term = query.search_term
-        self.start_index = query.start_index - 1 # we use zero based indexing
+        self.count = query.getCount()
+        self.search_term = query.getSearchTerm(cast=False)
+        self.start_index = query.getStartIndex() - 1 # we use zero based indexing
 
         # set the index of the final result in this page
         self.end_index = self.start_index + self.count
@@ -71,7 +91,7 @@ class SearchResponse(object):
         while page < self.page_count and ic < 5:
             page += 1
             ic += 1
-            query.start_index = next_index + 1
+            query.setStartIndex(next_index + 1)
             next_links.append({'page': page,
                                'link': str(query)})
             next_index += self.count
@@ -79,7 +99,7 @@ class SearchResponse(object):
 
     def _setLastLink(self, query):
         if self.current_page < self.page_count:
-            query.start_index = 1 + self.start_index + (self.count * (self.page_count - self.current_page))
+            query.setStartIndex(1 + self.start_index + (self.count * (self.page_count - self.current_page)))
             self.last_link = {'page': self.page_count,
                               'link': str(query)}
         else:
@@ -93,7 +113,7 @@ class SearchResponse(object):
         while page > 1 and ic < 5:
             page -= 1
             ic += 1
-            query.start_index = prev_index + 1
+            query.setStartIndex(prev_index + 1)
             prev_links.insert(0, {'page': page,
                                   'link': str(query)})
             prev_index -= self.count
@@ -101,30 +121,17 @@ class SearchResponse(object):
 
     def _setFirstLink(self, query):
         if self.current_page > 1:
-            query.start_index = 1 + self.start_index - (self.count * (self.current_page-1))
+            query.setStartIndex(1 + self.start_index - (self.count * (self.current_page-1)))
             self.first_link = {'page': 1,
                                'link': str(query)}
         else:
             self.first_link = None
 
-class TermParser(object):
+class TermBuilder(object):
     """
-    Parse a search term into a list of DWS TermSearch objects
+    Build a list of DWS TermSearch objects from a token list
     """
 
-    # The following pattern is designed to parse out the <or>, <not>,
-    # <target> and <word> from a user query string. <or> is a pipe
-    # (|), <not> is a minus sign (-). <target> maps to a search target
-    # and <word> is the actual query word.
-    #
-    # A related pattern which groups <or> and <not> into one operator
-    # <op> is:
-    # r'(?P<op>(?:\|\s*?-)|[-|])?(?(op)\s*?)(?:(?P<target>[a-zA-Z]+):)?(?P<word>[^\s]+)'
-    #
-    # See http://docs.python.org/library/re.html for regular
-    # expression details.
-    pattern = re.compile(r'(?P<or>[|])?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
-    
     targets = {'': "FullText",
                'a': "Author",
                'p': "Parameters",
@@ -138,19 +145,16 @@ class TermParser(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, querystr):
-        matches = self.pattern.findall(querystr)
-
-        # If there aren't any matches we need to do a full text search
-        if not matches:
+    def __call__(self, tokens):
+        # If there aren't any tokens we need to do a full text search
+        if not tokens:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.TermTarget = 'FullText'
             return [term]
 
-        # Extract all the words and target groups from the query
-        # string, creating TermSearch objects from those components.
+        # Create the termSearch objects from the tokens
         terms = []
-        for i, (op_or, op_not, target, word) in enumerate(matches):
+        for i, (op_or, op_not, target, word) in enumerate(tokens):
             op = ''
             if i:
                 if op_or and op_not:
@@ -164,7 +168,11 @@ class TermParser(object):
 
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = word
-            term.TermTarget = self.targets[target.lower()]
+            try:
+                term.TermTarget = self.targets[target.lower()]
+            except KeyError:
+                raise ValueError('The following target is not recognised: %s' % target)
+                
             term._id = i+1
             term._operator = op
             terms.append(term)
@@ -173,15 +181,16 @@ class TermParser(object):
 
 class SearchRequest(Request):
         
-    def __call__(self, query):
+    def __call__(self, query, logger):
         from urllib2 import URLError
+        from query import QueryError
 
-        count = query.count
-        search_term = ' '.join(query.search_term)
+        count = query.getCount()
+        search_term = query.getSearchTerm()
 
         # do a sanity check on the start index
-        if query.start_index < (1 - count):
-            query.start_index = 1
+        if query.getStartIndex() < (1 - count):
+            query.setStartIndex(1)
 
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
@@ -191,11 +200,12 @@ class SearchRequest(Request):
         search = self.client.factory.create('ns0:SearchCriteria')
 
         # add the terms
-        term_parser = TermParser(self.client)
-        search.TermSearch.extend(term_parser(search_term))
+        term_parser = TermBuilder(self.client)
+        terms = term_parser(search_term)
+        search.TermSearch.extend(terms)
 
         # add the spatial criteria
-        bbox = query.bbox
+        bbox = query.getBBOX()
         if bbox:
             (search.SpatialSearch.BoundingBox.LimitWest,
              search.SpatialSearch.BoundingBox.LimitSouth,
@@ -203,14 +213,14 @@ class SearchRequest(Request):
              search.SpatialSearch.BoundingBox.LimitNorth) = bbox
             search.SpatialSearch.SpatialOperator = 'Overlaps'
 
-        start = query.start_date
+        start = query.getStartDate()
         if start:
             start_date = self.client.factory.create('ns0:DateValueType')
             start_date.DateValue = start.strftime('%Y-%m-%d')
             start_date.TemporalOperator = "OnOrAfter"
             search.TemporalSearch.DateRange.Date.append(start_date)
 
-        end = query.end_date
+        end = query.getEndDate()
         if end:
             end_date = self.client.factory.create('ns0:DateValueType')
             end_date.DateValue = end.strftime('%Y-%m-%d')
@@ -218,17 +228,14 @@ class SearchRequest(Request):
             search.TemporalSearch.DateRange.Date.append(end_date)
         
         # send the query to the DWS
-        try:
-            response = self.client.service.doSearch(search, retrieve, query.start_index, count )
-        except URLError, e:
-            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+        response = self._callService(self.client.service.doSearch, search, retrieve, query.getStartIndex(), count )
 
         status = response.Status
         message = response.StatusMessage
         hits = response.Hits
 
         if not status:
-            if message != 'search.no.results':
+            if message != 'Search was successful but generated no results.':
                 raise DWSError('The Discovery Web Service failed: %s' % message)
             documents = []
         else:
@@ -994,10 +1001,7 @@ class MetadataRequest(Request):
     def getMetadataFormats(self):
         from urllib2 import URLError
 
-        try:
-            response = self.client.service.getList('MetadataFormatList')
-        except URLError, e:
-            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+        response = self._callService(self.client.service.getList, 'MetadataFormatList')
 
         return response.listMember
         
@@ -1018,10 +1022,7 @@ class MetadataRequest(Request):
         simpledoc.DocumentId = gid
         
         # send the query to the DWS
-        try:
-            response = self.client.service.doPresent([simpledoc], retrieve )
-        except URLError, e:
-            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+        response = self._callService(self.client.service.doPresent, [simpledoc], retrieve )
         
         status = response.Status
         message = response.StatusMessage
