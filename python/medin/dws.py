@@ -21,7 +21,8 @@ class Request(object):
         """
         Wrap the call to the SOAP service with some error checking
         """
-
+        from urllib2 import URLError
+        
         try:
             return method(*args, **kwargs)
         except URLError, e:
@@ -182,7 +183,6 @@ class TermBuilder(object):
 class SearchRequest(Request):
         
     def __call__(self, query, logger):
-        from urllib2 import URLError
         from query import QueryError
 
         count = query.getCount()
@@ -999,8 +999,6 @@ class MetadataResponse(object):
 class MetadataRequest(Request):
 
     def getMetadataFormats(self):
-        from urllib2 import URLError
-
         response = self._callService(self.client.service.getList, 'MetadataFormatList')
 
         return response.listMember
@@ -1009,8 +1007,6 @@ class MetadataRequest(Request):
         """
         Connect to the DWS and retrieve a metadata entry by its ID
         """
-
-        from urllib2 import URLError
 
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
