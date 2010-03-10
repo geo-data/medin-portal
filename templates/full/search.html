@@ -1,14 +1,21 @@
 <%inherit file="base-ok.html"/>
 
 <%def name="header()">
+    <link href="/css/ui-lightness/jquery-ui-1.8rc3.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         #map {
             width: 100%;
             height: 400px;
-            border: 1px solid black;
+            border: 1px solid #ADACA8;
         }
+#ui-datepicker-div {
+  z-index: 9999999;
+}
     </style>
+    <script type="text/javascript" src="/js/jquery-1.4.2.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8rc3.js"></script>
     <script type="text/javascript" src="/js/openlayers/OpenLayers.js"></script>
+    <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
         <!--
 var map, layer;
@@ -18,14 +25,21 @@ var bbox = new OpenLayers.Bounds(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]})
 var bbox = null;
 %endif
 
-function init(){
+// Initialise the page once loaded
+$(function() {
+    // initialise the date pickers
+    $.datepicker.setDefaults({ dateFormat: 'yy-mm-dd' });
+    $('#start-date').datepicker();
+    $('#end-date').datepicker();
+
+    // initialise the mapping
     var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
     var options = {
         restrictedExtent: extent,
         maxResolution: 360/512
     }
     
-    map = new OpenLayers.Map( $('map'), options);
+    map = new OpenLayers.Map('map', options);
     layer = new OpenLayers.Layer.TMS( "Bathy", 
                                       "${script_root}/spatial/tms/",
                                       { layername: 'bathymetry', type: 'png' } );
@@ -42,20 +56,8 @@ function init(){
     var box = new OpenLayers.Marker.Box(bbox);
     boxes.addMarker(box);
     map.addLayer(boxes);
-}
+});
 
-// Ensure any other loader gets called
-// Code from http://blog.roberthahn.ca/articles/2007/02/02/how-to-use-window-onload-the-right-way/
-function makeDoubleDelegate(function1, function2) {
-    return function() {
-        if (function1)
-            function1();
-        if (function2)
-            function2();
-    }
-}
-
-window.onload = makeDoubleDelegate(window.onload, init);
         // -->
     </script>
 </%def>
@@ -63,21 +65,88 @@ window.onload = makeDoubleDelegate(window.onload, init);
 <p>Search the MEDIN Data Archive Centres.</p>
 
 <form method="GET" action="${resource_root}/catalogue">
-  <input type="text" name="q"\
+  <fieldset>
+    <legend>Search term</legend>
+    <input type="text" name="q" size="30"\
   %if search_term:
  value="${search_term}"
   %endif
-/>
-  <div> from <input type="text" name="sd"\
+/> (Leave blank to match everything)
+    <div><input type="submit" value="search"/> (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
+    <div id="search-term-help" style="display: none">
+    <p>Words typed in 'as is' will result in a full text search that
+    requires all words to be present in matching metadata, e.g.:</p>
+    
+    <blockquote><div><kbd>aerosol pollution
+    troposphere</kbd></div></blockquote>
+    
+    <p>will find all documents containing <strong>all</strong> of the
+    above words.</p>
+    
+    <p>Words can be excluded from result matches using the
+    <strong>minus sign</strong> (<strong>-</strong>) e.g.:</p>
+    
+    <blockquote><div><kbd><strong>-</strong>aerosol pollution
+    <strong>-</strong>troposphere</kbd></div></blockquote>
+    
+    <p>will find all documents that contain <kbd>pollution</kbd> but
+    <strong>not</strong> <kbd>aerosol</kbd> <strong>or</strong>
+    <kbd>troposphere</kbd>.</p>
+    
+    <p>Instead of finding all matching terms, alternative matches can
+    be specified using the <strong>pipe character</strong>
+    (<strong>|</strong>) e.g.:</p>
+    
+    <blockquote><div><kbd>aerosol <strong>|</strong> pollution
+    troposphere</kbd></div></blockquote>
+    
+    <p>will find all documents that contain <kbd>troposphere</kbd> and
+    <strong>either</strong> <kbd>aerosol</kbd> <strong>or</strong>
+    <kbd>pollution</kbd>.</p>
+    
+    <p>As well as running full text searches, more specific search
+    targets can be specified by prefixing words with the target
+    identifier.  The identifiers map to the search targets as
+    follows:</p>
+
+    <blockquote><div>
+      <strong>a</strong>  => Author<br/>
+      <strong>p</strong>  => Parameter<br/>
+      <strong>rt</strong> => Resource type<br/>
+      <strong>tc</strong> => Topic category<br/>
+      <strong>l</strong>  => Lineage<br/>
+      <strong>al</strong> => Public access limits<br/>
+      <strong>o</strong>  => Data originator<br/>
+      <strong>f</strong>  => Data format<br/>
+    </div></blockquote>
+    
+    <p>The identifier is separated from the word using a
+    <strong>colon</strong> (<strong>:</strong>) e.g.:</p>
+    
+    <blockquote><div><kbd>aerosol <strong>tc:</strong>pollution
+    <strong>p:</strong>troposphere</kbd></div></blockquote>
+    
+    <p>will match all documents that contain <kbd>aerosol</kbd> that
+    also have a <strong>topic category</strong> containing
+    <kbd>pollution</kbd> and a <strong>parameter</strong> containing
+    <kbd>troposphere</kbd>.</p>
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Date range</legend>
+    <div>Match data that overlaps the period:</div>
+    <div> from <input type="text" name="sd" id="start-date" maxlength="10" size="10"\
   %if start_date:
  value="${start_date}"
   %endif
 /> to 
-  <input type="text" name="ed"\
+     <input type="text" name="ed" id="end-date" maxlength="10" size="10"\
   %if end_date:
  value="${end_date}"
   %endif
-/></div>
+/> (Dates should be in the format <strong>YYYY-MM-DD</strong>)</div>
+    <div><input type="submit" value="search"/></div>
+  </fieldset>
 
   %if sort:
   <input name="s" type="hidden" value="${sort}" />
@@ -88,7 +157,9 @@ window.onload = makeDoubleDelegate(window.onload, init);
   %if bbox:
   <input name="bbox" type="hidden" value="${','.join(bbox)}" />
   %endif
-  <input type="submit" value="search"/>
-</form>
 
-<div id="map"></div>
+  <fieldset>
+    <legend>Geographic search</legend>
+    <div id="map"></div>
+  </fieldset>
+</form>

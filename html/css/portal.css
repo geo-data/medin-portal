@@ -46,3 +46,27 @@ div.subitem {
     padding: 0.2em;
     color: black;
 }
+fieldset {
+    padding: 0.5em;
+    margin-bottom: 0.75em;
+    border: 1px solid #ADACA8;
+}
+legend {
+    color: #304E96; 
+    font-size:1.4em; 
+    font-weight:normal;
+}
+#bodycontent_wide fieldset p {
+    margin-bottom: 0;
+    margin-top: 0.25em;
+}
+input[type=submit] {
+    margin-top: 0.5em;
+}
+blockquote {
+  margin-left: 1.5em;
+}
+#bodycontent_wide kbd {
+  font-size: 9pt;
+  color: black;
+}
