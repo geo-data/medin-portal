@@ -153,8 +153,8 @@ $(function() {
   %if search_term:
  value="${search_term}"
   %endif
-/> (Leave blank to match everything)
-    <div><input type="submit" value="search"/> (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
+/> <input type="submit" value="search"/>
+    <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
     <div id="search-term-help" style="display: none">
     <p>Words typed in 'as is' will result in a full text search that
     requires all words to be present in matching metadata, e.g.:</p>
@@ -187,9 +187,9 @@ $(function() {
     <kbd>pollution</kbd>.</p>
     
     <p>As well as running full text searches, more specific search
-    targets can be specified by prefixing words with the target
-    identifier.  The identifiers map to the search targets as
-    follows:</p>
+    targets can be specified by prefixing words with a target
+    identifier.  Available target identifiers and how they relate to
+    search fields are as follows:</p>
 
     <blockquote><div>
       <strong>a</strong>  => Author<br/>
@@ -226,8 +226,8 @@ $(function() {
   %if end_date:
  value="${end_date}"
   %endif
-/> (Dates should be in the format <strong>YYYY-MM-DD</strong>)</div>
-    <div><input type="submit" value="search"/></div>
+/> <input type="submit" value="search"/></div>
+    <div>Dates should be in the format <strong>YYYY-MM-DD</strong>.</div>
   </fieldset>
 
   %if sort:
@@ -244,13 +244,15 @@ ${','.join(bbox)}\
 
   <fieldset>
     <legend>Geographic search</legend>
-    <select name="a" id="area">
-      <option value="">Select an area...</option>
-      <optgroup id="british-isles" label="British Isles"></optgroup>
-      <optgroup id="countries" label="Countries"></optgroup>
-    </select>
-    <input type="submit" value="search"/>
-    <button type="button" onclick="javascript:clear_area()">clear area</button>
+    <div>
+      <select name="a" id="area">
+        <option value="">Select an area...</option>
+        <optgroup id="british-isles" label="British Isles"></optgroup>
+        <optgroup id="countries" label="Countries"></optgroup>
+      </select>
+      <input type="submit" value="search"/>
+      <input type="button" onclick="javascript:clear_area()" value="clear area"/>
+    </div>
     <div id="map-holder">
       <div id="map"></div>
     </div>
