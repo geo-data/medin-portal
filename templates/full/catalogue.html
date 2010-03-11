@@ -63,10 +63,10 @@ result.
 % endif
 <p>
 % if first_link:
-<a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&and;&nbsp;First</a>
+<a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
 % if prev_links:
-<a href="${resource_root}?${prev_links[-1]['link']}" title="Results page ${prev_links[-1]['page']}">&or;&nbsp;Previous</a> 
+<a href="${resource_root}?${prev_links[-1]['link']}" title="Results page ${prev_links[-1]['page']}">&lsaquo;&nbsp;Previous</a> 
 % for link in prev_links:
 <a href="${resource_root}?${link['link']}" title="Results page ${link['page']}">${link['page']}</a> 
 % endfor
