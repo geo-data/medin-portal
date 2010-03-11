@@ -31,7 +31,9 @@ class GETParams(object):
         params = []
         for k, v in self.params.items():
             for p in v:
-                params.append('%s=%s' % (k, quote_plus(str(p))))
+                p = str(p)
+                if len(p):
+                    params.append('%s=%s' % (k, quote_plus(p)))
 
         return '&'.join(params)
 
