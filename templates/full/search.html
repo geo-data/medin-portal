@@ -8,9 +8,9 @@
             height: 400px;
             border: 1px solid #ADACA8;
         }
-#ui-datepicker-div {
-  z-index: 9999999;
-}
+        #map-holder {
+            margin-top: 0.5em;
+        }
     </style>
     <script type="text/javascript" src="/js/jquery-1.4.2.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8rc3.js"></script>
@@ -18,12 +18,78 @@
     <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
         <!--
-var map, layer;
+var map, boxes, box;            // map object, box layer, box marker
 %if bbox:
 var bbox = new OpenLayers.Bounds(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]});
 %else:
 var bbox = null;
 %endif
+%if area:
+var area = '${area}';
+%else:
+var area = null;
+%endif
+
+function add_box(extent) {
+    clear_box();                // remove any previous box
+
+    // add the box to the map
+    box = new OpenLayers.Marker.Box(extent);
+    bbox = extent;
+    boxes.addMarker(box);
+
+    map.zoomToExtent(extent);   // zoom to the box
+
+    $('#bbox').val(extent.toBBOX()); // set the form element
+}
+
+// remove the bounding box and deselect the area
+function clear_area() {
+    var select = $('#area')
+    select.val('');
+    select.change();
+}
+
+function clear_box() {
+    if (box) {
+        boxes.removeMarker(box);
+        box = null;
+    }
+
+    $('#bbox').val('');
+}
+
+// Populate the area selection control
+function populate_areas() {
+    var select = $('#area');
+    var countries = get_countries();
+    for (var i = 0; i < countries.length; i++) {
+        var id = countries[i][0];
+        var name = countries[i][1];
+        select.append('<option value="'+id+'">'+name+'</option>');
+    }
+
+    // ensure a bbox is created when an area is selected
+    select.change(function() {
+        var id = $(this).attr('value');
+        var tbbox = get_bbox(id);
+        if (!tbbox) {
+            clear_box();
+            return;
+        }
+
+        var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
+        add_box(extent);
+    });
+
+    // if there's an existing area, select it
+    if (area) {
+        select.val(area);
+        select.change();
+    } else if (bbox) {
+        add_box(bbox);
+    }
+}
 
 // Initialise the page once loaded
 $(function() {
@@ -36,26 +102,26 @@ $(function() {
     var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
     var options = {
         restrictedExtent: extent,
+        maxExtent: extent,
         maxResolution: 360/512
     }
     
     map = new OpenLayers.Map('map', options);
-    layer = new OpenLayers.Layer.TMS( "Bathy", 
+    var layer = new OpenLayers.Layer.TMS( "Bathy", 
                                       "${script_root}/spatial/tms/",
                                       { layername: 'bathymetry', type: 'png' } );
     map.addLayer(layer);
     map.addControl(new OpenLayers.Control.Permalink());
 
+    boxes = new OpenLayers.Layer.Boxes("boxes");
+    map.addLayer(boxes);
+
     if (!bbox) {
         map.setCenter(extent, 1);
-        return;
     }
 
-    map.zoomToExtent(bbox);
-    var boxes = new OpenLayers.Layer.Boxes("boxes");
-    var box = new OpenLayers.Marker.Box(bbox);
-    boxes.addMarker(box);
-    map.addLayer(boxes);
+    // add the area selections
+    populate_areas();
 });
 
         // -->
@@ -155,11 +221,18 @@ $(function() {
   <input name="c" type="hidden" value="${count}" />
   %endif
   %if bbox:
-  <input name="bbox" type="hidden" value="${','.join(bbox)}" />
+  <input name="bbox" id="bbox" type="hidden" value="${','.join(bbox)}" />
   %endif
 
   <fieldset>
     <legend>Geographic search</legend>
-    <div id="map"></div>
+    <select name="a" id="area">
+      <option value="">Select an area...</option>
+    </select>
+    <button type="button" onclick="javascript:clear_area()">Clear area</button>
+    <div><input type="submit" value="search"/></div>
+    <div id="map-holder">
+      <div id="map"></div>
+    </div>
   </fieldset>
 </form>

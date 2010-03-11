@@ -80,12 +80,14 @@ class Search(MakoApp):
         bbox = q.getBBOX()
         start_date = q.getStartDate(cast=False)
         end_date = q.getEndDate(cast=False)
+        area = q.getArea()
 
         tvars=dict(search_term=search_term,
                    count=count,
                    sort=sort,
                    start_date=start_date,
                    end_date=end_date,
+                   area=area,
                    bbox=bbox)
 
         return TemplateContext('Search', tvars=tvars)

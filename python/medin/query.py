@@ -233,6 +233,12 @@ class Query(GETParams):
     def setStartIndex(self, value):
         self['i'] = value
 
+    def getArea(self, cast=True, default=''):
+        try:
+            return self['a'][0]
+        except KeyError:
+            return default
+
 class TargetError(QueryError):
     """
     An error raised when a bad term target is specified
