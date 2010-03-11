@@ -138,8 +138,6 @@ $(function() {
     </script>
 </%def>
 
-<p>Search the MEDIN Data Archive Centres.</p>
-
 <form method="GET" action="${resource_root}/catalogue">
   <fieldset>
     <legend>Search term</legend>
@@ -243,8 +241,8 @@ ${','.join(bbox)}\
       <optgroup id="british-isles" label="British Isles"></optgroup>
       <optgroup id="countries" label="Countries"></optgroup>
     </select>
+    <input type="submit" value="search"/>
     <button type="button" onclick="javascript:clear_area()">Clear area</button>
-    <div><input type="submit" value="search"/></div>
     <div id="map-holder">
       <div id="map"></div>
     </div>

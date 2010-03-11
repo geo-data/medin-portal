@@ -90,7 +90,7 @@ class Search(MakoApp):
                    area=area,
                    bbox=bbox)
 
-        return TemplateContext('Search', tvars=tvars)
+        return TemplateContext('Search the Data Archive Centres', tvars=tvars)
 
 class Results(MakoApp):
 
