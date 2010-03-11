@@ -62,11 +62,21 @@ function clear_box() {
 // Populate the area selection control
 function populate_areas() {
     var select = $('#area');
-    var countries = get_countries();
-    for (var i = 0; i < countries.length; i++) {
-        var id = countries[i][0];
-        var name = countries[i][1];
-        select.append('<option value="'+id+'">'+name+'</option>');
+
+    var optgroup = select.find('#british-isles');
+    var areas = get_british_isles();
+    for (var i = 0; i < areas.length; i++) {
+        var id = areas[i][0];
+        var name = areas[i][1];
+        optgroup.append('<option value="'+id+'">'+name+'</option>');
+    }
+
+    optgroup = select.find('#countries');
+    areas = get_countries();
+    for (var i = 0; i < areas.length; i++) {
+        var id = areas[i][0];
+        var name = areas[i][1];
+        optgroup.append('<option value="'+id+'">'+name+'</option>');
     }
 
     // ensure a bbox is created when an area is selected
@@ -230,6 +240,8 @@ ${','.join(bbox)}\
     <legend>Geographic search</legend>
     <select name="a" id="area">
       <option value="">Select an area...</option>
+      <optgroup id="british-isles" label="British Isles"></optgroup>
+      <optgroup id="countries" label="Countries"></optgroup>
     </select>
     <button type="button" onclick="javascript:clear_area()">Clear area</button>
     <div><input type="submit" value="search"/></div>
