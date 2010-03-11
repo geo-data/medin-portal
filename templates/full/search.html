@@ -220,9 +220,11 @@ $(function() {
   %if count:
   <input name="c" type="hidden" value="${count}" />
   %endif
+  <input name="bbox" id="bbox" type="hidden" value="\
   %if bbox:
-  <input name="bbox" id="bbox" type="hidden" value="${','.join(bbox)}" />
+${','.join(bbox)}\
   %endif
+" />
 
   <fieldset>
     <legend>Geographic search</legend>
