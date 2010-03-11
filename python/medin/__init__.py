@@ -114,7 +114,7 @@ class Results(MakoApp):
         try:
             r = self.request(q, environ['logging.logger'])
         except DWSError, e:
-            raise HTTPError('500 Internal Server Error', e.args[0])
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
 
         timestamp = r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
@@ -235,7 +235,7 @@ class Metadata(MakoApp):
         try:
             r = self.request(gid)
         except DWSError, e:
-            raise HTTPError('500 Internal Server Error', e.args[0])
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
 
         # Check if the client needs a new version
         headers = []
@@ -428,7 +428,7 @@ class MetadataImage(object):
         try:
             r = self.request(gid)
         except DWSError, e:
-            raise HTTPError('500 Internal Server Error', e.args[0])
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())
@@ -481,7 +481,7 @@ class MetadataDownload(object):
 
             r = self.request(gid)
         except DWSError, e:
-            raise HTTPError('500 Internal Server Error', e.args[0])
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())

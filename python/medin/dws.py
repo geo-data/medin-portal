@@ -4,7 +4,13 @@ import os
 import suds                             # for the SOAP client
 
 class DWSError(Exception):
-    pass
+
+    def __init__(self, msg, status=500):
+        self.status = status
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
 
 class Request(object):
 
@@ -29,15 +35,15 @@ class Request(object):
             raise DWSError('The Discovery Web Service %s' % str(e.reason))
         except Exception, e:
             try:
-                status, reason = e.args
-            except ValueError:
+                status, reason = e.args[0]
+            except ValueError, IndexError:
                 raise DWSError('The Discovery Web Service failed: %s' % str(e))
             else:
                 if status == 503:
                     msg = 'The Discovery Web Service is temorarily unavailable'
                 else:
                     msg = 'The Discovery Web Service failed: %s' % reason
-                raise DWSError(msg)
+                raise DWSError(msg, status)
 
 class SearchResponse(object):
 
