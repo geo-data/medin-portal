@@ -59,6 +59,15 @@ function clear_box() {
     $('#bbox').val('');
 }
 
+function zoom_to_area(id) {
+    var tbbox = get_bbox(id);
+    if (!tbbox)
+        return false;
+
+    map.zoomToExtent(OpenLayers.Bounds.fromArray(tbbox));
+    return true;
+}
+
 // Populate the area selection control
 function populate_areas() {
     var select = $('#area');
@@ -98,6 +107,9 @@ function populate_areas() {
         select.change();
     } else if (bbox) {
         add_box(bbox);
+    } else {
+        // zoom to the UK as a default
+        zoom_to_area('GB');
     }
 }
 
@@ -125,10 +137,6 @@ $(function() {
 
     boxes = new OpenLayers.Layer.Boxes("boxes");
     map.addLayer(boxes);
-
-    if (!bbox) {
-        map.setCenter(extent, 1);
-    }
 
     // add the area selections
     populate_areas();
@@ -242,7 +250,7 @@ ${','.join(bbox)}\
       <optgroup id="countries" label="Countries"></optgroup>
     </select>
     <input type="submit" value="search"/>
-    <button type="button" onclick="javascript:clear_area()">Clear area</button>
+    <button type="button" onclick="javascript:clear_area()">clear area</button>
     <div id="map-holder">
       <div id="map"></div>
     </div>
