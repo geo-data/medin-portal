@@ -61,10 +61,13 @@ legend {
     margin-top: 0.25em;
 }
 blockquote {
-  margin-left: 1.5em;
+    margin-left: 1.5em;
 }
 #bodycontent_wide kbd {
-  font-size: 9pt;
-  color: black;
+    font-size: 9pt;
+    color: black;
 }
-
+.area {
+    background-image:url('/images/area-fill.png');
+    background-repeat: repeat;
+}

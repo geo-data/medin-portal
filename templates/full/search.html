@@ -35,6 +35,8 @@ function add_box(extent) {
 
     // add the box to the map
     box = new OpenLayers.Marker.Box(extent);
+    box.setBorder('#ca0000');
+    $(box.div).addClass('area');
     bbox = extent;
     boxes.addMarker(box);
 
