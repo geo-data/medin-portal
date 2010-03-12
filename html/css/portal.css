@@ -51,11 +51,31 @@ fieldset {
     margin-bottom: 0.75em;
     border: 1px solid #ADACA8;
 }
+fieldset.off {
+    border-bottom: 0;
+    border-left: 0;
+    border-right: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
 legend {
     color: #304E96; 
     font-size:1.4em; 
     font-weight:normal;
 }
+legend a {
+	text-decoration:none;
+    color:#304E96; 
+}
+legend a:hover {
+	text-decoration:underline;
+    color:#304E96; 
+}
+legend a:visited {
+	text-decoration:none;
+    color:#304E96; 
+}
+
 #bodycontent_wide fieldset p {
     margin-bottom: 0;
     margin-top: 0.25em;

@@ -111,7 +111,17 @@ function populate_areas() {
         add_box(bbox);
     } else {
         // zoom to the UK as a default
-        zoom_to_area('GB');
+
+        // The map is hidden to begin with and needs to be initialised
+        // when it is first shown
+        $('body').bind('fieldsetview', function(event, id) {
+            if (id != 'spatial-search')
+                return;
+
+            map.updateSize();
+            zoom_to_area('GB');
+            $(this).unbind(event); // we don't need this event any more
+        });
     }
 }
 
@@ -216,20 +226,31 @@ $(function() {
     <kbd>troposphere</kbd>.</p>
     </div>
   </fieldset>
-  <fieldset>
-    <legend>Date range</legend>
-    <div>Match data that overlaps the period:</div>
-    <div> from <input type="text" name="sd" id="start-date" maxlength="10" size="10"\
-  %if start_date:
- value="${start_date}"
-  %endif
-/> to 
-     <input type="text" name="ed" id="end-date" maxlength="10" size="10"\
-  %if end_date:
- value="${end_date}"
-  %endif
-/> <input type="submit" value="search"/></div>
-    <div>Dates should be in the format <strong>YYYY-MM-DD</strong>.</div>
+  <fieldset id="date-search"\
+    %if not start_date and not end_date:
+ class="off"\
+    %endif
+>
+    <legend><a href="javascript:toggle_fieldset('date-search')" title="Show or hide the date range">Date range</a></legend>
+    <div\
+    %if not start_date and not end_date:
+ style="display:none"\
+    %endif
+>
+
+      <div>Match data that overlaps the period:</div>
+      <div> from <input type="text" name="sd" id="start-date" maxlength="10" size="10"\
+    %if start_date:
+   value="${start_date}"
+    %endif
+  /> to 
+       <input type="text" name="ed" id="end-date" maxlength="10" size="10"\
+    %if end_date:
+   value="${end_date}"
+    %endif
+  /> <input type="submit" value="search"/></div>
+      <div>Dates should be in the format <strong>YYYY-MM-DD</strong>.</div>
+    </div>
   </fieldset>
 
   %if sort:
@@ -244,19 +265,29 @@ ${','.join(bbox)}\
   %endif
 " />
 
-  <fieldset>
-    <legend>Geographic search</legend>
-    <div>
-      <select name="a" id="area">
-        <option value="">Select an area...</option>
-        <optgroup id="british-isles" label="British Isles"></optgroup>
-        <optgroup id="countries" label="Countries"></optgroup>
-      </select>
-      <input type="submit" value="search"/>
-      <input type="button" onclick="javascript:clear_area()" value="clear area"/>
-    </div>
-    <div id="map-holder">
-      <div id="map"></div>
+  <fieldset id="spatial-search"\
+    %if not area and not bbox:
+ class="off"\
+    %endif
+>
+    <legend><a href="javascript:toggle_fieldset('spatial-search')" title="Show or hide the geographic search">Geographic search</a></legend>
+    <div\
+    %if not area and not bbox:
+ style="display:none"\
+    %endif
+>
+      <div>
+        <select name="a" id="area">
+          <option value="">Select an area...</option>
+          <optgroup id="british-isles" label="British Isles"></optgroup>
+          <optgroup id="countries" label="Countries"></optgroup>
+        </select>
+        <input type="submit" value="search"/>
+        <input type="button" onclick="javascript:clear_area()" value="clear area"/>
+      </div>
+      <div id="map-holder">
+        <div id="map"></div>
+      </div>
     </div>
   </fieldset>
 </form>
