@@ -41,7 +41,13 @@ ${query_string}\
     <meta name="itemsPerPage" content="${count}"/>
 </%def>
 
-<p>You can <a href="${script_root}/full${query_string}" title="Edit this search">amend your search</a>.</p>
+%if hits == 0:
+<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> to make it less restrictive.</p>
+<%return '' %>
+%endif
+
+<p>Not the results you're looking for? You
+  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>.</p>
 <p>Your search returned <strong>${hits}</strong>
 % if hits != 1:
 results.

@@ -149,7 +149,10 @@ class Results(MakoApp):
                    updated = r.updated,
                    results=results)
 
-        title = 'Catalogue page %d of %d' % (r.current_page, r.page_count)
+        if r.hits:
+            title = 'Catalogue page %d of %d' % (r.current_page, r.page_count)
+        else:
+            title = 'Catalogue results'
         if search_term:
             title += ' for: %s' % search_term
 
@@ -570,6 +573,9 @@ def wsgi_app():
     #smtp_handler.setLevel(logging.ERROR)
     #logger.addHandler(smtp_handler)
     logger.setLevel(logging.DEBUG)
+    #scl = logging.getLogger('suds.client')
+    #scl.setLevel(logging.DEBUG)
+    #scl.addHandler(logging.StreamHandler())
     application = WSGILog(application, logger)
 
     # add the Environ configuration middleware
