@@ -71,3 +71,6 @@ blockquote {
     background-image:url('/images/area-fill.png');
     background-repeat: repeat;
 }
+#version {
+    text-align: right;
+}

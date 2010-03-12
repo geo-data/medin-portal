@@ -86,13 +86,18 @@ class MakoApp(object):
             path = path % template
         return lookup.get_template(path)
 
-    def get_template_vars(self, environ, title, **kwargs):        
+    def get_template_vars(self, environ, title, **kwargs):
+        from medin import __version__ as version
+        from datetime import date
+        
         vars = dict(title=title,
                     request_uri=environ.request_uri(),
                     http_root=environ.http_uri(),
                     script_root=environ.script_uri(),
                     resource_root=environ.resource_uri(),
                     log=environ['logging.handler'].records(),
+                    version=version,
+                    year=date.today().year,
                     environ=environ)
 
         # Add some useful environment variables to the template

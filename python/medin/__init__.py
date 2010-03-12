@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.7
+__version__ = 0.8
 
 from errata import HTTPError
 
