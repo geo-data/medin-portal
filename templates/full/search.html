@@ -125,12 +125,52 @@ function populate_areas() {
     }
 }
 
+function init_date(id) {
+    var input = $('#'+id);
+    var text = $('#'+id+'-text');
+
+    // a function to initialise the date picker
+    var init_datepicker = function() {
+        input.datepicker({onClose: function(date, picker) {
+            if (!date) {
+                input.hide();
+                text.show();
+            }
+        }});
+    }
+
+    var has_date = input.val();
+    // initialise the date picker if a date is present
+    if (has_date) {
+        init_datepicker();
+    }
+
+    text.one('click', function() {
+        $(this).hide();
+        input.show();
+
+        // initialise the date picker if there was no initial date
+        if (!has_date) {
+            init_datepicker();
+        }
+        
+        input.datepicker('show');
+        
+        // for subsequent clicks
+        text.click(function() {
+            $(this).hide();
+            input.show();
+            input.datepicker('show');
+        });
+    });
+}
+
 // Initialise the page once loaded
 $(function() {
     // initialise the date pickers
     $.datepicker.setDefaults({ dateFormat: 'yy-mm-dd' });
-    $('#start-date').datepicker();
-    $('#end-date').datepicker();
+    init_date('start-date');
+    init_date('end-date');
 
     // initialise the mapping
     var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
@@ -239,14 +279,25 @@ $(function() {
 >
 
       <div>Match data that overlaps the period:</div>
-      <div> from <input type="text" name="sd" id="start-date" maxlength="10" size="10"\
+      <div> from <a id="start-date-text" href="#" title="Specify a start date" onclick="return false;"\
     %if start_date:
-   value="${start_date}"
+ style="display:none"\
     %endif
-  /> to 
-       <input type="text" name="ed" id="end-date" maxlength="10" size="10"\
+>the earliest record</a><input type="text" name="sd" id="start-date" maxlength="10" size="10"\
+    %if start_date:
+ value="${start_date}"\
+    %else:
+ style="display:none"\
+    %endif
+  /> to <a id="end-date-text" href="#" title="Specify an end date" onclick="return false;"\
     %if end_date:
-   value="${end_date}"
+ style="display:none"\
+    %endif
+>the latest record</a><input type="text" name="ed" id="end-date" maxlength="10" size="10"\
+    %if end_date:
+ value="${end_date}"\
+    %else:
+ style="display:none"\
     %endif
   /> <input type="submit" value="search"/></div>
       <div>Dates should be in the format <strong>YYYY-MM-DD</strong>.</div>
