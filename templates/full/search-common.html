@@ -34,4 +34,11 @@
       which are in <strong>your specified area</strong>
     %endif
     </span>
+    <p id="result-count"><strong>${hits}</strong> 
+    %if hits != 1:
+    results
+    %else:
+    result
+    %endif
+    returned in <strong>${'%.2f' % runtime}</strong> seconds.</p>
 </%def>

@@ -98,6 +98,7 @@ class MakoApp(object):
                     log=environ['logging.handler'].records(),
                     version=version,
                     year=date.today().year,
+                    runtime=environ['portal.timer'].runtime(),
                     environ=environ)
 
         # Add some useful environment variables to the template

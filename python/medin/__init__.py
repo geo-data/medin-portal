@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.9
+__version__ = 0.91
 
 from errata import HTTPError
 
@@ -138,9 +138,13 @@ class OpenSearch(MakoApp):
 
 class Search(MakoApp):
     def __init__(self):
+        from medin.dws import SearchRequest
+        self.request = SearchRequest()
         super(Search, self).__init__(['%s', 'search.html'])
 
     def setup(self, environ):
+        from medin.dws import DWSError, RESULT_SIMPLE
+        
         areas = get_areas(environ)
         q = get_query(environ)
         errors = q.verify()
@@ -148,8 +152,16 @@ class Search(MakoApp):
             for error in errors:
                 msg_error(environ, error)
 
-        search_term = q.getSearchTerm(cast=False)
+        # we need to get the number of hits for the query
         count = q.getCount()
+        q.setCount(0)
+        try:
+            r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
+        except DWSError, e:
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        q.setCount(count)               # reset the count to it's previous value
+
+        search_term = q.getSearchTerm(cast=False)
         sort = q.getSort(cast=False)
         bbox = q.getBBOX()
         start_date = q.getStartDate(cast=False)
@@ -161,6 +173,7 @@ class Search(MakoApp):
                     'countries': areas.countries()}
 
         tvars=dict(search_term=search_term,
+                   hits=r.hits,
                    criteria=criteria,
                    count=count,
                    sort=sort,
@@ -172,12 +185,120 @@ class Search(MakoApp):
 
         return TemplateContext('Search the MEDIN Data Archive Centres', tvars=tvars)
 
+class Navigation(object):
+    """
+    Responsible for creating navigation links
+    """
+
+    def __init__(self, hits, query):
+        from copy import deepcopy
+
+        self.hits = hits
+        self.count = query.getCount()
+        self._start_index = query.getStartIndex() - 1 # we use zero based indexing
+
+        # set the index of the final result in this page
+        self.end_index = self._start_index + self.count
+        if self.end_index > hits:
+            self.end_index = hits
+
+        #we make a copy as the query object is modified later
+        self._query = deepcopy(query)
+
+    @property
+    def start_index(self):
+        start_index = self._start_index + 1;
+        if start_index < 1:
+            start_index = 1
+        return start_index
+
+    @property
+    def current_page(self):
+        try:
+            return self._current_page
+        except AttributeError:
+            pass
+        
+        from math import ceil
+
+        pages_before = self._start_index / float(self.count)
+        self._current_page = int(ceil(pages_before)) + 1
+
+        return self._current_page
+
+    @property
+    def page_count(self):
+        try:
+            return self._page_count
+        except AttributeError:
+            pass
+        
+        from math import ceil
+        
+        pages_before = self._start_index / float(self.count)
+        pages_after = (self.hits - self._start_index) / float(self.count)
+        self._page_count = int(ceil(pages_before) + ceil(pages_after))
+
+        return self._page_count
+
+    def getNextLinks(self):
+        query = self._query
+        next_links = []
+        next_index = self._start_index + self.count
+        ic = 0
+        page = self.current_page
+        while page < self.page_count and ic < 5:
+            page += 1
+            ic += 1
+            query.setStartIndex(next_index + 1)
+            next_links.append({'page': page,
+                               'link': str(query)})
+            next_index += self.count
+
+        return next_links
+
+    def getLastLink(self):
+        query = self._query
+        if self.current_page < self.page_count:
+            query.setStartIndex(1 + self._start_index + (self.count * (self.page_count - self.current_page)))
+            return {'page': self.page_count,
+                    'link': str(query)}
+
+        return None
+
+    def getPrevLinks(self):
+        query = self._query
+        prev_links = []
+        prev_index = self._start_index - self.count
+        ic = 0
+        page = self.current_page
+        while page > 1 and ic < 5:
+            page -= 1
+            ic += 1
+            query.setStartIndex(prev_index + 1)
+            prev_links.insert(0, {'page': page,
+                                  'link': str(query)})
+            prev_index -= self.count
+
+        return prev_links
+
+    def getFirstLink(self):
+        query = self._query
+        if self.current_page > 1:
+            query.setStartIndex(1 + self._start_index - (self.count * (self.current_page-1)))
+            return {'page': 1,
+                    'link': str(query)}
+
+        return None
+
+
 class Results(MakoApp):
 
-    def __init__(self, path, headers):
+    def __init__(self, path, headers, result_type):
         from medin.dws import SearchRequest
         
         self.headers = headers
+        self.result_type = result_type
         self.request = SearchRequest()
         super(Results, self).__init__(path, check_etag=False)
 
@@ -192,45 +313,33 @@ class Results(MakoApp):
                 msg_error(environ, error)
 
         try:
-            r = self.request(q, environ['logging.logger'])
+            r = self.request(q, self.result_type, environ['logging.logger'])
         except DWSError, e:
             raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
 
-        timestamp = r.updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        updated = r.lastModified()
+        timestamp = updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
 
-        results = []
-        for id, title, author, abstract, updated, bbox in r.results:
-            results.append(dict(id=id,
-                                title=title,
-                                author=author,
-                                abstract=abstract,
-                                updated=updated,
-                                bbox=bbox))
-
-        start_index = r.start_index
-        if start_index < 1:
-            start_index = 1
-
-        search_term = r.search_term
-        
+        nav = Navigation(r.hits, q)
+        search_term = q.getSearchTerm(cast=False)
         tvars=dict(hits=r.hits,
-                   query=r.query,
+                   query=q,
+                   count = q.getCount(),
+                   updated = updated,
                    search_term = search_term,
-                   start_index = start_index,
-                   end_index = r.end_index,
-                   count = r.count,
-                   next_links = r.next_links,
-                   prev_links = r.prev_links,
-                   last_link = r.last_link,
-                   first_link = r.first_link,
-                   current_page = r.current_page,
-                   page_count = r.page_count,
-                   updated = r.updated,
-                   results=results)
+                   start_index = nav.start_index,
+                   end_index = nav.end_index,
+                   next_links = nav.getNextLinks(),
+                   prev_links = nav.getPrevLinks(),
+                   last_link = nav.getLastLink(),
+                   first_link = nav.getFirstLink(),
+                   current_page = nav.current_page,
+                   page_count = nav.page_count,
+                   results=list(r))
 
         if r.hits:
-            title = 'Catalogue page %d of %d' % (r.current_page, r.page_count)
+            title = 'Catalogue page %d of %d' % (nav.current_page, nav.page_count)
         else:
             title = 'Catalogue results'
         if search_term:
@@ -247,8 +356,10 @@ class Results(MakoApp):
 
 class HTMLResults(Results):
     def __init__(self):
+        from medin.dws import RESULT_BRIEF
+        
         headers = [('Content-type', 'text/html')]
-        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers)
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers, RESULT_BRIEF)
 
     def setup(self, environ):
         from copy import deepcopy
@@ -273,14 +384,46 @@ class HTMLResults(Results):
 
 class RSSResults(Results):
     def __init__(self):
+        from medin.dws import RESULT_SUMMARY
+
         headers = [('Content-type', 'application/rss+xml')]
-        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'], headers)
+        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'], headers, RESULT_SUMMARY)
 
 class AtomResults(Results):
     def __init__(self):
-        headers = [('Content-type', 'application/atom+xml')]
-        super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], headers)
+        from medin.dws import RESULT_SUMMARY
 
+        headers = [('Content-type', 'application/atom+xml')]
+        super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], headers, RESULT_SUMMARY)
+
+class ResultSummary(object):
+
+    def __init__(self):
+        from medin.dws import SearchRequest
+        
+        self.request = SearchRequest()
+
+    def __call__(self, environ, start_response):
+        from medin.dws import DWSError, RESULT_SIMPLE
+        from json import dumps as tojson
+
+        q = get_query(environ)
+        q.setCount(0)                   # we don't need any results
+        
+        try:
+            r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
+        except DWSError, e:
+            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+
+        json = tojson({'status': bool(r),
+                       'hits': r.hits,
+                       'time': environ['portal.timer'].runtime()})
+        
+        headers = [('Content-type', 'application/json')]
+
+        start_response('200 OK', headers)
+        return [json]
+    
 class ResultFormat(object):
 
     def __init__(self, default, formats):
@@ -621,6 +764,35 @@ def get_bbox(environ, start_response):
     start_response('200 OK', headers)
     return [json] 
 
+class Timer(object):
+    """
+    Class that performs basic time profiling
+
+    The time in fractional seconds since the class was instantiated
+    can be retrieved using the runtime() method.
+    """
+
+    def __init__(self):
+        from time import time
+        self.start = time()
+
+    def runtime(self):
+        from time import time
+        return time() - self.start
+
+class WSGITimer(object):
+    """
+    WSGI Middleware that adds a timer to the environ dictionary
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        environ['portal.timer'] = Timer()
+
+        return self.app(environ, start_response)
+
 class Selector(selector.Selector):
     status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
 
@@ -654,8 +826,11 @@ def wsgi_app():
     # the default entry point for the search
     application.add('/{template}[/]', GET=Search())
 
-    # the default entry point for the search
+    # the API for analysing search criteria passed in via GET parameters
     application.add('/{template}/query.json', GET=query_criteria)
+
+    # retrieve the result summary for a query
+    application.add('/{template}.json', GET=ResultSummary())
 
     # create the app to return the required formats
     result_formats = medin.ResultFormat(HTMLResults, {'rss': RSSResults,
@@ -698,5 +873,8 @@ def wsgi_app():
 
     # add the Environ configuration middleware
     application = Config(application)
+
+    # start the timer
+    application = WSGITimer(application)
 
     return application

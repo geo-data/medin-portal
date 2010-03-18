@@ -78,6 +78,22 @@ function check_query() {
                     area.append('<span>which are in <strong>your specified area</strong></span>');
             },
             dataType: 'json'});
+
+    // if the query has changed we also need to update the result
+    // details
+    update_results();
+}
+
+function update_results() {
+    var url = script_root+'/full.json?'+$('#search-form').serialize();
+    $.ajax({url: url,
+            success: function(results) {
+                var block = $('#result-count').empty();
+                block.append('<span><strong>'+results['hits']+'</strong> '+
+                             ((results['hits'] != 1) ? 'results' : 'result')
+                             +' returned in <strong>'+results['time'].toFixed(2)+'</strong> seconds.</span>');
+            },
+            dataType: 'json'});
 }
 
 var _areas = {}                 // for caching bboxes

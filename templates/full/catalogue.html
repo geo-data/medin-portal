@@ -149,7 +149,7 @@ ${result_links()}
   <tr>
     <td>${start_index+i}.</td>
     <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
-    <td>${res['author']}</td>
+    <td>${res['originator']}</td>
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
   </tr>
 % endfor

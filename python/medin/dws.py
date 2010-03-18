@@ -3,6 +3,10 @@ import os
 # Third party modules
 import suds                             # for the SOAP client
 
+RESULT_SIMPLE = 1
+RESULT_BRIEF = 2
+RESULT_SUMMARY = 3
+
 class DWSError(Exception):
 
     def __init__(self, msg, status=500):
@@ -44,95 +48,6 @@ class Request(object):
                 else:
                     msg = 'The Discovery Web Service failed: %s' % reason
                 raise DWSError(msg, status)
-
-class SearchResponse(object):
-
-    def __init__(self, hits, results, query):
-        from copy import deepcopy
-
-        self.hits = hits
-        self.results = results
-        self.count = query.getCount()
-        self.search_term = query.getSearchTerm(cast=False)
-        self.start_index = query.getStartIndex() - 1 # we use zero based indexing
-
-        # set the index of the final result in this page
-        self.end_index = self.start_index + self.count
-        if self.end_index > hits:
-            self.end_index = hits
-
-        try:
-            self.updated = max((r[-2] for r in results))
-        except ValueError:
-            from datetime import datetime
-            self.updated = datetime.utcnow()
-
-        # The functionality from here down should move to the
-        # medin.Result object
-
-        #we make a copy as the query object is modified later
-        self.query = deepcopy(query)
-
-        self._setPageCounts()
-        self._setFirstLink(query)
-        self._setLastLink(query)
-        self._setPrevLinks(query)
-        self._setNextLinks(query)
-
-        # bump the start index back to where people expect it to be
-        self.start_index += 1
-
-    def _setPageCounts(self):
-        from math import ceil
-        
-        pages_before = self.start_index / float(self.count)
-        self.current_page = int(ceil(pages_before)) + 1
-        pages_after = (self.hits - self.start_index) / float(self.count)
-        self.page_count = int(ceil(pages_before) + ceil(pages_after))
-
-    def _setNextLinks(self, query):
-        next_links = []
-        next_index = self.start_index + self.count
-        ic = 0
-        page = self.current_page
-        while page < self.page_count and ic < 5:
-            page += 1
-            ic += 1
-            query.setStartIndex(next_index + 1)
-            next_links.append({'page': page,
-                               'link': str(query)})
-            next_index += self.count
-        self.next_links = next_links
-
-    def _setLastLink(self, query):
-        if self.current_page < self.page_count:
-            query.setStartIndex(1 + self.start_index + (self.count * (self.page_count - self.current_page)))
-            self.last_link = {'page': self.page_count,
-                              'link': str(query)}
-        else:
-            self.last_link = None
-
-    def _setPrevLinks(self, query):
-        prev_links = []
-        prev_index = self.start_index - self.count
-        ic = 0
-        page = self.current_page
-        while page > 1 and ic < 5:
-            page -= 1
-            ic += 1
-            query.setStartIndex(prev_index + 1)
-            prev_links.insert(0, {'page': page,
-                                  'link': str(query)})
-            prev_index -= self.count
-        self.prev_links = prev_links
-
-    def _setFirstLink(self, query):
-        if self.current_page > 1:
-            query.setStartIndex(1 + self.start_index - (self.count * (self.current_page-1)))
-            self.first_link = {'page': 1,
-                               'link': str(query)}
-        else:
-            self.first_link = None
 
 class TermBuilder(object):
     """
@@ -188,10 +103,131 @@ class TermBuilder(object):
 
         return terms
 
-class SearchRequest(Request):
+class SearchResponse(object):
+    """
+    Interface to DWS search responses
+    
+    An Abstract class providing an interface to a Response as returned
+    by the DWS
+    """
+
+    doc_type = None                     # the DWS document request type
+    
+    def __init__(self, reply, count):
+        self.reply = reply              # the raw DWS reply
+        self.count = count
+
+    @property
+    def message(self):
+        return self.reply.StatusMessage
+
+    @property
+    def hits(self):
+        return self.reply.Hits
+
+    def _processDocument(self, doc):
+        return doc
+
+    def __nonzero__(self):
+        """
+        Return True if the response is valid, False otherwise
+        """
+        return self.reply.Status
+
+    def __len__(self):
+        if self and self.count:
+            return len(getattr(self.reply.Documents, self.doc_type))
+        return 0
+
+    def __iter__(self):
+        if self and self.count:
+            docs = getattr(self.reply.Documents, self.doc_type)
+        else:
+            docs = []
+
+        for doc in docs:
+            yield self._processDocument(doc)
+
+class SimpleResponse(SearchResponse):
+
+    doc_type = 'DocumentSimple'
+
+    def _processDocument(self, doc):
+        return doc.DocumentId
+
+class BriefResponse(SearchResponse):
+
+    doc_type = 'DocumentBrief'
+
+    def lastModified(self):
+        """
+        Last modification date for the response
+        """
+
+        # the last modification date is the most recent date in the
+        # results
+        try:
+            return max((r['updated'] for r in self))
+        except ValueError:
+            from datetime import datetime
+            return datetime.utcnow()
+
+    # this function needs to be modified when the DWS has been fixed
+    # to return the correct fields
+    def _processDocument(self, doc):
+        from datetime import datetime
         
-    def __call__(self, query, logger):
-        from query import QueryError
+        def to_list(field):
+            if hasattr(field, 'split'):
+                return [e.strip() for e in field.split(';')]
+            return []
+        
+        i = doc.AdditionalInformation
+        return {'id': doc.DocumentId,
+                'title': doc.Title,
+                'updated': datetime.now(),
+                'authors': to_list(i.Authors),
+                'resource-type': i.ResourceType,
+                'topic-category': i.TopicCategory,
+                'lineage': i.Lineage,
+                'public-access': i.LimitationsPublicAccess,
+                'originator': i.DataOriginator,
+                'parameters': to_list(i.Parameters)}
+
+class SummaryResponse(BriefResponse):
+
+    doc_type = 'DocumentSummary'
+
+    # this function needs to be modified when the DWS has been fixed
+    # to return the correct fields. It can then extend the
+    # BriefResponse implementation.
+    def _processDocument(self, doc):
+        from datetime import datetime
+        
+        return {'id': doc.DocumentId,
+                'title': doc.Title,
+                'updated': datetime.now(),
+                'abstract': doc.Abstract,
+                'bbox': [-180.0, -90.0, 180.0, 90],
+                'authors': [],
+                'resource-type': None,
+                'topic-category': None,
+                'lineage': None,
+                'public-access': None,
+                'originator': None,
+                'parameters': []}
+
+class SearchRequest(Request):
+
+    _result_map = {RESULT_SIMPLE: SimpleResponse,
+                   RESULT_BRIEF: BriefResponse,
+                   RESULT_SUMMARY: SummaryResponse}
+
+    def __call__(self, query, result_type, logger):
+        try:
+            ResponseClass = self._result_map[result_type]
+        except KeyError:
+            raise ValueError('Unknown result type: %s' % str(result_type))
 
         count = query.getCount()
         search_term = query.getSearchTerm(skip_errors=True)
@@ -202,7 +238,7 @@ class SearchRequest(Request):
 
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
-        retrieve.RecordDetail = 'DocumentBrief' # we want brief results
+        retrieve.RecordDetail = ResponseClass.doc_type
 
         # construct the SearchCriteria
         search = self.client.factory.create('ns0:SearchCriteria')
@@ -221,6 +257,7 @@ class SearchRequest(Request):
              search.SpatialSearch.BoundingBox.LimitNorth) = bbox
             search.SpatialSearch.SpatialOperator = 'Overlaps'
 
+        # add the temporal criteria
         start = query.getStartDate()
         if start:
             start_date = self.client.factory.create('ns0:DateValueType')
@@ -234,36 +271,27 @@ class SearchRequest(Request):
             end_date.DateValue = end.strftime('%Y-%m-%d')
             end_date.TemporalOperator = "OnOrBefore"
             search.TemporalSearch.DateRange.Date.append(end_date)
+
+        # work around the fact that the DWS can't be asked to return
+        # zero results
+        if count > 0:
+            dws_count = count
+        else:
+            dws_count = 1;
         
         # send the query to the DWS
-        response = self._callService(self.client.service.doSearch, search, retrieve, query.getStartIndex(), count )
+        response = ResponseClass(self._callService(self.client.service.doSearch,
+                                                   search,
+                                                   retrieve,
+                                                   query.getStartIndex(),
+                                                   dws_count),
+                                 count)
 
-        status = response.Status
-        message = response.StatusMessage
-        hits = response.Hits
+        if not response:
+            if response.message != 'Search was successful but generated no results.':
+                raise DWSError('The Discovery Web Service failed: %s' % response.message)
 
-        if not status:
-            if message != 'Search was successful but generated no results.':
-                raise DWSError('The Discovery Web Service failed: %s' % message)
-            documents = []
-        else:
-            documents = response.Documents.DocumentBrief
-
-        results = []
-        from datetime import datetime
-        for result in documents:
-            fields = result.AdditionalInformation
-            gid = result.DocumentId
-            title = result.Title
-            abstract = 'Test'
-            originator = fields.DataOriginator
-            date = datetime.now()
-            bbox = [-180.0, -90.0, 180.0, 90]
-            entry = (gid, title, originator, abstract, date, bbox)
-
-            results.append(entry)
-
-        return SearchResponse(hits, results, query)
+        return response
 
 # a decorator that ensures the xpath context is correct
 def _assignContext(f):
