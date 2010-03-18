@@ -152,7 +152,7 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens):
+    def __call__(self, tokens, skip_errors=True):
         # If there aren't any tokens we need to do a full text search
         if not tokens:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
@@ -178,7 +178,9 @@ class TermBuilder(object):
             try:
                 term.TermTarget = self.targets[target.lower()]
             except KeyError:
-                raise ValueError('The following target is not recognised: %s' % target)
+                if not skip_errors:
+                    raise ValueError('The following target is not recognised: %s' % target)
+                term.TermTarget = self.targets['']
                 
             term._id = i+1
             term._operator = op
@@ -192,7 +194,7 @@ class SearchRequest(Request):
         from query import QueryError
 
         count = query.getCount()
-        search_term = query.getSearchTerm()
+        search_term = query.getSearchTerm(skip_errors=True)
 
         # do a sanity check on the start index
         if query.getStartIndex() < (1 - count):

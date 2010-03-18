@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.8
+__version__ = 0.9
 
 from errata import HTTPError
 
@@ -50,7 +50,80 @@ def get_query(environ):
     except KeyError:
         qsl = ''
 
-    return Query(qsl)
+    return Query(qsl, get_areas(environ))
+
+def get_areas(environ):
+    """
+    Returns the area interface
+
+    Because this object references the thread sensitive sqlite
+    database this function returns an object which is unique to the
+    calling thread.
+    """
+    from thread import get_ident
+
+    thread_id = get_ident()
+    
+    global _areas
+    try:
+        return _areas[thread_id]
+    except NameError:
+        _areas = {}
+        pass
+    except KeyError:
+        pass
+
+    from medin.spatial import Areas
+    
+    areas = _areas[thread_id] = Areas(get_db(environ))
+    return areas
+
+def get_db(environ):
+    """
+    Returns the portal sqlite database object
+
+    The database object is unique to the calling thread to ensure
+    thread related problems such as database locking are avoided.
+    """
+    from thread import get_ident
+
+    thread_id = get_ident()
+    global _dbs
+    try:
+        return _dbs[thread_id]
+    except NameError:
+        _dbs = {}
+        pass
+    except KeyError:
+        pass
+
+    import os.path, sqlite3
+    filepath = os.path.join(environ.root, 'data', 'portal.sqlite')
+    
+    db = _dbs[thread_id] = sqlite3.connect(filepath)
+    return db
+
+# Utility classes
+
+class Proxy:
+    """
+    Proxy class
+
+    This class wraps an object. It passes all unhandled attribute
+    calls to the underlying object. This enables the proxy to override
+    the underlying object's attributes. In practice this works like
+    runtime inheritance.
+    """
+
+    def __init__(self, obj):
+        self.__obj = obj
+
+    def __getattr__(self, name):
+        """
+        Delegate unhandled attributes to the wrapped object
+        """
+        
+        return getattr(self.__obj, name)
 
 # The WSGI Applications
 
@@ -68,26 +141,33 @@ class Search(MakoApp):
         super(Search, self).__init__(['%s', 'search.html'])
 
     def setup(self, environ):
+        areas = get_areas(environ)
         q = get_query(environ)
         errors = q.verify()
         if errors:
             for error in errors:
                 msg_error(environ, error)
-        
+
         search_term = q.getSearchTerm(cast=False)
         count = q.getCount()
         sort = q.getSort(cast=False)
         bbox = q.getBBOX()
         start_date = q.getStartDate(cast=False)
         end_date = q.getEndDate(cast=False)
-        area = q.getArea()
+        area = q.getArea(cast=False)
+        criteria = q.asDict(False)
+
+        area_ids = {'british-isles': areas.britishIsles(),
+                    'countries': areas.countries()}
 
         tvars=dict(search_term=search_term,
+                   criteria=criteria,
                    count=count,
                    sort=sort,
                    start_date=start_date,
                    end_date=end_date,
                    area=area,
+                   area_ids=area_ids,
                    bbox=bbox)
 
         return TemplateContext('Search the MEDIN Data Archive Centres', tvars=tvars)
@@ -176,6 +256,8 @@ class HTMLResults(Results):
         # create the data structure for the template sort logic
         ctxt = super(HTMLResults, self).setup(environ)
         query = deepcopy(ctxt.tvars['query'])
+        ctxt.tvars['criteria'] = query.asDict(False)
+        #ctxt.tvars['criteria'] = {'area': None, 'bbox': None, 'terms': [], 'dates': {}}
 
         sorts = {}
         cur_sort, cur_asc = query.getSort(default=('',''))
@@ -299,7 +381,7 @@ class MetadataKML(Metadata):
 
         return TemplateContext(title, tvars=tvars, headers=headers)
 
-class EnvironProxy:
+class EnvironProxy(Proxy):
     """
     Proxy for the environ object providing extra configuration info
 
@@ -309,6 +391,8 @@ class EnvironProxy:
     """
 
     def __init__(self, environ):
+        Proxy.__init__(self, environ)
+        
         try:
             root = environ['PORTAL_ROOT']
         except KeyError:
@@ -321,15 +405,6 @@ class EnvironProxy:
 
         self.root = root.rstrip(os.path.sep)
         
-        self.__environ = environ
-
-    def __getattr__(self, name):
-        """
-        Delegate unhandled attributes to the environment dictionary
-        """
-        
-        return getattr(self.__environ, name)
-
     def script_path(self):
         """
         Returns path info after the script name
@@ -509,6 +584,43 @@ class TemplateChoice(MakoApp):
     def setup(self, environ):
         return TemplateContext('Choose Your Search Format')
 
+def query_criteria(environ, start_response):
+    from json import dumps as tojson
+    
+    q = get_query(environ)
+    
+    # Check if the client needs a new version
+    etag = check_etag(environ, str(q))
+
+    json = tojson(q.asDict())
+    
+    headers = [('Content-Type', 'application/json'),
+               ('Etag', etag)]
+    
+    start_response('200 OK', headers)
+    return [json]
+
+def get_bbox(environ, start_response):
+    from json import dumps as tojson
+    from medin.spatial import Areas
+
+    aid = environ['selector.vars']['id'] # the area ID
+    
+    # Check if the client needs a new version
+    etag = check_etag(environ, aid)
+
+    bbox = Areas(get_db(environ)).getBBOX(aid)
+    if not bbox:
+        raise HTTPError('404 Not Found', 'The area id does not exist: %s' % aid)
+
+    json = tojson(bbox)
+    
+    headers = [('Content-Type', 'application/json'),
+               ('Etag', etag)]
+    
+    start_response('200 OK', headers)
+    return [json] 
+
 class Selector(selector.Selector):
     status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
 
@@ -530,6 +642,9 @@ def wsgi_app():
     application.parser.patterns['tms'] = r'/.*'
     application.add('/spatial/tms[{req:tms}]', _ANY_=tilecache) # for TMS requests to tilecache
 
+    # provide an API to the areas
+    application.add('/spatial/areas/{id:word}/extent.json', GET=get_bbox)
+
     # provide a choice of templates
     application.add('[/]', GET=TemplateChoice())
 
@@ -538,6 +653,9 @@ def wsgi_app():
 
     # the default entry point for the search
     application.add('/{template}[/]', GET=Search())
+
+    # the default entry point for the search
+    application.add('/{template}/query.json', GET=query_criteria)
 
     # create the app to return the required formats
     result_formats = medin.ResultFormat(HTMLResults, {'rss': RSSResults,

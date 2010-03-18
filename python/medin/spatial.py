@@ -1,6 +1,60 @@
 import sys, traceback, os
 from TileCache.Service import Service, Layer, Cache, wsgiHandler  # for our TileCache service
 
+class Areas(object):
+    """
+    Interface for interacting with areas stored in a sqlite database
+    """
+
+    def __init__(self, db):
+        self._db = db
+
+    def getArea(self, id):
+        cur = self._db.cursor()
+        cur.execute('SELECT name, minx, miny, maxx, maxy FROM areas WHERE id = ?', (id,))
+        res = cur.fetchone()
+        if res:
+            return (res[0], tuple(res[1:]))
+        return None
+
+    def getAreaName(self, id):
+        cur = self._db.cursor()
+        cur.execute('SELECT name FROM areas WHERE id = ?', (id,))
+        area = cur.fetchone()
+        if area:
+            return area[0]
+        return None
+
+    def getBBOX(self, id):
+        cur = self._db.cursor()
+        cur.execute('SELECT minx, miny, maxx, maxy from areas where id = ?', (id,))
+        bbox = cur.fetchone()
+        if bbox:
+            return bbox
+        return None
+
+    def countries(self):
+        cur = self._db.cursor()
+        cur.execute('SELECT id, name FROM countries ORDER BY name')
+        return [row for row in cur]
+
+    def britishIsles(self):
+        cur = self._db.cursor()
+        cur.execute('SELECT id, name FROM british_isles')
+        return [row for row in cur]
+
+    def __deepcopy__(self, memo):
+        """
+        Return a deepcopy of the current instance
+        
+        We don't want to make a deep copy of the database connection,
+        as that is shared between copies. Not sharing it results in
+        the database closing when an Areas instance is deleted, which
+        affects all other copies in existence.
+        """
+        
+        return self.__class__(self._db)
+
 class TileService(Service):
     """Extends TileCache.Service to enhance configuration sources
 

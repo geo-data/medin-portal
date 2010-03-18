@@ -1,0 +1,37 @@
+<%def name="search_criteria()">\
+    <div class="box-title">You are searching for...</div>
+    <span id="criteria-term">
+    %if not criteria['terms'] and not criteria['dates'] and not criteria['area'] and not criteria['bbox']:
+      <strong>everything</strong> in the catalogue.
+    %elif not criteria['terms']:
+      <strong>everything</strong>
+    %else:
+      documents containing 
+    %endif
+    %for term in criteria['terms']:
+      %if term['op']:
+      <strong>${term['op']}</strong> 
+      %endif
+      <kbd>${term['word']}</kbd> 
+      %if term['target'][0] and term['target'][1]:
+      (in ${term['target'][1]})
+      %elif term['target'][0] and not term['target'][1]:
+      (<span class="error">ignoring unknown target <strong>${term['target'][0]}</strong></span>)
+      %endif
+    %endfor
+    </span><span id="criteria-date">
+    %if 'start' in criteria['dates'] and 'end' in criteria['dates']:
+      between <strong>${criteria['dates']['start']}</strong> and <strong>${criteria['dates']['end']}</strong>
+    %elif 'start' in criteria['dates']:
+      since <strong>${criteria['dates']['start']}</strong>
+    %elif 'end' in criteria['dates']:
+      before <strong>${criteria['dates']['end']}</strong>
+    %endif
+    </span><span id="criteria-area">
+    %if criteria['area']:
+      which are in <strong>${criteria['area']}</strong>
+    %elif criteria['bbox']:
+      which are in <strong>your specified area</strong>
+    %endif
+    </span>
+</%def>

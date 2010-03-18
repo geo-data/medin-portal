@@ -1,5 +1,7 @@
 <%def name="header()">
 </%def>
+<%def name="left_menu()">
+</%def>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head profile="http://a9.com/-/spec/opensearch/1.1/">
@@ -83,7 +85,8 @@
           <div class="p7bottom"><a href="http://www.oceannet.org/marine_data_standards/" id="marine_data_standards" tabindex="29" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Marine data standards</a></div>
           <div class="p7vbottom"><a href="http://www.oceannet.org/library/" id="library" tabindex="32" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Library</a></div>
         </div>
-        <div class="clear"></div>				
+        <div class="clear"></div>
+        ${self.left_menu()}
         </div>
 
         <div id="bodycontent_wide">
@@ -93,12 +96,12 @@
           
           ${next.body()}
 
-          <!--pre>
+          <pre>
 <%
 from pprint import pformat
 context.write(pformat(context.kwargs))
 %>
-          </pre-->
+          </pre>
           <!-- SwishCommand noindex -->
         </div>		
       </div>

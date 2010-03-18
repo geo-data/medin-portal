@@ -1,3 +1,4 @@
+<%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>
 
 <%def name="header()">
@@ -29,6 +30,7 @@ var area = '${area}';
 %else:
 var area = null;
 %endif
+var script_root = '${script_root}';
 
 function add_box(extent) {
     clear_box();                // remove any previous box
@@ -62,45 +64,36 @@ function clear_box() {
 }
 
 function zoom_to_area(id) {
-    var tbbox = get_bbox(id);
-    if (!tbbox)
-        return false;
+    get_bbox(id, function(ttbox) {
+        if (!tbbox)
+            return false;
 
-    map.zoomToExtent(OpenLayers.Bounds.fromArray(tbbox));
-    return true;
+        map.zoomToExtent(OpenLayers.Bounds.fromArray(tbbox));
+        return true;
+    });
 }
 
 // Populate the area selection control
 function populate_areas() {
     var select = $('#area');
 
-    var optgroup = select.find('#british-isles');
-    var areas = get_british_isles();
-    for (var i = 0; i < areas.length; i++) {
-        var id = areas[i][0];
-        var name = areas[i][1];
-        optgroup.append('<option value="'+id+'">'+name+'</option>');
-    }
-
-    optgroup = select.find('#countries');
-    areas = get_countries();
-    for (var i = 0; i < areas.length; i++) {
-        var id = areas[i][0];
-        var name = areas[i][1];
-        optgroup.append('<option value="'+id+'">'+name+'</option>');
-    }
-
     // ensure a bbox is created when an area is selected
     select.change(function() {
         var id = $(this).attr('value');
-        var tbbox = get_bbox(id);
-        if (!tbbox) {
+        if (!id) {
             clear_box();
             return;
         }
+        
+        get_bbox(id, function(tbbox) {
+            if (!tbbox) {
+                clear_box();
+                return;
+            }
 
-        var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
-        add_box(extent);
+            var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
+            add_box(extent);
+        });
     });
 
     // if there's an existing area, select it
@@ -131,18 +124,27 @@ function init_date(id) {
 
     // a function to initialise the date picker
     var init_datepicker = function() {
-        input.datepicker({onClose: function(date, picker) {
-            if (!date) {
-                input.hide();
-                text.show();
+        input.datepicker({
+            onClose: function(new_date, picker) {
+                if (!new_date) {
+                    input.hide();
+                    text.show();
+                }
+            },
+            onSelect: function(date, picker) {
+                // trigger the change event, which is used by the
+                // query checking code.
+                input.change();
             }
-        }});
+        });
     }
 
     var has_date = input.val();
     // initialise the date picker if a date is present
     if (has_date) {
         init_datepicker();
+        text.hide();
+        input.show();
     }
 
     text.one('click', function() {
@@ -185,20 +187,45 @@ $(function() {
                                       "${script_root}/spatial/tms/",
                                       { layername: 'bathymetry', type: 'png' } );
     map.addLayer(layer);
-    map.addControl(new OpenLayers.Control.Permalink());
 
     boxes = new OpenLayers.Layer.Boxes("boxes");
     map.addLayer(boxes);
 
     // add the area selections
     populate_areas();
+
+    // add the user input checks to the form so that when input is
+    // updated it is checked on the server.
+    $('#search-form input[type=text], select').change(function() {
+        check_query();
+    });
+
+    // if the current form contents don't match the original query
+    // string (i.e. the user has pressed the back button), then check
+    // the query
+    if ('${query_string}' != '?'+$('#search-form').serialize())
+        check_query();
 });
 
         // -->
     </script>
 </%def>
 
-<form method="GET" action="${resource_root}/catalogue">
+<%def name="left_menu()">\
+<div id="menu-contents">&nbsp;
+  <div class="box">
+    ${search_criteria()}
+  </div>
+</div>
+</%def>
+
+<%def name="area_selection(area_id)">\
+    %for id, name in area_ids[area_id]:
+<option value="${id}">${name}</option>
+    %endfor
+</%def>
+
+<form id="search-form" method="GET" action="${resource_root}/catalogue">
   <fieldset>
     <legend>Search term</legend>
     <input type="text" name="q" size="30"\
@@ -330,8 +357,12 @@ ${','.join(bbox)}\
       <div>
         <select name="a" id="area">
           <option value="">Select an area...</option>
-          <optgroup id="british-isles" label="British Isles"></optgroup>
-          <optgroup id="countries" label="Countries"></optgroup>
+          <optgroup id="british-isles" label="British Isles">
+${area_selection('british-isles')}
+          </optgroup>
+          <optgroup id="countries" label="Countries">
+${area_selection('countries')}
+          </optgroup>
         </select>
         <input type="submit" value="search"/>
         <input type="button" onclick="javascript:clear_area()" value="clear area"/>

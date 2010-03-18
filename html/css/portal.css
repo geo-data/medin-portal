@@ -39,7 +39,7 @@ div.subitem {
 .selected {
     color: #37C5F5;
 }
-#bodycontent_wide .error {
+#bodycontent_wide p.error {
     border-style:groove;
     border-color: #A00000;
     background-color: #F8B8B8;
@@ -83,9 +83,10 @@ legend a:visited {
 blockquote {
     margin-left: 1.5em;
 }
-#bodycontent_wide kbd {
+#bodycontent_wide kbd, #menu-contents kbd {
     font-size: 9pt;
     color: black;
+    background:#eee;
 }
 .area {
     background-image:url('/images/area-fill.png');
@@ -93,4 +94,31 @@ blockquote {
 }
 #version {
     text-align: right;
+}
+#menu-contents {
+    background: white;
+	color:#666666;
+    font-size:9pt;
+}
+#menu-contents p {
+    margin-top: 0.5em;
+}
+#menu-contents span.error {
+    color:#A00000;
+}
+#menu-contents a {
+	color:#304e96;
+}
+#menu-contents a:hover {
+	color:#333;
+}
+div.box {
+    border-top:1px solid #ADACA8;
+    border-right:1px solid #ADACA8;
+    padding:0 0.1em 0.5em 0;
+}
+div.box-title {
+    color:#304E96;
+    margin-bottom:0.1em;
+    font-size:1.4em;
 }

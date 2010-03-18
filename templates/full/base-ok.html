@@ -1,7 +1,9 @@
 <%inherit file="base.html"/>
 
+<div id="messages">
 %for record in log:
           <p class="error">${record.getMessage()}.</p>
 %endfor
+</div>
 
 ${next.body()}

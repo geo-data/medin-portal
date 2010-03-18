@@ -51,9 +51,10 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    def __init__(self, *args, **kwargs):
-        super(Query, self).__init__(*args, **kwargs)
+    def __init__(self, qsl, areas, *args, **kwargs):
+        super(Query, self).__init__(qsl, *args, **kwargs)
         self.raise_errors = False
+        self.areas = areas
 
     def verify(self):
         """
@@ -104,17 +105,22 @@ class Query(GETParams):
                 self.getStartIndex()
             except QueryError, e:
                 errors.append(str(e))
+
+            try:
+                self.getArea()
+            except QueryError, e:
+                errors.append(str(e))
                 
         finally:
             self.raise_errors = errsetting
             
         return errors
 
-    def getSearchTerm(self, cast=True, default=''):
+    def getSearchTerm(self, cast=True, default='', skip_errors=False):
         try:
             qstring = self['q'][0]
             if cast:
-                return TermParser()(qstring)
+                return TermParser()(qstring, skip_errors)
             return qstring
         except KeyError:
             pass
@@ -135,15 +141,18 @@ class Query(GETParams):
         except KeyError, AttributeError:
             return default
 
-        if not cast:
-            return date
-        
         import datetime
         try:
-            return datetime.datetime.strptime(date, '%Y-%m-%d')
+            dt = datetime.datetime.strptime(date, '%Y-%m-%d')
+            if cast:
+                return dt
+            return date
         except ValueError:
             try:
-                return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+                dt = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+                if cast:
+                    return dt
+                return date
             except ValueError:
                 if self.raise_errors:
                     raise QueryError('The following date is not recognised: %s. Please specify the date in the format YYYY-MM-DD' % date)
@@ -237,9 +246,54 @@ class Query(GETParams):
 
     def getArea(self, cast=True, default=''):
         try:
-            return self['a'][0]
+            area = self['a'][0]
         except KeyError:
             return default
+
+        if not cast:
+            return area
+
+        areaname = self.areas.getAreaName(area)
+        if areaname:
+            return areaname
+
+        if self.raise_errors:
+            raise QueryError('The area id does not exist: %s' % area)
+
+        return default
+
+    def asDict(self, verify=True):
+        """
+        Return the query as a dictionary structure
+        """
+
+        # add any errors
+        a = {}
+        if verify:
+            a['errors'] = self.verify()
+
+        # add the terms
+        analyser = TermAnalyser()
+        tokens = self.getSearchTerm(skip_errors=True)
+        a['terms'] = analyser(tokens)
+
+        # add the dates
+        dates = {}
+        start = self.getStartDate(cast=False, default=None)
+        end = self.getEndDate(cast=False, default=None)
+        if start:
+            dates['start'] = start
+        if end:
+            dates['end'] = end
+        a['dates'] = dates
+
+        # add the area
+        bbox = self.getBBOX(cast=False, default=False)
+        if bbox: bbox = True
+        a['bbox'] = bbox
+        a['area'] = self.getArea(default=None)
+
+        return a
 
 class TargetError(QueryError):
     """
@@ -270,18 +324,75 @@ class TermParser(object):
     
     targets = set(('', 'a', 'al', 'f', 'l', 'o', 'p', 'rt', 'tc'))
 
-    def __call__(self, querystr):
+    def __call__(self, querystr, skip_errors=False):
         matches = self.pattern.findall(querystr)
 
         # Extract all the words and target groups from the query
         # string, creating TermSearch objects from those components.
         tokens = []
+        bad_targets = []
         for op_or, op_not, target, word in matches:
             if target not in self.targets:
-                targets = [t for t in self.targets if t]
-                targets.sort()
-                targets = ', '.join(targets)
-                raise TargetError('The following target in the search term is not recognised: %s. Please choose one of: %s' % (target, targets))
+                bad_targets.append(target)
             tokens.append((op_or, op_not, target, word))
+
+        if not skip_errors and bad_targets:
+            targets = [t for t in self.targets if t]
+            targets.sort()
+            targets = ', '.join(targets)
+
+            if len(bad_targets) == 1:
+                msg = 'The following target in the search term is not recognised: %s' % bad_targets[0]
+            else:
+                msg = 'The following targets in the search term are not recognised: %s' % ', '.join(bad_targets)
+            raise TargetError('%s. Please choose one of: %s' % (msg, targets))
+
             
         return tokens
+
+class TermAnalyser(object):
+
+    mapping = {'a': 'author',
+               'p': 'parameter',
+               'rt': 'resource type',
+               'tc': 'topic category',
+               'l': 'lineage',
+               'al': 'public access limits',
+               'o': 'data originator',
+               'f': 'data format'}
+
+    def __call__(self, tokens):
+        """
+        Returns query tokens transformed into a human friendly structure
+        """
+
+        op_map = {'': 'and',
+                  '|': 'or'}
+        query = []
+        for i, (op_or, op_not, target, word) in enumerate(tokens):
+            op = op_map[op_or]
+            ops = []
+            if i and op:
+                ops.append(op)
+            if op_not:
+                ops.append('not')
+
+            try:
+                targets = [target, self.mapping[target]]
+            except KeyError:
+                if target:
+                    targets = [target, None]
+                else:
+                    targets = [None, None]
+
+            if ops:
+                op = ' '.join(ops)
+            else:
+                op = None
+                
+            term = {'op': op,
+                    'target': targets,
+                    'word': word}
+            query.append(term)
+
+        return query

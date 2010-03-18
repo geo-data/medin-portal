@@ -1,4 +1,14 @@
+<%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>
+
+<%def name="left_menu()">\
+<div id="menu-contents">&nbsp;
+  <div class="box">
+    ${search_criteria()}
+    <p><a href="${script_root}/full${query_string}" title="Edit the current search criteria">Edit this search</a>.</p>
+  </div>
+</div>
+</%def>
 
 <%def name="start_link()">\
 % if first_link:
@@ -42,12 +52,21 @@ ${query_string}\
 </%def>
 
 %if hits == 0:
-<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> to make it less restrictive.</p>
+<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> 
+%if log:
+to correct the errors.
+%else:
+to make it less restrictive.
+%endif
+</p>
 <%return '' %>
 %endif
-
 <p>Not the results you're looking for? You
-  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>.</p>
+  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>
+%if log:
+ to correct the errors
+%endif
+.</p>
 <p>Your search returned <strong>${hits}</strong>
 % if hits != 1:
 results.
