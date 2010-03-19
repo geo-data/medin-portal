@@ -143,7 +143,7 @@ class Search(MakoApp):
         super(Search, self).__init__(['%s', 'search.html'])
 
     def setup(self, environ):
-        from medin.dws import DWSError, RESULT_SIMPLE
+        from medin.dws import RESULT_SIMPLE
         
         areas = get_areas(environ)
         q = get_query(environ)
@@ -155,10 +155,7 @@ class Search(MakoApp):
         # we need to get the number of hits for the query
         count = q.getCount()
         q.setCount(0)
-        try:
-            r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
         q.setCount(count)               # reset the count to it's previous value
 
         search_term = q.getSearchTerm(cast=False)
@@ -303,7 +300,6 @@ class Results(MakoApp):
         super(Results, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from medin.dws import DWSError
         from copy import copy
 
         q = get_query(environ)
@@ -312,10 +308,7 @@ class Results(MakoApp):
             for error in errors:
                 msg_error(environ, error)
 
-        try:
-            r = self.request(q, self.result_type, environ['logging.logger'])
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(q, self.result_type, environ['logging.logger'])
 
         updated = r.lastModified()
         timestamp = updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
@@ -404,16 +397,13 @@ class ResultSummary(object):
         self.request = SearchRequest()
 
     def __call__(self, environ, start_response):
-        from medin.dws import DWSError, RESULT_SIMPLE
+        from medin.dws import RESULT_SIMPLE
         from json import dumps as tojson
 
         q = get_query(environ)
         q.setCount(0)                   # we don't need any results
         
-        try:
-            r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
 
         json = tojson({'status': bool(r),
                        'hits': r.hits,
@@ -456,14 +446,10 @@ class Metadata(MakoApp):
         super(Metadata, self).__init__(path, check_etag=False)
 
     def setup(self, environ):
-        from medin.dws import DWSError
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
 
-        try:
-            r = self.request(gid)
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(gid)
 
         # Check if the client needs a new version
         headers = []
@@ -640,16 +626,12 @@ class MetadataImage(object):
         self.request = MetadataRequest()
 
     def __call__(self, environ, start_response):
-        from medin.dws import DWSError
         import os.path
         import medin.spatial
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
 
-        try:
-            r = self.request(gid)
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(gid)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())
@@ -690,19 +672,15 @@ class MetadataDownload(object):
         self.request = MetadataRequest()
 
     def __call__(self, environ, start_response):
-        from medin.dws import DWSError
         from os.path import splitext
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         fmt = environ['selector.vars']['format'] # the requested format
 
-        try:
-            if fmt not in self.request.getMetadataFormats():
-                raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
+        if fmt not in self.request.getMetadataFormats():
+            raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-            r = self.request(gid)
-        except DWSError, e:
-            raise HTTPError('%d Discovery Web Service Error' % e.status, e.msg)
+        r = self.request(gid)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())

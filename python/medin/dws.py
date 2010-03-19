@@ -36,7 +36,13 @@ class Request(object):
         try:
             return method(*args, **kwargs)
         except URLError, e:
-            raise DWSError('The Discovery Web Service %s' % str(e.reason))
+            try:
+                status, msg = e.reason
+            except ValueError:
+                status = 500
+                msg = str(e.reason)
+                
+            raise DWSError('Connecting to the Discovery Web Service failed: %s' % msg, status)
         except Exception, e:
             try:
                 status, reason = e.args[0]

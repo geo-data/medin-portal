@@ -14,10 +14,13 @@ class ErrorHandler(errata.ErrorHandler):
     the appropriate response is returned to the client."""
 
     def __init__(self, *args, **kwargs):
+        from medin.dws import DWSError
+        
         super(ErrorHandler, self).__init__(*args, **kwargs)
 
         self.add(HTTPNotModified, self.handleHTTPNotModified)
         self.add(errata.HTTPError, self.handleHTTPError)
+        self.add(DWSError, self.handleDWSError)
 
         from mako.exceptions import TopLevelLookupException
         self.add(TopLevelLookupException, self.handleTemplateLookupException)
@@ -34,6 +37,17 @@ class ErrorHandler(errata.ErrorHandler):
 
         renderer = ErrorRenderer(exception)
         return renderer(environ, start_response)
+
+    def handleDWSError(self, exception, environ, start_response):
+        if exception.status < 500:
+            # it's something we shouldn't propagate as a HTTP error, so set it as a 500
+            fmt = '500 Discovery Web Service Error (Code %d)'
+        else:
+            # it's safe to propagate the error to the client as a HTTP error
+            fmt = '%d Discovery Web Service Error'
+
+        e = errata.HTTPError(fmt % exception.status, exception.msg)
+        return self.handleHTTPError(e, environ, start_response)
 
     def handleTemplateLookupException(self, exception, environ, start_response):
         from mako.exceptions import TopLevelLookupException
