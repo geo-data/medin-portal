@@ -1,3 +1,6 @@
+// how long before loading messages should be displayed in milliseconds
+var LOAD_DELAY = 1000;
+
 function toggle(id, show_txt, hide_txt) {
     var ele = $('#'+id);
     if (ele.is(':visible')) {
@@ -28,22 +31,38 @@ var query_check = 0;
 function check_query() {
     query_check += 1;
     var check_count = query_check;
+
+    var term = $('#criteria-term');
+    var date = $('#criteria-date');
+    var area = $('#criteria-area');
+
+    // set the timeout for the image load
+    function load() {
+        term.empty();
+        date.empty();
+        area.empty();
+        term.append('<span><img class="loading" src="/images/loading.gif" width="16" height="16" alt="[loading]"/> Updating search criteria...</span>');
+    }
+    var timeout = setTimeout(load, LOAD_DELAY);
+
     var url = script_root+'/full/query.json?'+$('#search-form').serialize();
     $.ajax({url: url,
             success: function(criteria) {
+                clearTimeout(timeout);
+
                 // only process if this is the latest check
                 if (query_check != check_count)
                     return;
                 
                 var messages = $('#messages').empty();
+
                 for (var i = 0; i < criteria['errors'].length; i++) {
                     messages.append('<p class="error">'+criteria['errors'][i]+'</p>');
                 }
 
-                var term = $('#criteria-term').empty();
-                var date = $('#criteria-date').empty();
-                var area = $('#criteria-area').empty();
-
+                term.empty();
+                date.empty();
+                area.empty();
                 if (!criteria['terms'].length &&
                     !criteria['dates'].start && !criteria['dates'].end &&
                     !criteria['area'] && !criteria['bbox']) {
@@ -77,6 +96,9 @@ function check_query() {
                 else if (criteria['bbox'])
                     area.append('<span>which are in <strong>your specified area</strong></span>');
             },
+            complete: function(req, status) {
+                clearTimeout(timeout); // just to be sure!
+            },
             dataType: 'json'});
 
     // if the query has changed we also need to update the result
@@ -84,14 +106,52 @@ function check_query() {
     update_results();
 }
 
+var update_check = 0;
 function update_results() {
+    update_check += 1;
+    var check_count = update_check;
+    var block = $('#result-count');
+
+    // set the timeout for the image load
+    function load() {
+        block.empty();
+        block.append('<span><img class="loading" src="/images/loading.gif" width="16" height="16" alt="[loading]"/> Updating result count...</span>');
+    }
+    var timeout = setTimeout(load, LOAD_DELAY);
+    
     var url = script_root+'/full.json?'+$('#search-form').serialize();
     $.ajax({url: url,
             success: function(results) {
-                var block = $('#result-count').empty();
+                clearTimeout(timeout);
+
+                // only process if this is the latest check
+                if (update_check != check_count)
+                    return;
+
+                block.empty();
                 block.append('<span><strong>'+results['hits']+'</strong> '+
                              ((results['hits'] != 1) ? 'results' : 'result')
                              +' returned in <strong>'+results['time'].toFixed(2)+'</strong> seconds.</span>');
+            },
+            error: function(req, status, e) {
+                clearTimeout(timeout);
+
+                // only process if this is the latest check
+                if (update_check != check_count)
+                    return;
+
+                update_check += 1; // so the timeout wont fire
+                var msg = null;
+                if (req.readyState == 4 && req.status == 500) {
+                    msg = 'The server failed to return the result count';
+                } else {
+                    msg = 'There is a problem obtaining the result count';
+                }
+
+                block.empty().append('<span class="error">'+msg+'.</span>');
+            },
+            complete: function(req, status) {
+                clearTimeout(timeout); // just to be sure!
             },
             dataType: 'json'});
 }

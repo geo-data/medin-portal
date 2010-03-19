@@ -122,3 +122,6 @@ div.box-title {
     margin-bottom:0.1em;
     font-size:1.4em;
 }
+img.loading {
+    vertical-align:middle;
+}
