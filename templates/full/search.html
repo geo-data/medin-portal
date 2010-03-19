@@ -64,7 +64,7 @@ function clear_box() {
 }
 
 function zoom_to_area(id) {
-    get_bbox(id, function(ttbox) {
+    get_bbox(id, function(tbbox) {
         if (!tbbox)
             return false;
 
@@ -110,7 +110,7 @@ function populate_areas() {
         $('body').bind('fieldsetview', function(event, id) {
             if (id != 'spatial-search')
                 return;
-
+            
             map.updateSize();
             zoom_to_area('GB');
             $(this).unbind(event); // we don't need this event any more
@@ -203,7 +203,7 @@ $(function() {
     // if the current form contents don't match the original query
     // string (i.e. the user has pressed the back button), then check
     // the query
-    if ('${query_string}' != '?'+$('#search-form').serialize())
+    if ('${query_string}' && '${query_string}' != '?'+$('#search-form').serialize())
         check_query();
 });
 
