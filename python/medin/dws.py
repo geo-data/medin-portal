@@ -278,6 +278,9 @@ class SearchRequest(Request):
             end_date.TemporalOperator = "OnOrBefore"
             search.TemporalSearch.DateRange.Date.append(end_date)
 
+        if search.TemporalSearch.DateRange.Date:
+            search.TemporalSearch.DateRange.DateRangeTarget = 'TemporalCoverage'
+
         # work around the fact that the DWS can't be asked to return
         # zero results
         if count > 0:
