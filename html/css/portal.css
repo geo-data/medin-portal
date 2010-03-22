@@ -39,6 +39,9 @@ div.subitem {
 .selected {
     color: #37C5F5;
 }
+#bodycontent_wide a:visited, #menu-contents a:visited {
+    color:#673096;
+}
 #bodycontent_wide p.error {
     border-style:groove;
     border-color: #A00000;
