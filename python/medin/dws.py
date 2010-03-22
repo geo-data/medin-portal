@@ -223,6 +223,25 @@ class SummaryResponse(BriefResponse):
                 'originator': None,
                 'parameters': []}
 
+class OrderAnalyser(object):
+    """
+    Receives and verifies sorting input from the query
+    """
+
+    _field_map = {'updated': 'DatasetUpdateOrder',
+                  'originator': 'DataCenter'}
+
+    def __init__(self, field, ascending):
+        try:
+            self.field = self._field_map[field]
+        except KeyError:
+            raise ValueError('Unknown sort field: %s. Choose one of %s.' % (field, ', '.join(self._field_map.keys())))
+
+        if ascending:
+            self.direction = 'ascending'
+        else:
+            self.direction = 'descending'
+
 class SearchRequest(Request):
 
     _result_map = {RESULT_SIMPLE: SimpleResponse,
@@ -245,6 +264,21 @@ class SearchRequest(Request):
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
         retrieve.RecordDetail = ResponseClass.doc_type
+
+        # add the ordering criteria
+        order_by = self.client.factory.create('ns0:OrderByType')
+        order = query.getSort()
+        if not order:
+            field = 'DatasetUpdateOrder'
+            direction = 'descending'
+        else:
+            analyser = OrderAnalyser(*order)
+            field = analyser.field
+            direction = analyser.direction
+
+        order_by.OrderByField = field
+        order_by.OrderByDirection = direction
+        retrieve.OrderBy.append(order_by)
 
         # construct the SearchCriteria
         search = self.client.factory.create('ns0:SearchCriteria')

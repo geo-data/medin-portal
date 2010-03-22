@@ -51,10 +51,11 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    def __init__(self, qsl, areas, *args, **kwargs):
+    def __init__(self, qsl, areas, fields, *args, **kwargs):
         super(Query, self).__init__(qsl, *args, **kwargs)
         self.raise_errors = False
         self.areas = areas
+        self.fields = fields
 
     def verify(self):
         """
@@ -189,14 +190,21 @@ class Query(GETParams):
             field, asc = sort.split(',', 1)
         except ValueError:
             if self.raise_errors:
-                raise QueryError('The sort parameter must be in the format field,order')
+                raise QueryError('The sort parameter must be in the format "field,order"')
             return default
 
         try:
             asc = int(asc)
+            if asc not in (1, 0):
+                raise ValueError('Bad sort order value')
         except ValueError:
             if self.raise_errors:
-                raise QueryError('The order must be an integer')
+                raise QueryError('The sort order must be either 1 (ascending) or 0 (descending)')
+            return default
+
+        if field not in self.fields:
+            if self.raise_errors:
+                raise QueryError('Unknown sort field: %s. Choose one of: %s' % (field, ', '.join(self.fields)))
             return default
 
         return field, asc

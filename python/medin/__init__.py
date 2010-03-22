@@ -50,7 +50,8 @@ def get_query(environ):
     except KeyError:
         qsl = ''
 
-    return Query(qsl, get_areas(environ))
+    fields = ('updated', 'originator')
+    return Query(qsl, get_areas(environ), fields)
 
 def get_areas(environ):
     """
@@ -361,11 +362,10 @@ class HTMLResults(Results):
         ctxt = super(HTMLResults, self).setup(environ)
         query = deepcopy(ctxt.tvars['query'])
         ctxt.tvars['criteria'] = query.asDict(False)
-        #ctxt.tvars['criteria'] = {'area': None, 'bbox': None, 'terms': [], 'dates': {}}
 
         sorts = {}
-        cur_sort, cur_asc = query.getSort(default=('',''))
-        for sort in ('title', 'author', 'updated'):
+        cur_sort, cur_asc = query.getSort(default=('updated', 0))
+        for sort in query.fields:
             query.setSort((sort, 1))
             asc = (str(query), (sort == cur_sort and cur_asc == 1))
             query.setSort((sort, 0))
