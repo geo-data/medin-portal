@@ -7,11 +7,28 @@
           title="MEDIN - ${title}">
 </%def>
 
+<%def name="left_menu()">\
+<div id="menu-contents">&nbsp;
+  <div class="info">
+    <h3>Download</h3>
+    <p>The complete metadata is available for downloading in the following
+      XML metadata formats:</p>
+    <ul>
+      <li><a href="${resource_root}/DC">Dublin Core format</a></li>
+      <li><a href="${resource_root}/DIF_9.4">GCMD DIF format</a> (version 9.4)</li>
+      <li><a href="${resource_root}/MEDIN_2.3">MEDIN format</a> (version 2.3.1)</li>
+      <li><div><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</div></li>
+    </ul>
+  </div>
+</div>
+</%def>
+
 % if bbox:
-<div style="float: right; width: 260px; margin:auto; margin-left: 0.5em">
-  <h2>Geographic Extent</h2>
-  <img width="250" height="250" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" style="border: 3px solid #DAD8FF"/>
-  <p>
+<div class="extent right">
+  <div class="info">
+  <h3>Geographic Extent</h3>
+  <img class="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data"/>
+  <p class="no-bottom">
   The metadata covers the area West - East from ${bbox[0]}&deg; to
   ${bbox[2]}&deg; and North - South from ${bbox[3]}&deg; to
   ${bbox[1]}&deg;.
@@ -19,9 +36,11 @@
   <a
   href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}"
   title="Area search for metadata">Search</a> for all metadata within
-  this area.<br/>
-
-  <a style="float: right" href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="image_no_border"> KML</a>
+  this area.
+  </p>
+  </div>
+  <p class="lower-link right">
+    <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="image_no_border"> KML</a>
   </p>
 </div>
 % endif
@@ -55,42 +74,38 @@
   % endfor
 % endif
 
-<h2>Download</h2>
-<p>The complete metadata is available for downloading in the following
-  XML metadata formats:</p>
-<ul>
-  <li><a href="${resource_root}/DC">Dublin Core format</a></li>
-  <li><a href="${resource_root}/DIF_9.4">GCMD DIF format</a> (version 9.4)</li>
-  <li><a href="${resource_root}/MEDIN_2.3">MEDIN format</a> (version 2.3.1)</li>
-  <li><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</li>
-</ul>
-
 <h2>Details</h2>
 <p class="no-bottom">Details for the metadata are as follows:</p>
 
-<table summary="Metadata details" class="tabulate mini metadata">
+<table summary="Metadata details" class="tabulate">
   % if linkage:
   <tr>
-    <td class="heading"><strong>Resource locator</strong></td>
-    <td class="content">
-      % for i, resource in enumerate(linkage):
-      % if i:
-      <div class="sibling">
-      % else:
-      <div>
-      % endif
-        <a href="${resource['link']}" title="External link">
-          % if resource['name']:
-          ${resource['name']}
-          % else:
-          ${resource['link']}
-          % endif
-          </a>
-        % if resource['description']:
-        - ${resource['description']}
-        % endif
+    <td class="heading">
+      <div class="cell">
+        <strong>Resource locator</strong>
       </div>
-      % endfor
+    </td>
+    <td class="content">
+      <div class="cell">
+        % for i, resource in enumerate(linkage):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <a href="${resource['link']}" title="External link">
+            % if resource['name']:
+            ${resource['name']}
+            % else:
+            ${resource['link']}
+            % endif
+            </a>
+          % if resource['description']:
+          - ${resource['description']}
+          % endif
+        </div>
+        % endfor
+      </div>
     </td>
   </tr>
   % endif
@@ -98,43 +113,53 @@
   % if topic_category:
   <tr>
     <td class="heading">
-      <strong>Topic category</strong>
+      <div class="cell">
+        <strong>Topic category</strong>
+      </div>
     </td>
     <td class="content">
-      % for i, (keyword, defn) in enumerate(topic_category.items()):
-      % if i:
-      <div class="sibling">
-      % else:
-      <div>
-      % endif
-        % if defn:
-        <a href="${script_root}/full/catalogue?tc=${defn['short'] | u}"
-           title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
-          % if defn['long'] != defn['short']:
-          - ${defn['long'] | x}
-          % endif
-        <br/>Definition: ${defn['defn'] | x}
+      <div class="cell">
+        % for i, (keyword, defn) in enumerate(topic_category.items()):
+        % if i:
+        <div class="sibling">
         % else:
-        ${keyword | x}
+        <div>
         % endif
+          % if defn:
+          <a href="${script_root}/full/catalogue?tc=${defn['short'] | u}"
+             title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
+            % if defn['long'] != defn['short']:
+            - ${defn['long'] | x}
+            % endif
+          <br/>Definition: ${defn['defn'] | x}
+          % else:
+          ${keyword | x}
+          % endif
+        </div>
+        % endfor
       </div>
-      % endfor
     </td>
   </tr>
   % endif
   
   % for name, details in metadata:
   <tr>
-    <td class="heading"><strong>${name}</strong></td>
+    <td class="heading">
+      <div class="cell">
+        <strong>${name}</strong>
+      </div>
+    </td>
     <td class="content">
-      % for i, detail in enumerate(details):
-      % if i:
-      <div class="sibling">
-      % else:
-      <div>
-      % endif
-      ${detail}</div>
-      % endfor
+      <div class="cell">
+        % for i, detail in enumerate(details):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+      </div>
     </td>
   </tr>
   % endfor

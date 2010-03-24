@@ -1,5 +1,5 @@
 <%def name="search_criteria()">\
-    <div class="box-title">You are searching for...</div>
+    <h3>You are searching for...</h3>
     <span id="criteria-term">
     %if not criteria['terms'] and not criteria['dates'] and not criteria['area'] and not criteria['bbox']:
       <strong>everything</strong> in the catalogue.
@@ -29,9 +29,9 @@
     %endif
     </span><span id="criteria-area">
     %if criteria['area']:
-      which are in <strong>${criteria['area']}</strong>
+      in <strong>${criteria['area']}</strong>
     %elif criteria['bbox']:
-      which are in <strong>your specified area</strong>
+      in <strong>your specified area</strong>
     %endif
     </span>
     <p id="result-count"><strong>${hits}</strong> 

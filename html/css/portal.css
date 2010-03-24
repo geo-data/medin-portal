@@ -1,3 +1,9 @@
+#bodycontent_wide h3, h3 {
+    color:#304E96;
+    margin-bottom:0.1em;
+    margin-top:0.1em;
+    font-size:1.1em;
+}
 .tabulate td {
     padding-right: 0.3em;
     vertical-align: top;
@@ -7,23 +13,41 @@ table.mini {
     margin-top: 0;
     padding-top: 0;
 }
-table.metadata {
+table.tabulate thead th {
+    background-color:#DAD8FF;
+    border-top: 1px solid #ADACA8;
+    border-bottom:0.5em solid white;
+    padding-right: 0.3em;
+}
+table.tabulate {
     clear: both;
+    border-collapse:collapse;
+}
+table.tabulate tr.last td {
+    padding-bottom:0.5em;
+    border-bottom: 1px solid #ADACA8;
 }
 th {
     white-space: nowrap;
 }
 td.heading {
     background-color: #DAD8FF;
-    padding-left: 0.5em;
+    min-width:12em;
+    border-top:0.5em solid white;
+    padding: 0;
 }
 td.content {
     background-color: #EBF9FF;
-    padding-left: 0.5em;
+    border-top:0.5em solid white;
+    padding: 0;
 }
 #bodycontent_wide .no-bottom {
     margin-bottom: 0;
     padding-bottom: 0;
+}
+div.cell {
+    padding: 0.5em;
+    border-top: 1px solid #ADACA8;
 }
 div.sibling {
     border-top: 1px solid #DAD8FF;
@@ -31,13 +55,19 @@ div.sibling {
 div.subitem {
     padding-left: 1.5em;
 }
-.sort {
-    font-size: 120%;
+.right {
     float: right;
-    padding-left: 0.5em;
 }
-.selected {
-    color: #37C5F5;
+img.sort {
+    vertical-align:middle;
+    width:12px;
+    height:10px;
+}
+img.desc {
+    background:url(/images/catalogue-sprites.png) no-repeat 0 0;
+}
+img.asc {
+    background:url(/images/catalogue-sprites.png) no-repeat -12px 0;
 }
 #bodycontent_wide a:visited, #menu-contents a:visited {
     color:#673096;
@@ -98,7 +128,7 @@ blockquote {
 #version {
     text-align: right;
 }
-#menu-contents {
+#menu-contents, .results-nav {
     background: white;
 	color:#666666;
     font-size:9pt;
@@ -115,15 +145,30 @@ blockquote {
 #menu-contents a:hover {
 	color:#333;
 }
-div.box {
-    border-top:1px solid #ADACA8;
-    border-right:1px solid #ADACA8;
-    padding:0 0.1em 0.5em 0;
+#bodycontent_wide .info, .info {
+    background-color:#FFEBC8;
+    border:1px solid #ADACA8;
+    padding:0.3em;
+    line-height:1.2em;
 }
-div.box-title {
-    color:#304E96;
-    margin-bottom:0.1em;
-    font-size:1.4em;
+.info li {
+    margin-left:1.2em;
+}
+div.extent {
+    width:270px;
+    margin:auto;
+    margin-left:0.5em;
+}
+.lower-link {
+    margin-top: 0.3em;
+}
+img.extent {
+    width:250px;
+    height:250px;
+    border: 1px solid #ADACA8;
+    margin-left: 0.3em;
+    margin-right: 0.3em;
+    margin-top: 0.5em;
 }
 img.loading {
     vertical-align:middle;

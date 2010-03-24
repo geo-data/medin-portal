@@ -3,7 +3,7 @@
 
 <%def name="left_menu()">\
 <div id="menu-contents">&nbsp;
-  <div class="box">
+  <div class="info">
     ${search_criteria()}
     <p><a href="${script_root}/full${query_string}" title="Edit the current search criteria">Edit this search</a>.</p>
   </div>
@@ -49,44 +49,62 @@ ${query_string}\
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
     <meta name="itemsPerPage" content="${count}"/>
+
+    <script type="text/javascript">
+      <!--        
+
+// Initialise the page once loaded
+$(function() {
+
+    // toggle the ordering images (ascending or descending) when the
+    // mouse moves over the column heading.
+    $('span.sort').each(function(index) {
+        var self = $(this);
+        var img = self.find('img.sort')
+        var cls = (img.hasClass('asc') || img.hasClass('desc')) ? 'asc desc' : 'desc';
+        var old_class = img.attr('class');
+
+        function toggle() {
+            img.toggleClass(cls);
+        }
+
+        // toggle the image class on hover
+        self.find('a').hover(toggle, toggle);
+
+        // set the image back to its original stage
+        $(window).unload(function() {
+            img.attr('class', old_class);
+        });
+    });
+});
+      -->
+    </script>
+    
 </%def>
 
-%if hits == 0:
-<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> 
-%if log:
-to correct the errors.
-%else:
-to make it less restrictive.
-%endif
-</p>
-<%return '' %>
-%endif
-<p>Not the results you're looking for? You
-  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>
-%if log:
- to correct the errors
-%endif
-.</p>
-<p>Your search returned <strong>${hits}</strong>
-% if hits != 1:
-results.
+<%def name="sort_links(name, field)">
+<%
+  fsort = sort[field]
+%>
+<span class="sort">\
+% if fsort['asc'][1]:
+<a href="${resource_root}?${fsort['desc'][0]}" title="Toggle ordering of results (currently ascending)">${name}</a>
+<img class="sort asc" src="/images/transparent.png" alt="[sorted ascending]" title="Currently sorted by ${name}, ascending"/>\
+% elif fsort['desc'][1]:
+<a href="${resource_root}?${fsort['asc'][0]}" title="Toggle ordering of results (currently descending)">${name}</a>
+<img class="sort desc" src="/images/transparent.png" alt="[sorted descending]" title="Currently sorted by ${name}, descending"/>\
 % else:
-result.
+<a href="${resource_root}?${fsort['desc'][0]}" title="Toggle ordering of results">${name}</a>
+<img class="sort" src="/images/transparent.png" alt=""/>\
 % endif
-% if not results:
-% if hits:
- However, the results specified are out of range of the original search.
- Try browsing at <a href="${resource_root}?${first_link['link']}" title="The first result set">the beginning of the results</a>.
-% endif
-</p>
-<% return '' %>
-% endif
+</span>
+</%def>
 
 <%def name="result_links()">
 % if page_count == 1:
 <% return '' %>
 % endif
-<p>
+<div class="results-nav">
 % if first_link:
 <a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
@@ -108,8 +126,40 @@ result.
 % if last_link:
 <a href="${resource_root}?${last_link['link']}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
 % endif
-</p>
+</div>
 </%def>
+
+
+%if hits == 0:
+<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> 
+%if log:
+to correct the errors.
+%else:
+to make it less restrictive.
+%endif
+</p>
+<%return '' %>
+%endif
+<p class="info right">Not the results you're looking for? You
+  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>\
+%if log:
+ to correct the errors\
+%endif
+.</p>
+<p>Your search returned <strong>${hits}</strong>
+% if hits != 1:
+results.
+% else:
+result.
+% endif
+% if not results:
+% if hits:
+ However, the results specified are out of range of the original search.
+ Try browsing at <a href="${resource_root}?${first_link['link']}" title="The first result set">the beginning of the results</a>.
+% endif
+</p>
+<% return '' %>
+% endif
 
  Showing <strong>
 % if hits > count or page_count > 1:
@@ -121,32 +171,23 @@ all results
 
 ${result_links()}
 
-<%def name="sort_links(field)">
-<%
-  fsort = sort[field]
-%>
-<span class="sort">\
-% if not fsort['asc'][1]:
-<a href="${resource_root}?${fsort['asc'][0]}" title="Sort by ascending ${field}">&and;</a>\
-% else:
-<span class="selected" title="Currently sorted by ascending ${field}">&and;</span>\
-% endif
-% if not fsort['desc'][1]:
-<a href="${resource_root}?${fsort['desc'][0]}" title="Sort by descending ${field}">&or;</a>\
-% else:
-<span class="selected" title="Currently sorted by descending ${field}">&or;</span>\
-% endif
-</span>
-</%def>
-
 <table summary="Table of results" class="tabulate">
+  <thead>
   <tr>
     <th colspan="2">Title</th>
-    <th>${sort_links('originator')}Originator</th>
-    <th>${sort_links('updated')}Last updated</th>
+    <th>${sort_links('Originator', 'originator')}</th>
+    <th>${sort_links('Last updated', 'updated')}</th>
   </tr>
+  </thead>
+<%
+  last = len(results)-1
+%>
 % for i, res in enumerate(results):
+  %if i != last:
   <tr>
+  %else:
+  <tr class="last">
+  %endif
     <td>${start_index+i}.</td>
     <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
     <td>${res['originator']}</td>

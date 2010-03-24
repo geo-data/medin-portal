@@ -92,9 +92,9 @@ function check_query() {
                     date.append('<span> before <strong>'+criteria['dates'].end+'</strong></span>');
 
                 if (criteria['area'])
-                    area.append('<span> which are in <strong>'+criteria['area']+'</strong></span>');
+                    area.append('<span> in <strong>'+criteria['area']+'</strong></span>');
                 else if (criteria['bbox'])
-                    area.append('<span>which are in <strong>your specified area</strong></span>');
+                    area.append('<span> in <strong>your specified area</strong></span>');
             },
             complete: function(req, status) {
                 clearTimeout(timeout); // just to be sure!
