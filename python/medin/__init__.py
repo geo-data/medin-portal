@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.91
+__version__ = 0.92
 
 from errata import HTTPError
 
@@ -50,7 +50,7 @@ def get_query(environ):
     except KeyError:
         qsl = ''
 
-    fields = ('updated', 'originator')
+    fields = ('updated', 'originator', 'title')
     return Query(qsl, get_areas(environ), fields)
 
 def get_areas(environ):

@@ -1,66 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions xmlns:tns="http://medin.discovery.services.ndg" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:sch="http://medin.discovery.services.ndg/schema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://medin.discovery.services.ndg">
+<!--
+		Maurizio Nagni <maurizio.nagni@stcf.ac.uk>
+		(NERC Earth Observation Data Centre)
+	-->
+<wsdl:definitions xmlns:sch="http://medin.discovery.services.ndg/schema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://medin.discovery.services.ndg" targetNamespace="http://medin.discovery.services.ndg">
   <wsdl:types>
     <xs:schema targetNamespace="http://medin.discovery.services.ndg">
       <xs:import namespace="http://medin.discovery.services.ndg/schema" schemaLocation="DiscoverySchema.xsd"/>
     </xs:schema>
   </wsdl:types>
-  <wsdl:message name="doPresentResponse">
-    <wsdl:part name="part" element="sch:DoPresentReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListNamesResponse">
-    <wsdl:part name="part" element="sch:GetListNamesReturn">
-    </wsdl:part>
+  <wsdl:message name="doSearchRequest">
+    <wsdl:part name="part" element="sch:DoSearch"/>
   </wsdl:message>
   <wsdl:message name="doSearchResponse">
-    <wsdl:part name="part" element="sch:DoSearchReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListResponse">
-    <wsdl:part name="part" element="sch:GetListReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="doSearchRequest">
-    <wsdl:part name="part" element="sch:DoSearch">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="doPresentRequest">
-    <wsdl:part name="part" element="sch:DoPresent">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListRequest">
-    <wsdl:part name="part" element="sch:GetList">
-    </wsdl:part>
+    <wsdl:part name="part" element="sch:DoSearchReturn"/>
   </wsdl:message>
   <wsdl:message name="getListNamesRequest">
-    <wsdl:part name="part" element="sch:GetListNames">
-    </wsdl:part>
+    <wsdl:part name="part" element="sch:GetListNames"/>
+  </wsdl:message>
+  <wsdl:message name="getListRequest">
+    <wsdl:part name="part" element="sch:GetList"/>
+  </wsdl:message>
+  <wsdl:message name="doPresentRequest">
+    <wsdl:part name="part" element="sch:DoPresent"/>
+  </wsdl:message>
+  <wsdl:message name="doPresentResponse">
+    <wsdl:part name="part" element="sch:DoPresentReturn"/>
+  </wsdl:message>
+  <wsdl:message name="getListNamesResponse">
+    <wsdl:part name="part" element="sch:GetListNamesReturn"/>
+  </wsdl:message>
+  <wsdl:message name="getListResponse">
+    <wsdl:part name="part" element="sch:GetListReturn"/>
   </wsdl:message>
   <wsdl:portType name="Discovery">
     <wsdl:operation name="doSearch">
-      <wsdl:input name="doSearchRequest" message="tns:doSearchRequest">
-    </wsdl:input>
-      <wsdl:output name="doSearchResponse" message="tns:doSearchResponse">
-    </wsdl:output>
+      <wsdl:input name="doSearchRequest" message="tns:doSearchRequest"/>
+      <wsdl:output name="doSearchResponse" message="tns:doSearchResponse"/>
     </wsdl:operation>
     <wsdl:operation name="doPresent">
-      <wsdl:input name="doPresentRequest" message="tns:doPresentRequest">
-    </wsdl:input>
-      <wsdl:output name="doPresentResponse" message="tns:doPresentResponse">
-    </wsdl:output>
+      <wsdl:input name="doPresentRequest" message="tns:doPresentRequest"/>
+      <wsdl:output name="doPresentResponse" message="tns:doPresentResponse"/>
     </wsdl:operation>
     <wsdl:operation name="getListNames">
-      <wsdl:input name="getListNamesRequest" message="tns:getListNamesRequest">
-    </wsdl:input>
-      <wsdl:output name="getListNamesResponse" message="tns:getListNamesResponse">
-    </wsdl:output>
+      <wsdl:input name="getListNamesRequest" message="tns:getListNamesRequest"/>
+      <wsdl:output name="getListNamesResponse" message="tns:getListNamesResponse"/>
     </wsdl:operation>
     <wsdl:operation name="getList">
-      <wsdl:input name="getListRequest" message="tns:getListRequest">
-    </wsdl:input>
-      <wsdl:output name="getListResponse" message="tns:getListResponse">
-    </wsdl:output>
+      <wsdl:input name="getListRequest" message="tns:getListRequest"/>
+      <wsdl:output name="getListResponse" message="tns:getListResponse"/>
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="DiscoverySoapBinding" type="tns:Discovery">
@@ -104,7 +92,7 @@
   </wsdl:binding>
   <wsdl:service name="DiscoveryServiceMEDIN">
     <wsdl:port name="Discovery" binding="tns:DiscoverySoapBinding">
-      <wsdlsoap:address location="http://neptune.badc.rl.ac.uk/axis2/services/DiscoveryServiceMEDIN/"/>
+      <wsdlsoap:address location="http://neptune.badc.rl.ac.uk/axis2/services/DiscoveryServiceMEDIN"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

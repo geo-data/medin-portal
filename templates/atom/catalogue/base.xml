@@ -42,7 +42,9 @@
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
     <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
     <content type="html">${content(result)}</content>
+    %if result['bbox']:
     <georss:polygon>${result['bbox'][1]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][0]}</georss:polygon>
+    %endif
   </entry>
 % endfor
 % if not results:

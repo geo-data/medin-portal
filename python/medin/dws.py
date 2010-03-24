@@ -187,41 +187,38 @@ class BriefResponse(SearchResponse):
             if hasattr(field, 'split'):
                 return [e.strip() for e in field.split(';')]
             return []
-        
+
         i = doc.AdditionalInformation
+        updated = datetime.strptime(i.DatasetUpdateDate, '%Y-%m-%d %H:%M:%S.%f')
         return {'id': doc.DocumentId,
                 'title': doc.Title,
-                'updated': datetime.now(),
+                'updated': updated,
                 'authors': to_list(i.Authors),
                 'resource-type': i.ResourceType,
                 'topic-category': i.TopicCategory,
                 'lineage': i.Lineage,
                 'public-access': i.LimitationsPublicAccess,
                 'originator': i.DataOriginator,
+                'format': i.OriginalFormatName,
                 'parameters': to_list(i.Parameters)}
 
 class SummaryResponse(BriefResponse):
 
     doc_type = 'DocumentSummary'
 
-    # this function needs to be modified when the DWS has been fixed
-    # to return the correct fields. It can then extend the
-    # BriefResponse implementation.
     def _processDocument(self, doc):
-        from datetime import datetime
-        
-        return {'id': doc.DocumentId,
-                'title': doc.Title,
-                'updated': datetime.now(),
-                'abstract': doc.Abstract,
-                'bbox': [-180.0, -90.0, 180.0, 90],
-                'authors': [],
-                'resource-type': None,
-                'topic-category': None,
-                'lineage': None,
-                'public-access': None,
-                'originator': None,
-                'parameters': []}
+
+        try:
+            extent = doc.Spatial[0].BoundingBox
+            bbox = [extent.LimitWest, extent.LimitSouth, extent.LimitEast, extent.LimitNorth]
+        except AttributeError, IndexError:
+            bbox = None
+
+        ret = super(SummaryResponse, self)._processDocument(doc)
+        ret['bbox'] = bbox
+        ret['abstract'] = doc.Abstract
+
+        return ret
 
 class OrderAnalyser(object):
     """
@@ -229,6 +226,7 @@ class OrderAnalyser(object):
     """
 
     _field_map = {'updated': 'DatasetUpdateOrder',
+                  'title': 'DiscoveryTitle',
                   'originator': 'DataCenter'}
 
     def __init__(self, field, ascending):
@@ -331,8 +329,7 @@ class SearchRequest(Request):
                                  count)
 
         if not response:
-            if response.message != 'Search was successful but generated no results.':
-                raise DWSError('The Discovery Web Service failed: %s' % response.message)
+            raise DWSError('The Discovery Web Service failed: %s' % response.message)
 
         return response
 
@@ -1103,9 +1100,7 @@ class MetadataRequest(Request):
         message = response.StatusMessage
 
         if not status:
-            if message != 'present.successful':
-                raise DWSError('The Discovery Web Service failed: %s' % message)
-            return None
+            raise DWSError('The Discovery Web Service failed: %s' % message)
 
         document = response.Documents.DocumentFull[0]
         title = document.Title
