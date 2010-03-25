@@ -214,6 +214,7 @@ $(function() {
 <div id="menu-contents">&nbsp;
   <div class="info">
     ${search_criteria()}
+    <p><a href="${resource_root}" title="Clear this search and start again">Start a new search</a>.</p>
   </div>
 </div>
 </%def>
@@ -225,71 +226,73 @@ $(function() {
 </%def>
 
 <form id="search-form" method="GET" action="${resource_root}/catalogue">
-  <fieldset>
-    <legend>Search term</legend>
-    <input type="text" name="q" size="30"\
-  %if search_term:
- value="${search_term}"
-  %endif
+  <fieldset id="text-search">
+    <legend><a href="javascript:toggle_fieldset('text-search')" title="Show or hide the text search">Search term</a></legend>
+    <div>
+      <input type="text" name="q" size="30"\
+      %if search_term:
+ value="${search_term}"\
+      %endif
 /> <input type="submit" value="search"/>
-    <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
-    <div id="search-term-help" style="display: none">
-    <p>Words typed in 'as is' will result in a full text search that
-    requires all words to be present in matching metadata, e.g.:</p>
-    
-    <blockquote><div><kbd>aerosol pollution
-    troposphere</kbd></div></blockquote>
-    
-    <p>will find all documents containing <strong>all</strong> of the
-    above words.</p>
-    
-    <p>Words can be excluded from result matches using the
-    <strong>minus sign</strong> (<strong>-</strong>) e.g.:</p>
-    
-    <blockquote><div><kbd><strong>-</strong>aerosol pollution
-    <strong>-</strong>troposphere</kbd></div></blockquote>
-    
-    <p>will find all documents that contain <kbd>pollution</kbd> but
-    <strong>not</strong> <kbd>aerosol</kbd> <strong>or</strong>
-    <kbd>troposphere</kbd>.</p>
-    
-    <p>Instead of finding all matching terms, alternative matches can
-    be specified using the <strong>pipe character</strong>
-    (<strong>|</strong>) e.g.:</p>
-    
-    <blockquote><div><kbd>aerosol <strong>|</strong> pollution
-    troposphere</kbd></div></blockquote>
-    
-    <p>will find all documents that contain <kbd>troposphere</kbd> and
-    <strong>either</strong> <kbd>aerosol</kbd> <strong>or</strong>
-    <kbd>pollution</kbd>.</p>
-    
-    <p>As well as running full text searches, more specific search
-    targets can be specified by prefixing words with a target
-    identifier.  Available target identifiers and how they relate to
-    search fields are as follows:</p>
-
-    <blockquote><div>
-      <strong>a</strong>  => Author<br/>
-      <strong>p</strong>  => Parameter<br/>
-      <strong>rt</strong> => Resource type<br/>
-      <strong>tc</strong> => Topic category<br/>
-      <strong>l</strong>  => Lineage<br/>
-      <strong>al</strong> => Public access limits<br/>
-      <strong>o</strong>  => Data originator<br/>
-      <strong>f</strong>  => Data format<br/>
-    </div></blockquote>
-    
-    <p>The identifier is separated from the word using a
-    <strong>colon</strong> (<strong>:</strong>) e.g.:</p>
-    
-    <blockquote><div><kbd>aerosol <strong>tc:</strong>pollution
-    <strong>p:</strong>troposphere</kbd></div></blockquote>
-    
-    <p>will match all documents that contain <kbd>aerosol</kbd> that
-    also have a <strong>topic category</strong> containing
-    <kbd>pollution</kbd> and a <strong>parameter</strong> containing
-    <kbd>troposphere</kbd>.</p>
+      <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
+      <div id="search-term-help" style="display: none">
+      <p>Words typed in 'as is' will result in a full text search that
+      requires all words to be present in matching metadata, e.g.:</p>
+      
+      <blockquote><div><kbd>aerosol pollution
+      troposphere</kbd></div></blockquote>
+      
+      <p>will find all documents containing <strong>all</strong> of the
+      above words.</p>
+      
+      <p>Words can be excluded from result matches using the
+      <strong>minus sign</strong> (<strong>-</strong>) e.g.:</p>
+      
+      <blockquote><div><kbd><strong>-</strong>aerosol pollution
+      <strong>-</strong>troposphere</kbd></div></blockquote>
+      
+      <p>will find all documents that contain <kbd>pollution</kbd> but
+      <strong>not</strong> <kbd>aerosol</kbd> <strong>or</strong>
+      <kbd>troposphere</kbd>.</p>
+      
+      <p>Instead of finding all matching terms, alternative matches can
+      be specified using the <strong>pipe character</strong>
+      (<strong>|</strong>) e.g.:</p>
+      
+      <blockquote><div><kbd>aerosol <strong>|</strong> pollution
+      troposphere</kbd></div></blockquote>
+      
+      <p>will find all documents that contain <kbd>troposphere</kbd> and
+      <strong>either</strong> <kbd>aerosol</kbd> <strong>or</strong>
+      <kbd>pollution</kbd>.</p>
+      
+      <p>As well as running full text searches, more specific search
+      targets can be specified by prefixing words with a target
+      identifier.  Available target identifiers and how they relate to
+      search fields are as follows:</p>
+      
+      <blockquote><div>
+        <strong>a</strong>  => Author<br/>
+        <strong>p</strong>  => Parameter<br/>
+        <strong>rt</strong> => Resource type<br/>
+        <strong>tc</strong> => Topic category<br/>
+        <strong>l</strong>  => Lineage<br/>
+        <strong>al</strong> => Public access limits<br/>
+        <strong>o</strong>  => Data originator<br/>
+        <strong>f</strong>  => Data format<br/>
+      </div></blockquote>
+      
+      <p>The identifier is separated from the word using a
+      <strong>colon</strong> (<strong>:</strong>) e.g.:</p>
+      
+      <blockquote><div><kbd>aerosol <strong>tc:</strong>pollution
+      <strong>p:</strong>troposphere</kbd></div></blockquote>
+      
+      <p>will match all documents that contain <kbd>aerosol</kbd> that
+      also have a <strong>topic category</strong> containing
+      <kbd>pollution</kbd> and a <strong>parameter</strong> containing
+      <kbd>troposphere</kbd>.</p>
+      </div>
     </div>
   </fieldset>
   <fieldset id="date-search"\
