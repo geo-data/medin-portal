@@ -314,17 +314,28 @@ class SearchRequest(Request):
             search.TemporalSearch.DateRange.DateRangeTarget = 'TemporalCoverage'
 
         # work around the fact that the DWS can't be asked to return
-        # zero results
-        if count > 0:
+        # zero results and it can't deal with a negative start index
+        start_index = query.getStartIndex()
+        if start_index < 1:
+            if count != 0:
+                # the count needs to be adjusted for negative start index
+                dws_count = count - (abs(start_index) + 1)
+            else:
+                # the count is zero so needs to be set to one
+                dws_count = 1
+            start_index = 1
+        elif count > 0:
+            # the count is fine, leave as is
             dws_count = count
         else:
-            dws_count = 1;
-        
+            # the count is zero so needs to be set to one
+            dws_count = 1
+
         # send the query to the DWS
         response = ResponseClass(self._callService(self.client.service.doSearch,
                                                    search,
                                                    retrieve,
-                                                   query.getStartIndex(),
+                                                   start_index,
                                                    dws_count),
                                  count)
 
