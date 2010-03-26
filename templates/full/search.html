@@ -31,141 +31,6 @@ var area = null;
 %endif
 var script_root = '${script_root}';
 
-function add_box(extent) {
-    clear_box();                // remove any previous box
-
-    // add the box to the map
-    box = new OpenLayers.Marker.Box(extent);
-    box.setBorder('#ca0000');
-    $(box.div).addClass('area');
-    bbox = extent;
-    boxes.addMarker(box);
-
-    map.zoomToExtent(extent);   // zoom to the box
-
-    $('#bbox').val(extent.toBBOX()); // set the form element
-}
-
-// remove the bounding box and deselect the area
-function clear_area() {
-    var select = $('#area')
-    select.val('');
-    select.change();
-}
-
-function clear_box() {
-    if (box) {
-        boxes.removeMarker(box);
-        box = null;
-    }
-
-    $('#bbox').val('');
-}
-
-function zoom_to_area(id) {
-    get_bbox(id, function(tbbox) {
-        if (!tbbox)
-            return false;
-
-        map.zoomToExtent(OpenLayers.Bounds.fromArray(tbbox));
-        return true;
-    });
-}
-
-// Populate the area selection control
-function populate_areas() {
-    var select = $('#area');
-
-    // ensure a bbox is created when an area is selected
-    select.change(function() {
-        var id = $(this).attr('value');
-        if (!id) {
-            clear_box();
-            return;
-        }
-        
-        get_bbox(id, function(tbbox) {
-            if (!tbbox) {
-                clear_box();
-                return;
-            }
-
-            var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
-            add_box(extent);
-        });
-    });
-
-    // if there's an existing area, select it
-    if (area) {
-        select.val(area);
-        select.change();
-    } else if (bbox) {
-        add_box(bbox);
-    } else {
-        // zoom to the UK as a default
-
-        // The map is hidden to begin with and needs to be initialised
-        // when it is first shown
-        $('body').bind('fieldsetview', function(event, id) {
-            if (id != 'spatial-search')
-                return;
-            
-            map.updateSize();
-            zoom_to_area('GB');
-            $(this).unbind(event); // we don't need this event any more
-        });
-    }
-}
-
-function init_date(id) {
-    var input = $('#'+id);
-    var text = $('#'+id+'-text');
-
-    // a function to initialise the date picker
-    var init_datepicker = function() {
-        input.datepicker({
-            onClose: function(new_date, picker) {
-                if (!new_date) {
-                    input.hide();
-                    text.show();
-                }
-            },
-            onSelect: function(date, picker) {
-                // trigger the change event, which is used by the
-                // query checking code.
-                input.change();
-            }
-        });
-    }
-
-    var has_date = input.val();
-    // initialise the date picker if a date is present
-    if (has_date) {
-        init_datepicker();
-        text.hide();
-        input.show();
-    }
-
-    text.one('click', function() {
-        $(this).hide();
-        input.show();
-
-        // initialise the date picker if there was no initial date
-        if (!has_date) {
-            init_datepicker();
-        }
-        
-        input.datepicker('show');
-        
-        // for subsequent clicks
-        text.click(function() {
-            $(this).hide();
-            input.show();
-            input.datepicker('show');
-        });
-    });
-}
-
 // Initialise the page once loaded
 $(function() {
     // initialise the date pickers
@@ -178,7 +43,10 @@ $(function() {
     var options = {
         restrictedExtent: extent,
         maxExtent: extent,
-        maxResolution: 360/512
+        maxResolution: 360/512,
+        eventListeners: {
+            "movestart": stop_box_edit
+        }
     }
     
     map = new OpenLayers.Map('map', options);
@@ -369,6 +237,7 @@ ${area_selection('countries')}
         <input type="submit" value="search"/>
         <input type="button" onclick="javascript:clear_area()" value="clear area"/>
       </div>
+      <div>Click on an existing box to resize or drag it. Click the box again to deselect it.</div>
       <div id="map-holder">
         <div id="map"></div>
       </div>

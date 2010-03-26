@@ -121,10 +121,6 @@ blockquote {
     color: black;
     background:#eee;
 }
-.area {
-    background-image:url('/images/area-fill.png');
-    background-repeat: repeat;
-}
 #version {
     text-align: right;
 }
@@ -173,3 +169,23 @@ img.extent {
 img.loading {
     vertical-align:middle;
 }
+
+/* Box resizing icons
+ *
+ * This adds icons missing from the default jQuery widget 
+ */
+.ui-custom-icon { 
+    display: block; 
+    text-indent: -99999px; 
+    overflow: hidden; 
+    background-repeat: no-repeat; 
+    width: 16px; 
+    height: 16px; 
+    background-image: url(/images/ui-resize-handles.png); 
+}
+.ui-resizable-sw { cursor: sw-resize; width: 12px; height: 12px; left: 1px; bottom: 1px; }
+.ui-resizable-nw { cursor: nw-resize; width: 12px; height: 12px; left: 1px; top: 1px; }
+.ui-resizable-ne { cursor: ne-resize; width: 12px; height: 12px; right: 1px; top: 1px; }
+.ui-icon-gripsmall-diagonal-sw { background-position: -4px 1px; }
+.ui-icon-gripsmall-diagonal-nw { background-position: -19px -4px; }
+.ui-icon-gripsmall-diagonal-ne { background-position: -29px -4px; }
