@@ -18,7 +18,7 @@
     <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
         <!--
-var map, boxes, box;            // map object, box layer, box marker
+var map;            // map object
 %if bbox:
 var bbox = new OpenLayers.Bounds(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]});
 %else:
@@ -38,39 +38,26 @@ $(function() {
     init_date('start-date');
     init_date('end-date');
 
-    // initialise the mapping
-    var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
-    var options = {
-        restrictedExtent: extent,
-        maxExtent: extent,
-        maxResolution: 360/512,
-        eventListeners: {
-            "movestart": stop_box_edit
-        }
-    }
-    
-    map = new OpenLayers.Map('map', options);
+    map = init_map();
+
     var layer = new OpenLayers.Layer.TMS( "Bathy", 
                                       "${script_root}/spatial/tms/",
                                       { layername: 'bathymetry', type: 'png' } );
     map.addLayer(layer);
-
-    boxes = new OpenLayers.Layer.Boxes("boxes");
-    map.addLayer(boxes);
 
     // add the area selections
     populate_areas();
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
-    $('#search-form input[type=text], select').change(function() {
+    $('#search-form input[type=text]').change(function() {
         check_query();
     });
 
     // if the current form contents don't match the original query
     // string (i.e. the user has pressed the back button), then check
     // the query
-    if ('${query_string}' && '${query_string}' != '?'+$('#search-form').serialize())
+    if (!compare_vars(parse_GET('${query_string}'), $('#search-form').serializeArray()))
         check_query();
 });
 
@@ -237,7 +224,36 @@ ${area_selection('countries')}
         <input type="submit" value="search"/>
         <input type="button" onclick="javascript:clear_area()" value="clear area"/>
       </div>
-      <div>Click on an existing box to resize or drag it. Click the box again to deselect it.</div>
+      <div>Create a <strong>new box</strong> by dragging the mouse whilst holding down the <kbd>CTRL</kbd> key. Click the box to finish.</div>
+      <div>Click on an <strong>existing box</strong> to <strong>resize or drag</strong> it. Click the box again to finish. (<a href="javascript:toggle('spatial-search-help', 'help', 'hide help')" id="spatial-search-help-link" title="Show or hide the help">help</a>)</div>
+      <div id="spatial-search-help" style="display: none">
+      <h3>Define bounding boxes</h3>
+      <p>Creating a bounding box restricts results to data which
+      intersects with the box. In addition to using the predefined
+      areas you can create your own.</p>
+
+      <p>Create a <strong>new box</strong> by holding down the
+      <kbd>CTRL</kbd> key whilst dragging the mouse over the map using
+      the left mouse button. Releasing the button creates the box and
+      lets you <strong>resize it using the handles</strong> on the box
+      or <strong>reposition it by dragging</strong>. Click the box to
+      finish it and return to normal map navigation mode.</p>
+
+      <p>An <strong>existing box</strong> can be resized by clicking
+      it to enter edit mode. The resize handles will appear in the box
+      corners and the box can also be dragged to a new
+      position. Clicking the box again returns you to normal map
+      navigation mode.</p>
+      
+      <h3>Navigate the map</h3>
+      <p>As well as using the visible navigation icons on the map you
+      can also navigate using the mouse. Left-clicking the mouse and
+      dragging will let you <strong>pan the map</strong>. If you have
+      a mouse-wheel you can use this to <strong>zoom in or
+      out</strong>. Holding down the <kbd>SHIFT</kbd> key whilst
+      dragging the map lets you <strong>zoom into a specific
+      area</strong>.</p>
+      </div>
       <div id="map-holder">
         <div id="map"></div>
       </div>

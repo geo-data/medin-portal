@@ -232,6 +232,9 @@ class Query(GETParams):
     def setCount(self, value):
         self['c'] = value
 
+    def delCount(self):
+        del self['c']
+
     def getStartIndex(self, cast=True, default=1):
         try:
             idx = self['i'][0]

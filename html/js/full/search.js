@@ -3,127 +3,155 @@ var LOAD_DELAY = 1000;
 
 // jQuery CSS map determining the style of the area box
 var BOX_SELECTED = {
+    'background-color': 'transparent',
     'border-color': '#0B8AB3',
-    'opacity': '1',
+    'border-width': '2px',
+    'border-style': 'solid',
     'background-image': "url('/images/area-fill-selected.png')",
     'background-repeat': 'repeat'
 };
 
 var BOX_DESELECTED = {
+    'background-color': 'transparent',
     'border-color': '#CA0000',
-    'opacity': '1',
+    'border-width': '2px',
+    'border-style': 'solid',
     'background-image': "url('/images/area-fill.png')",
     'background-repeat': 'repeat'
 };
 
-function stop_box_edit(event) {
-    if (!box)
-        return;
+// top level function to initialise the map
+function init_map() {
+    var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
+    var options = {
+        restrictedExtent: extent,
+        maxExtent: extent,
+        maxResolution: 360/512,
+        eventListeners: {
+            "movestart": stop_box_edit
+        },
+        controls: []            // we will add our own controls
+    }
+    
+    var map = new OpenLayers.Map('map', options);
 
-    $(box.div).data('edit', false);
+    // the layer to contain the area box
+    var boxes = new OpenLayers.Layer.Boxes("boxes");
+    map.addLayer(boxes);
+    
+    // the custom control to draw area boxes
+    control = new OpenLayers.Control.BoxDraw();
+    control.box_layer = boxes;
+    map.addControl(control);
+    control.activate();
+
+    // default controls
+    var nav = new OpenLayers.Control.Navigation();
+    map.addControl(nav);
+    map.addControl(new OpenLayers.Control.PanZoom());
+    map.addControl(new OpenLayers.Control.ArgParser());
+    map.addControl(new OpenLayers.Control.Attribution());
+
+    // ensure navigation is deactivated when the CTRL key is pressed
+    // or the box is selected, otherwise it interferes with the box
+    // drawing.
+    $(document).keydown(function(evt) {
+        // only deactivate if it's the CTRL key and the nav is active
+        if (evt.which == 17 && nav.active) { 
+            nav.deactivate();
+            $(this).data('deactivated', true);
+        }
+    }).keyup(function(evt) {
+        var self = $(this);
+        // only activate if previously deactivated by this code
+        if (evt.which == 17 && self.data('deactivated')) {  // it's the CTRL key
+            nav.activate();
+            self.data('deactivated', false);
+        }      
+    }).bind('boxselected', function(event) {
+        var self = $(this);
+        if (nav.active || self.data('deactivated')) {
+            nav.deactivate();
+            self.data('deactivated', false); // prevent CTRL keyup from re-activating
+        }
+    }).bind('boxdeselected', function(event) {
+        if (!nav.active && !$(this).data('deactivated')) {
+            nav.activate();
+        }
+    });
+
+    return map;
 }
 
-function add_box(extent) {
-    // add the box to the map
-    var newbox = new OpenLayers.Marker.Box(extent);
-
-    // move the box based on pixel locations
-    function move_box(minx, miny, maxx, maxy) {
-        var min = map.getLonLatFromPixel(new OpenLayers.Pixel(minx, miny));
-        var max = map.getLonLatFromPixel(new OpenLayers.Pixel(maxx, maxy));
-        newbox.bounds = new OpenLayers.Bounds(min.lon, min.lat, max.lon, max.lat);
-
-        $('#area').val('');                     // unset any predefined area
-        $('#bbox').val(newbox.bounds.toBBOX()); // set the form element
-        check_query();                          // update the query results
+// parse GET variable string into an array
+// from http://www.webdevelopmentcentral.net/2006/06/parsing-url-variables-with-javascript.html
+function parse_GET(str) {
+    // strip off the leading '?'
+    str = str.substring(1);
+    vars = []
+    var nvPairs = str.split("&");
+    for (i = 0; i < nvPairs.length; i++)
+    {
+        var nvPair = nvPairs[i].split("=");
+        var obj = {name: nvPair[0],
+                   value: nvPair[1]};
+        vars.push(obj);
     }
 
-    // add the drag and resize behaviour
-    var div = $(newbox.div);
-    div.css(BOX_DESELECTED)
-    .draggable({
-        containment: '#map',    // don't drag outside of the map
-        disabled: true,
-        cursor: 'crosshair',
-        start: function(event, ui) {
-            $(this).data('edit', false); // prevent box being deselected on stop
-        },
-        stop: function(event, ui) {
-            // replace the existing box bounds with the new one
-            var self = $(this);
-            var minx = ui.position.left;
-            var maxy = ui.position.top;
-            var maxx = minx + self.width();
-            var miny = maxy + self.height();
+    return vars;
+}
 
-            move_box(minx, miny, maxx, maxy);
+// compare an array of get variables to see if they are the same
+function compare_vars(vars1, vars2) {
+    function cmp(a, b) {
+        return (b.name < a.name) - (a.name < b.name);
+    }
+
+    // get rid of variables with no value
+    function compact(array) {
+        a = [];
+        for (i = 0; i < array.length; i++) {
+            if (array[i].value)
+                a.push(array[i]);
         }
-    })
-    .resizable({
-        handles: 'all',
-        containment: '#map',    // don't resize outside of the map
-        distance: 5,
-        start: function(event, ui) {
-            $(this).data('edit', false); // prevent box being deselected on stop
-        },
-        stop: function(event, ui) {
-            // replace the existing box bounds with the new one
-            var minx = ui.position.left;
-            var maxy = ui.position.top;
-            var maxx = minx + ui.size.width;
-            var miny = maxy + ui.size.height;
+        return a;
+    }
 
-            move_box(minx, miny, maxx, maxy);
-        }
-    }).mousedown(function() {
-        $(this).data('edit', true);
-    }).mouseup(function () {
-        var self = $(this);
-        // Should we check the resizing?
-        if (!self.data('edit'))
-            return;
+    // compact the arrays
+    vars1 = compact(vars1);
+    vars2 = compact(vars2);
 
-        if (self.resizable( "option", "disabled" )) {
-            // deactivate all navigation controls
-            var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
-            for (var i = 0; i < controls.length; i++) {
-                controls[i].deactivate()
-            }
+    // sort the arrays to be equal
+    vars1.sort(cmp);
+    vars2.sort(cmp);
 
-            // set the box to be resizable
-            self.resizable( "option", "disabled", false )
-                .draggable( "option", "disabled", false );
-            self.css(BOX_SELECTED);
-        } else {
-            // reactivate all navigation controls
-            var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
-            for (var i = 0; i < controls.length; i++) {
-                controls[i].activate()
-            }
+    // test the equality of the arrays
+    if (vars1.length != vars2.length)
+        return false;
 
-            // disable resizing
-            self.resizable( "option", "disabled", true )
-                .draggable( "option", "disabled", true );
-            self.css(BOX_DESELECTED);
-        }
-    })
-    .resizable( "option", "disabled", true );
+    for (i = 0; i < vars1.length; i++) {
 
-    // add the custom handles for the resize
-    div.find('.ui-resizable-ne').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-ne');
-    div.find('.ui-resizable-sw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-sw');
-    div.find('.ui-resizable-nw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-nw');
+        if (vars1[i].name !== vars2[i].name)
+            return false;
 
-    boxes.addMarker(newbox);
-    
-    clear_box();                // remove any previous box
+        if (vars1[i].value !== vars2[i].value)
+            return false;
+    }
 
-    bbox = extent;
-    box = newbox;
-    
-    map.zoomToExtent(extent);   // zoom to the box
+    return true;
+}
 
-    $('#bbox').val(extent.toBBOX()); // set the form element
+function stop_box_edit(event) {
+    map.controls[0].stopEdit();
+}
+
+function add_box(extent, selected) {
+    map.controls[0].setBox(extent, selected);
+}
+
+function clear_box() {
+    map.controls[0].removeBox();
+    $('#bbox').val(''); // set the form element
 }
 
 // remove the bounding box and deselect the area
@@ -131,15 +159,6 @@ function clear_area() {
     var select = $('#area')
     select.val('');
     select.change();
-}
-
-function clear_box() {
-    if (box) {
-        boxes.removeMarker(box);
-        box = null;
-    }
-
-    $('#bbox').val('');
 }
 
 function zoom_to_area(id) {
@@ -161,18 +180,21 @@ function populate_areas() {
         var id = $(this).attr('value');
         if (!id) {
             clear_box();
-            return;
-        }
-        
-        get_bbox(id, function(tbbox) {
-            if (!tbbox) {
-                clear_box();
-                return;
-            }
+            check_query();      // update the query results
+        } else {
+            get_bbox(id, function(tbbox) {
+                if (!tbbox) {
+                    clear_box();
+                    return;
+                } else {
+                    var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
+                    add_box(extent);
+                    map.zoomToExtent(extent);   // zoom to the box
+                }
 
-            var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
-            add_box(extent);
-        });
+                check_query();      // update the query results
+            });
+        }
     });
 
     // if there's an existing area, select it
@@ -181,12 +203,13 @@ function populate_areas() {
         select.change();
     } else if (bbox) {
         add_box(bbox);
+        map.zoomToExtent(bbox);   // zoom to the box
     } else {
         // zoom to the UK as a default
 
         // The map is hidden to begin with and needs to be initialised
         // when it is first shown
-        $('body').bind('fieldsetview', function(event, id) {
+        $(document).bind('fieldsetview', function(event, id) {
             if (id != 'spatial-search')
                 return;
             
@@ -195,6 +218,13 @@ function populate_areas() {
             $(this).unbind(event); // we don't need this event any more
         });
     }
+
+    // capture the drawbox and movebox events and act accordingly
+    $(document).bind('drawbox movebox', function(event, bounds) {
+        select.val('');         // unset any predefined area
+        $('#bbox').val(bounds.toBBOX()); // set the form element
+        check_query();          // update the query results
+    });
 }
 
 function init_date(id) {
@@ -263,7 +293,7 @@ function toggle_fieldset(id) {
     if (fieldset.hasClass('off')) {
         fieldset.removeClass('off');
         fieldset.children('div').show('fast', function() {
-            $('body').trigger('fieldsetview', [id]);
+            $(document).trigger('fieldsetview', [id]);
         });
     } else {
         fieldset.children('div').hide('fast', function() {
@@ -422,3 +452,250 @@ function get_bbox(id, callback) {
 
     return true;
 }
+
+/* Control for drawing bounding box
+
+ This control manages the bounding box on the map. It is based on examples in:
+ - http://dev.openlayers.org/docs/files/OpenLayers/Control-js.html
+ - http://dev.openlayers.org/releases/OpenLayers-2.8/lib/OpenLayers/Control/SelectFeature.js
+
+ The box should really be a customised class derived from
+ OpenLayers.Marker.Box. This would clean the control code up and
+ delegate appropriate functionality to the Box where it belongs. */
+OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {                
+    defaultHandlerOptions: {
+        'single': true,
+        'double': false,
+        'pixelTolerance': 0,
+        'stopSingle': false,
+        'stopDouble': false
+    },
+
+    initialize: function(options) {
+        this.handlerOptions = OpenLayers.Util.extend(
+            {'keyMask': OpenLayers.Handler.MOD_CTRL},
+            this.defaultHandlerOptions
+        );
+
+        OpenLayers.Control.prototype.initialize.apply(
+            this, arguments
+        );
+
+        // this Handler.Box will intercept the shift-mousedown
+        // before Control.MouseDefault gets to see it
+        this.handler = new OpenLayers.Handler.DrawBox(
+            this, {
+                'done': this.drawBox
+            },
+            this.handlerOptions
+        );
+
+        // keep track of CTRL keydown position and prevent dragging
+        // and resizing of an existing box if the CTRL key is pressed
+        // down, as another box may be being drawn.
+        this.keydown = false;
+        var self = this;
+        $(document).keydown(function(evt) {
+            if (evt.which == 17) {
+                self.keydown = true;
+                if (self.box) {
+                    var div = $(self.box.div);
+                    if (div.data('selected')) {
+                        div.resizable( "option", "disabled", true )
+                            .draggable( "option", "disabled", true )
+                            .data('edit', false);
+
+                        function enable_edit(event) {
+                            if (event.which == 17) {
+                                div.resizable( "option", "disabled", false )
+                                    .draggable( "option", "disabled", false )
+                                    .data('edit', true);
+                                $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
+                            }
+                        }
+
+                        // re-enable the editing once the key is released
+                        $(document).bind('keyup', enable_edit);
+                    }
+                }
+            }
+        }).keyup(function(evt) {
+            if (evt.which == 17)
+                self.keydown = false;
+        });
+    }, 
+
+    drawBox: function(position) {
+        if (!(position instanceof OpenLayers.Bounds))
+            return;
+
+        var min = this.map.getLonLatFromPixel(
+            new OpenLayers.Pixel(position.left, position.bottom)
+        );
+        var max = this.map.getLonLatFromPixel(
+            new OpenLayers.Pixel(position.right, position.top)
+        );
+        var bounds = new OpenLayers.Bounds(
+            min.lon, min.lat, max.lon, max.lat
+        );
+
+        this.setBox(bounds, true);        
+
+        jQuery(document).trigger('drawbox', [bounds]);
+    },
+
+    setBox: function(bounds, selected) {
+        // add the box to the map
+        var box = new OpenLayers.Marker.Box(bounds);
+        
+        // add the drag and resize behaviour
+        var div = jQuery(box.div);
+        var ctrl = this;
+        div.draggable({
+            containment: '#map-holder',    // don't drag outside of the map
+            cursor: 'crosshair',
+            distance: 5,
+            start: function(event, ui) {
+                jQuery(this).data('edit', false); // prevent box being deselected on stop
+            },
+            stop: function(event, ui) {
+                // replace the existing box bounds with the new one
+                var self = jQuery(this);
+                var minx = ui.position.left;
+                var maxy = ui.position.top;
+                var maxx = minx + self.width();
+                var miny = maxy + self.height();
+                
+                ctrl.moveBox(minx, miny, maxx, maxy);
+            }
+        })
+        .resizable({
+            handles: 'all',
+            containment: '#map-holder',    // don't resize outside of the map
+            distance: 5,
+            start: function(event, ui) {
+                jQuery(this).data('edit', false); // prevent box being deselected on stop
+            },
+            stop: function(event, ui) {
+                // replace the existing box bounds with the new one
+                var minx = ui.position.left;
+                var maxy = ui.position.top;
+                var maxx = minx + ui.size.width;
+                var miny = maxy + ui.size.height;
+                
+                ctrl.moveBox(minx, miny, maxx, maxy);
+            }
+        }).mousedown(function(event) {
+            jQuery(this).data('edit', true);
+        }).mouseup(function (event) {
+            var self = jQuery(this);
+            // Should we check the resizing?
+            if (!self.data('edit'))
+                return;
+            
+            if (self.resizable( "option", "disabled" )) {
+                ctrl.selectBox();
+            } else {
+                ctrl.deselectBox();
+            }
+        });
+        
+        // add the custom handles for the resize
+        div.find('.ui-resizable-ne').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-ne');
+        div.find('.ui-resizable-sw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-sw');
+        div.find('.ui-resizable-nw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-nw');
+        
+        this.box_layer.addMarker(box); // add the box to the layer
+        if (this.box)
+            this.box_layer.removeMarker(this.box); // remove any previous box
+        this.box = box;
+
+        // define the initial state of the box
+        if (selected) {
+            this.selectBox();
+        } else {
+            this.deselectBox();
+        }        
+    },
+
+    selectBox: function() {
+        var div = $(this.box.div);
+
+        // set the box to be editable. If the CTRL key is depressed
+        // then we need to make disable editing until it is released.
+        if (this.keydown) {
+            div.resizable( "option", "disabled", true )
+                .draggable( "option", "disabled", true )
+                .data('edit', false);
+
+            function enable_edit(event) {
+                if (event.which == 17) {
+                    div.resizable( "option", "disabled", false )
+                        .draggable( "option", "disabled", false )
+                        .data('edit', true);
+                    $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
+                }
+            }
+            
+            $(document).bind('keyup', enable_edit);
+        } else {
+            div.resizable( "option", "disabled", false )
+                .draggable( "option", "disabled", false );
+        }
+        
+        div.css(BOX_SELECTED)
+            .data('selected', true);
+
+        jQuery(document).trigger('boxselected', []);
+    },
+
+    deselectBox: function() {
+        // disable resizing
+        jQuery(this.box.div).resizable( "option", "disabled", true )
+            .draggable( "option", "disabled", true )
+            .data('edit', false)
+            .css(BOX_DESELECTED)
+            .data('selected', false);
+
+        jQuery(document).trigger('boxdeselected', []);
+    },
+
+    removeBox: function() {
+        if (this.box) {
+            this.box_layer.removeMarker(this.box);
+            this.box = null;
+        }
+    },
+    
+    // move the box based on pixel locations
+    moveBox: function (minx, miny, maxx, maxy) {
+        if (!this.box) return;
+
+        var min = this.map.getLonLatFromPixel(new OpenLayers.Pixel(minx, miny));
+        var max = this.map.getLonLatFromPixel(new OpenLayers.Pixel(maxx, maxy));
+        this.box.bounds = new OpenLayers.Bounds(min.lon, min.lat, max.lon, max.lat);
+
+        jQuery(document).trigger('movebox', [this.box.bounds]);
+    },
+    
+    stopEdit: function() {
+        if (!this.box) return;
+
+        jQuery(this.box.div).data('edit', false);
+    },
+
+    CLASS_NAME: "OpenLayers.Control.BoxDraw"
+});
+
+
+// The box chosen when the user draws a new area
+OpenLayers.Handler.DrawBox = OpenLayers.Class(OpenLayers.Handler.Box, {
+
+    // override the startBox so that it displays with the correct style
+    startBox: function (xy) {
+        OpenLayers.Handler.Box.prototype.startBox.apply(this, arguments);
+        $(this.zoomBox).css(BOX_SELECTED);
+    },
+
+    CLASS_NAME: "OpenLayers.Handler.DrawBox"
+});

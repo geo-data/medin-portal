@@ -154,10 +154,13 @@ class Search(MakoApp):
                 msg_error(environ, error)
 
         # we need to get the number of hits for the query
-        count = q.getCount()
+        count = q.getCount(default=None)
         q.setCount(0)
         r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
-        q.setCount(count)               # reset the count to it's previous value
+        if count is not None:
+            q.setCount(count) # reset the count to it's previous value
+        else:
+            q.delCount() # delete the count as it wasn't there originally
 
         search_term = q.getSearchTerm(cast=False)
         sort = q.getSort(cast=False)
