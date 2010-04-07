@@ -507,8 +507,10 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
 
                         function enable_edit(event) {
                             if (event.which == 17) {
-                                div.resizable( "option", "disabled", false )
-                                    .draggable( "option", "disabled", false );
+                                if (div.data('selected')) {
+                                    div.resizable( "option", "disabled", false )
+                                        .draggable( "option", "disabled", false );
+                                }
                                 $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
                             }
                         }
@@ -585,8 +587,7 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
         }).iclick({
             interval: 300,
             success: function(event) {
-                var self = jQuery(this);
-                if (self.data('selected')) {
+                if (jQuery(this).data('selected')) {
                     ctrl.deselectBox();
                 } else {
                     ctrl.selectBox();
@@ -617,6 +618,10 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
 
         var div = $(this.box.div);
 
+        // only select if not already selected
+        if (div.data('selected'))
+            return;
+
         // set the box to be editable. If the CTRL key is depressed
         // then we need to make disable editing until it is released.
         if (this.keydown) {
@@ -625,8 +630,10 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
 
             function enable_edit(event) {
                 if (event.which == 17) {
-                    div.resizable( "option", "disabled", false )
-                        .draggable( "option", "disabled", false );
+                    if (div.data('selected')) {
+                        div.resizable( "option", "disabled", false )
+                            .draggable( "option", "disabled", false );
+                    }
                     $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
                 }
             }
@@ -646,17 +653,25 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
     deselectBox: function() {
         if (!this.box || !this.active) return;
 
-        // disable resizing
-        jQuery(this.box.div).resizable( "option", "disabled", true )
-            .draggable( "option", "disabled", true )
-            .css(BOX_DESELECTED)
-            .data('selected', false);
+        var div = $(this.box.div);
+        var state = div.data('selected');
 
-        jQuery(document).trigger('boxdeselected', []);
+        // disable editing if not already disabled
+        if (state !== false) {
+            div.resizable( "option", "disabled", true )
+                .draggable( "option", "disabled", true )
+                .css(BOX_DESELECTED)
+                .data('selected', false);
+        }
+
+        // trigger the event if switching selection state
+        if (state === true)
+            jQuery(document).trigger('boxdeselected', []);
     },
 
     removeBox: function() {
         if (this.box && this.active) {
+            this.deselectBox(); // to restore app state
             this.box_layer.removeMarker(this.box);
             this.box = null;
         }
