@@ -27,20 +27,17 @@ function init_map() {
         restrictedExtent: extent,
         maxExtent: extent,
         maxResolution: 360/512,
-        eventListeners: {
-            "movestart": stop_box_edit
-        },
         controls: []            // we will add our own controls
     }
-    
+
     var map = new OpenLayers.Map('map', options);
 
     // the layer to contain the area box
     var boxes = new OpenLayers.Layer.Boxes("boxes");
     map.addLayer(boxes);
-    
+
     // the custom control to draw area boxes
-    control = new OpenLayers.Control.BoxDraw();
+    var control = new OpenLayers.Control.BoxDraw();
     control.box_layer = boxes;
     map.addControl(control);
     control.activate();
@@ -57,9 +54,13 @@ function init_map() {
     // drawing.
     $(document).keydown(function(evt) {
         // only deactivate if it's the CTRL key and the nav is active
-        if (evt.which == 17 && nav.active) { 
+        if (evt.which == 17 && nav.active) {
             nav.deactivate();
             $(this).data('deactivated', true);
+        }
+        // deactivate the box drawing if SHIFT is pressed
+        else if (evt.which == 16 && control.active) {
+            control.deactivate();
         }
     }).keyup(function(evt) {
         var self = $(this);
@@ -67,7 +68,11 @@ function init_map() {
         if (evt.which == 17 && self.data('deactivated')) {  // it's the CTRL key
             nav.activate();
             self.data('deactivated', false);
-        }      
+        }
+        // re-activate the box drawing when SHIFT is released
+        else if (evt.which == 16 && !control.active) {
+            control.activate();
+        }
     }).bind('boxselected', function(event) {
         var self = $(this);
         if (nav.active || self.data('deactivated')) {
@@ -88,9 +93,9 @@ function init_map() {
 function parse_GET(str) {
     // strip off the leading '?'
     str = str.substring(1);
-    vars = []
+    var vars = []
     var nvPairs = str.split("&");
-    for (i = 0; i < nvPairs.length; i++)
+    for (var i = 0; i < nvPairs.length; i++)
     {
         var nvPair = nvPairs[i].split("=");
         var obj = {name: nvPair[0],
@@ -109,7 +114,7 @@ function compare_vars(vars1, vars2) {
 
     // get rid of variables with no value
     function compact(array) {
-        a = [];
+        var a = [];
         for (i = 0; i < array.length; i++) {
             if (array[i].value)
                 a.push(array[i]);
@@ -129,7 +134,7 @@ function compare_vars(vars1, vars2) {
     if (vars1.length != vars2.length)
         return false;
 
-    for (i = 0; i < vars1.length; i++) {
+    for (var i = 0; i < vars1.length; i++) {
 
         if (vars1[i].name !== vars2[i].name)
             return false;
@@ -139,10 +144,6 @@ function compare_vars(vars1, vars2) {
     }
 
     return true;
-}
-
-function stop_box_edit(event) {
-    map.controls[0].stopEdit();
 }
 
 function add_box(extent, selected) {
@@ -212,7 +213,7 @@ function populate_areas() {
         $(document).bind('fieldsetview', function(event, id) {
             if (id != 'spatial-search')
                 return;
-            
+
             map.updateSize();
             zoom_to_area('GB');
             $(this).unbind(event); // we don't need this event any more
@@ -264,9 +265,9 @@ function init_date(id) {
         if (!has_date) {
             init_datepicker();
         }
-        
+
         input.datepicker('show');
-        
+
         // for subsequent clicks
         text.click(function() {
             $(this).hide();
@@ -328,7 +329,7 @@ function check_query() {
                 // only process if this is the latest check
                 if (query_check != check_count)
                     return;
-                
+
                 var messages = $('#messages').empty();
 
                 for (var i = 0; i < criteria['errors'].length; i++) {
@@ -393,7 +394,7 @@ function update_results() {
         block.append('<span><img class="loading" src="/images/loading.gif" width="16" height="16" alt="[loading]"/> Updating result count...</span>');
     }
     var timeout = setTimeout(load, LOAD_DELAY);
-    
+
     var url = script_root+'/full.json?'+$('#search-form').serialize();
     $.ajax({url: url,
             success: function(results) {
@@ -462,7 +463,7 @@ function get_bbox(id, callback) {
  The box should really be a customised class derived from
  OpenLayers.Marker.Box. This would clean the control code up and
  delegate appropriate functionality to the Box where it belongs. */
-OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {                
+OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
     defaultHandlerOptions: {
         'single': true,
         'double': false,
@@ -502,14 +503,12 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
                     var div = $(self.box.div);
                     if (div.data('selected')) {
                         div.resizable( "option", "disabled", true )
-                            .draggable( "option", "disabled", true )
-                            .data('edit', false);
+                            .draggable( "option", "disabled", true );
 
                         function enable_edit(event) {
                             if (event.which == 17) {
                                 div.resizable( "option", "disabled", false )
-                                    .draggable( "option", "disabled", false )
-                                    .data('edit', true);
+                                    .draggable( "option", "disabled", false );
                                 $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
                             }
                         }
@@ -523,10 +522,10 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
             if (evt.which == 17)
                 self.keydown = false;
         });
-    }, 
+    },
 
     drawBox: function(position) {
-        if (!(position instanceof OpenLayers.Bounds))
+        if (!(position instanceof OpenLayers.Bounds) || !this.active)
             return;
 
         var min = this.map.getLonLatFromPixel(
@@ -539,15 +538,17 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
             min.lon, min.lat, max.lon, max.lat
         );
 
-        this.setBox(bounds, true);        
+        this.setBox(bounds, true);
 
         jQuery(document).trigger('drawbox', [bounds]);
     },
 
     setBox: function(bounds, selected) {
+        if (!this.active) return;
+
         // add the box to the map
         var box = new OpenLayers.Marker.Box(bounds);
-        
+
         // add the drag and resize behaviour
         var div = jQuery(box.div);
         var ctrl = this;
@@ -555,9 +556,7 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
             containment: '#map-holder',    // don't drag outside of the map
             cursor: 'crosshair',
             distance: 5,
-            start: function(event, ui) {
-                jQuery(this).data('edit', false); // prevent box being deselected on stop
-            },
+            delay: 300,
             stop: function(event, ui) {
                 // replace the existing box bounds with the new one
                 var self = jQuery(this);
@@ -565,7 +564,7 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
                 var maxy = ui.position.top;
                 var maxx = minx + self.width();
                 var miny = maxy + self.height();
-                
+
                 ctrl.moveBox(minx, miny, maxx, maxy);
             }
         })
@@ -573,38 +572,33 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
             handles: 'all',
             containment: '#map-holder',    // don't resize outside of the map
             distance: 5,
-            start: function(event, ui) {
-                jQuery(this).data('edit', false); // prevent box being deselected on stop
-            },
+            delay: 300,
             stop: function(event, ui) {
                 // replace the existing box bounds with the new one
                 var minx = ui.position.left;
                 var maxy = ui.position.top;
                 var maxx = minx + ui.size.width;
                 var miny = maxy + ui.size.height;
-                
+
                 ctrl.moveBox(minx, miny, maxx, maxy);
             }
-        }).mousedown(function(event) {
-            jQuery(this).data('edit', true);
-        }).mouseup(function (event) {
-            var self = jQuery(this);
-            // Should we check the resizing?
-            if (!self.data('edit'))
-                return;
-            
-            if (self.resizable( "option", "disabled" )) {
-                ctrl.selectBox();
-            } else {
-                ctrl.deselectBox();
+        }).iclick({
+            interval: 300,
+            success: function(event) {
+                var self = jQuery(this);
+                if (self.data('selected')) {
+                    ctrl.deselectBox();
+                } else {
+                    ctrl.selectBox();
+                }
             }
         });
-        
+
         // add the custom handles for the resize
         div.find('.ui-resizable-ne').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-ne');
         div.find('.ui-resizable-sw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-sw');
         div.find('.ui-resizable-nw').addClass('ui-custom-icon ui-icon-gripsmall-diagonal-nw');
-        
+
         this.box_layer.addMarker(box); // add the box to the layer
         if (this.box)
             this.box_layer.removeMarker(this.box); // remove any previous box
@@ -615,34 +609,34 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
             this.selectBox();
         } else {
             this.deselectBox();
-        }        
+        }
     },
 
     selectBox: function() {
+        if (!this.box || !this.active) return;
+
         var div = $(this.box.div);
 
         // set the box to be editable. If the CTRL key is depressed
         // then we need to make disable editing until it is released.
         if (this.keydown) {
             div.resizable( "option", "disabled", true )
-                .draggable( "option", "disabled", true )
-                .data('edit', false);
+                .draggable( "option", "disabled", true );
 
             function enable_edit(event) {
                 if (event.which == 17) {
                     div.resizable( "option", "disabled", false )
-                        .draggable( "option", "disabled", false )
-                        .data('edit', true);
+                        .draggable( "option", "disabled", false );
                     $(document).unbind('keyup', enable_edit); // we only need to enable the edit once
                 }
             }
-            
+
             $(document).bind('keyup', enable_edit);
         } else {
             div.resizable( "option", "disabled", false )
                 .draggable( "option", "disabled", false );
         }
-        
+
         div.css(BOX_SELECTED)
             .data('selected', true);
 
@@ -650,10 +644,11 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
     },
 
     deselectBox: function() {
+        if (!this.box || !this.active) return;
+
         // disable resizing
         jQuery(this.box.div).resizable( "option", "disabled", true )
             .draggable( "option", "disabled", true )
-            .data('edit', false)
             .css(BOX_DESELECTED)
             .data('selected', false);
 
@@ -661,27 +656,21 @@ OpenLayers.Control.BoxDraw = OpenLayers.Class(OpenLayers.Control, {
     },
 
     removeBox: function() {
-        if (this.box) {
+        if (this.box && this.active) {
             this.box_layer.removeMarker(this.box);
             this.box = null;
         }
     },
-    
+
     // move the box based on pixel locations
     moveBox: function (minx, miny, maxx, maxy) {
-        if (!this.box) return;
+        if (!this.box || !this.active) return;
 
         var min = this.map.getLonLatFromPixel(new OpenLayers.Pixel(minx, miny));
         var max = this.map.getLonLatFromPixel(new OpenLayers.Pixel(maxx, maxy));
         this.box.bounds = new OpenLayers.Bounds(min.lon, min.lat, max.lon, max.lat);
 
         jQuery(document).trigger('movebox', [this.box.bounds]);
-    },
-    
-    stopEdit: function() {
-        if (!this.box) return;
-
-        jQuery(this.box.div).data('edit', false);
     },
 
     CLASS_NAME: "OpenLayers.Control.BoxDraw"
