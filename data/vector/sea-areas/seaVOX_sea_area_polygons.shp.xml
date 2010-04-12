@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<metadata>
+	<idinfo>
+		<citation>
+			<citeinfo>
+				<origin>British Oceanographic Data Centre</origin>
+				<pubdate>9th March 2010</pubdate>
+				<edition>version 1.1</edition>
+				<geoform Sync="TRUE">vector digital data</geoform>
+				<onlink>\\BINA\PCUSERS1\PAW\limits_of_oceans_and_seas\seaVOX_sea_area_polygons.shp</onlink>
+				<ftname Sync="TRUE">seaVOX_sea_area_polygons</ftname><title>SeaVoX Salt and Fresh Water Body Gazetteer</title></citeinfo>
+		</citation>
+		<descript>
+			<abstract>
+The data set consists of a polygon file defining the limits of water bodies from the SeaVoX Salt and Fresh Water Body Gazetteer.
+
+SeaVoX is a combined SeaDataNet and MarineXML vocabulary content governance group, it is moderated by BODC (https://www.bodc.ac.uk/data/codes_and_formats/seavox/).
+
+This data set defines the geographic extent of the terms specified by the SeaVoX vocabulary governance to describe coherent regions of the hydrosphere. Includes land masses enclosing freshwater bodies.
+
+The coastline data set used in the shapefile is taken from the World Vector Shoreline data set (scale 1:250,000).
+</abstract>
+			<purpose>The data set was developed as a means of defining the geographic extent of the water bodies defined in the SeaVoX salt and fresh water gazetteer.</purpose>
+			<langdata Sync="TRUE">en</langdata></descript>
+		<timeperd>
+			<timeinfo>
+				<sngdate>
+					<caldate>unknown</caldate>
+				</sngdate>
+			</timeinfo>
+			<current>publication date</current>
+		</timeperd>
+		<status>
+			<progress>Complete</progress>
+			<update>As needed</update>
+		</status>
+		<spdom>
+			<bounding>
+				<westbc Sync="TRUE">-180.000198</westbc>
+				<eastbc Sync="TRUE">180.000000</eastbc>
+				<northbc Sync="TRUE">90.000053</northbc>
+				<southbc Sync="TRUE">-78.570282</southbc>
+			</bounding>
+			<lboundng><leftbc Sync="TRUE">-180.000198</leftbc><rightbc Sync="TRUE">180.000000</rightbc><bottombc Sync="TRUE">-78.570282</bottombc><topbc Sync="TRUE">90.000053</topbc></lboundng></spdom>
+		<keywords>
+			<theme>
+				<themekey>boundaries</themekey>
+				<themekey>oceans</themekey>
+				<themekey>seas</themekey>
+				<themekt>REQUIRED: Reference to a formally registered thesaurus or a similar authoritative source of theme keywords.</themekt></theme>
+			<place>
+				<placekey>world</placekey>
+				<placekey>world oceans</placekey>
+				<placekey>world seas</placekey>
+			</place>
+		</keywords>
+		<accconst>None</accconst>
+		<useconst>An acknowledgement of the source of the data set should be given. The data set should not be passed to third parties without prior permission.</useconst>
+		<ptcontac>
+			<cntinfo>
+				<cntperp>
+					<cntper>Pauline Weatherall</cntper>
+					<cntorg>British Oceanographic Data Centre</cntorg>
+				</cntperp>
+				<cntpos>Data Scientist</cntpos>
+			</cntinfo>
+		</ptcontac>
+		<datacred>SeaVOX Salt and Freshwater Water Body Gazetteer</datacred>
+		<native Sync="TRUE">Microsoft Windows XP Version 5.1 (Build 2600) Service Pack 3; ESRI ArcCatalog 9.3.0.1770</native>
+		<crossref>
+			<citeinfo>
+				<pubdate>18th November 2009</pubdate>
+				<title>SeaVox Salt and Fresh Water Gazetteer polygon file</title>
+				<edition>version 1.0</edition>
+			</citeinfo>
+		</crossref>
+		<natvform Sync="TRUE">Shapefile</natvform></idinfo>
+	<dataqual>
+		<lineage>
+			<procstep>
+				<procdesc>Dataset copied.</procdesc>
+				<srcused>\\LIVPCHT\C$\data_files\s23_limits.mdb</srcused>
+				<procdate>20090902</procdate>
+				<proctime>09133900</proctime>
+			</procstep>
+			<procstep><procdesc Sync="TRUE">Metadata imported.</procdesc><srcused Sync="TRUE">C:\DOCUME~1\PAW\LOCALS~1\Temp\xml225.tmp</srcused><procdate Sync="TRUE">20100310</procdate><proctime Sync="TRUE">15123200</proctime></procstep></lineage>
+	</dataqual>
+	<spdoinfo>
+		<direct Sync="TRUE">Vector</direct>
+		<ptvctinf>
+			<sdtsterm Name="seaVOX_sea_area_polygons">
+				<sdtstype Sync="TRUE">G-polygon</sdtstype>
+				<ptvctcnt Sync="TRUE">160</ptvctcnt>
+			</sdtsterm>
+			<esriterm Name="seaVOX_sea_area_polygons"><efeatyp Sync="TRUE">Simple</efeatyp><efeageom Sync="TRUE">Polygon</efeageom><esritopo Sync="TRUE">FALSE</esritopo><efeacnt Sync="TRUE">160</efeacnt><spindex Sync="TRUE">TRUE</spindex><linrefer Sync="TRUE">FALSE</linrefer></esriterm></ptvctinf>
+	</spdoinfo>
+	<spref>
+		<horizsys>
+			<geograph>
+				<latres Sync="TRUE">0.000000</latres>
+				<longres Sync="TRUE">0.000000</longres>
+				<geogunit Sync="TRUE">Decimal degrees</geogunit>
+			</geograph>
+			<geodetic>
+				<horizdn Sync="TRUE">D_WGS_1984</horizdn>
+				<ellips Sync="TRUE">WGS_1984</ellips>
+				<semiaxis Sync="TRUE">6378137.000000</semiaxis>
+				<denflat Sync="TRUE">298.257224</denflat>
+			</geodetic>
+			<cordsysn><geogcsn Sync="TRUE">GCS_WGS_1984</geogcsn></cordsysn></horizsys>
+		<vertdef>
+			<altsys>
+				<altres>0.000100</altres>
+				<altenc>Explicit elevation coordinate included with horizontal coordinates</altenc>
+			</altsys>
+		</vertdef>
+	</spref>
+	<eainfo>
+		<detailed Name="seaVOX_sea_area_polygons">
+			<enttyp>
+				<enttypl Sync="TRUE">seaVOX_sea_area_polygons</enttypl>
+				<enttypt Sync="TRUE">Feature Class</enttypt><enttypc Sync="TRUE">160</enttypc></enttyp>
+			<attr>
+				<attrlabl>FID</attrlabl>
+				<attrdef>Internal feature number.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+				<attalias Sync="TRUE">FID</attalias><attrtype Sync="TRUE">OID</attrtype><attwidth Sync="TRUE">4</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale></attr>
+			<attr>
+				<attrlabl>Shape</attrlabl>
+				<attrdef>Feature geometry.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+				<attalias Sync="TRUE">Shape</attalias><attrtype Sync="TRUE">Geometry</attrtype><attwidth Sync="TRUE">0</attwidth><atprecis Sync="TRUE">0</atprecis><attscale Sync="TRUE">0</attscale></attr>
+			<attr>
+				<attrlabl>OCEAN</attrlabl>
+				<attalias Sync="TRUE">OCEAN</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">50</attwidth></attr>
+			<attr>
+				<attrlabl>SUB_OCEAN</attrlabl>
+				<attalias Sync="TRUE">SUB_OCEAN</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">80</attwidth></attr>
+			<attr>
+				<attrlabl>LEVEL_1</attrlabl>
+				<attalias Sync="TRUE">LEVEL_1</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">80</attwidth></attr>
+			<attr>
+				<attrlabl>LEVEL_2</attrlabl>
+				<attalias Sync="TRUE">LEVEL_2</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">80</attwidth></attr>
+			<attr>
+				<attrlabl>LEVEL_3</attrlabl>
+				<attalias Sync="TRUE">LEVEL_3</attalias><attrtype Sync="TRUE">String</attrtype><attwidth Sync="TRUE">80</attwidth></attr>
+		</detailed>
+	</eainfo>
+	<distinfo>
+		<resdesc>Polygon Shapefile</resdesc>
+		<stdorder>
+			<digform>
+				<digtinfo>
+					<transize>140.178</transize>
+					<dssize Sync="TRUE">140.171</dssize></digtinfo>
+			</digform>
+		</stdorder>
+	</distinfo>
+	<metainfo>
+		<metd Sync="TRUE">20100312</metd>
+		<metc>
+			<cntinfo>
+				<cntorgp>
+					<cntorg>British Oceanographic Data Centre</cntorg>
+					<cntper>Pauline Weatherall</cntper>
+				</cntorgp>
+				<cntpos>Data Scientist</cntpos>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>6 Brownlow Street</address>
+					<city>Liverpool</city>
+					<state>Merseyside</state>
+					<postal>L3 5DA</postal>
+					<country>UK</country>
+				</cntaddr>
+				<cntvoice>+44 0151 795 4800</cntvoice>
+				<cntemail>paw@bodc.ac.uk</cntemail>
+			</cntinfo>
+		</metc>
+		<metstdn Sync="TRUE">FGDC Content Standards for Digital Geospatial Metadata</metstdn>
+		<metstdv Sync="TRUE">FGDC-STD-001-1998</metstdv>
+		<mettc Sync="TRUE">local time</mettc>
+		<metextns>
+			<onlink>http://www.esri.com/metadata/esriprof80.html</onlink>
+			<metprof>ESRI Metadata Profile</metprof>
+		</metextns>
+		<langmeta Sync="TRUE">en</langmeta><metextns><onlink Sync="TRUE">http://www.esri.com/metadata/esriprof80.html</onlink><metprof Sync="TRUE">ESRI Metadata Profile</metprof></metextns></metainfo>
+	<Esri><MetaID>{EDF4DAFA-0C8C-4786-B685-D133A95442BF}</MetaID><CreaDate>20100310</CreaDate><CreaTime>15123200</CreaTime><SyncOnce>FALSE</SyncOnce><SyncDate>20100312</SyncDate><SyncTime>15011100</SyncTime><ModDate>20100312</ModDate><ModTime>15011100</ModTime></Esri><dataIdInfo><envirDesc Sync="TRUE">Microsoft Windows XP Version 5.1 (Build 2600) Service Pack 3; ESRI ArcCatalog 9.3.0.1770</envirDesc><dataLang><languageCode Sync="TRUE" value="en"></languageCode></dataLang><idCitation><resTitle Sync="TRUE">seaVOX_sea_area_polygons</resTitle><presForm><PresFormCd Sync="TRUE" value="005"></PresFormCd></presForm></idCitation><spatRpType><SpatRepTypCd Sync="TRUE" value="001"></SpatRepTypCd></spatRpType><dataExt><geoEle><GeoBndBox esriExtentType="native"><westBL Sync="TRUE">-180.000198</westBL><eastBL Sync="TRUE">180</eastBL><northBL Sync="TRUE">90.000053</northBL><southBL Sync="TRUE">-78.570282</southBL><exTypeCode Sync="TRUE">1</exTypeCode></GeoBndBox></geoEle></dataExt><geoBox esriExtentType="decdegrees"><westBL Sync="TRUE">-180</westBL><eastBL Sync="TRUE">180</eastBL><northBL Sync="TRUE">90</northBL><southBL Sync="TRUE">-78.570282</southBL><exTypeCode Sync="TRUE">1</exTypeCode></geoBox></dataIdInfo><mdLang><languageCode Sync="TRUE" value="en"></languageCode></mdLang><mdStanName Sync="TRUE">ISO 19115 Geographic Information - Metadata</mdStanName><mdStanVer Sync="TRUE">DIS_ESRI1.0</mdStanVer><mdChar><CharSetCd Sync="TRUE" value="004"></CharSetCd></mdChar><mdHrLv><ScopeCd Sync="TRUE" value="005"></ScopeCd></mdHrLv><mdHrLvName Sync="TRUE">dataset</mdHrLvName><distInfo><distributor><distorTran><onLineSrc><orDesc Sync="TRUE">002</orDesc><linkage Sync="TRUE">file://\\BINA\PCUSERS1\PAW\limits_of_oceans_and_seas\sea_vox_sea_areas_master_file\seaVOX_sea_area_polygons.shp</linkage><protocol Sync="TRUE">Local Area Network</protocol></onLineSrc><transSize Sync="TRUE">140.171</transSize></distorTran><distorFormat><formatName Sync="TRUE">Shapefile</formatName></distorFormat></distributor></distInfo><refSysInfo><RefSystem><refSysID><identCode Sync="TRUE">GCS_WGS_1984</identCode></refSysID></RefSystem></refSysInfo><spatRepInfo><VectSpatRep><topLvl><TopoLevCd Sync="TRUE" value="001"></TopoLevCd></topLvl><geometObjs Name="seaVOX_sea_area_polygons"><geoObjTyp><GeoObjTypCd Sync="TRUE" value="001"></GeoObjTypCd></geoObjTyp><geoObjCnt Sync="TRUE">160</geoObjCnt></geometObjs></VectSpatRep></spatRepInfo><mdDateSt Sync="TRUE">20100312</mdDateSt></metadata>

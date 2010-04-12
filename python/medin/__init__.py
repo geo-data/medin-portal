@@ -169,9 +169,13 @@ class Search(MakoApp):
         end_date = q.getEndDate(cast=False)
         area = q.getArea(cast=False)
         criteria = q.asDict(False)
+        area_type = areas.getAreaType(area)
 
         area_ids = {'british-isles': areas.britishIsles(),
-                    'countries': areas.countries()}
+                    'countries': areas.countries(),
+                    'sea-areas': areas.seaAreas(),
+                    'progress-areas': areas.chartingProgressAreas(),
+                    'ices-rectangles': areas.icesRectangles()}
 
         tvars=dict(search_term=search_term,
                    hits=r.hits,
@@ -181,6 +185,7 @@ class Search(MakoApp):
                    start_date=start_date,
                    end_date=end_date,
                    area=area,
+                   area_type=area_type,
                    area_ids=area_ids,
                    bbox=bbox)
 

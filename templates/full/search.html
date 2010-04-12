@@ -77,7 +77,11 @@ $(function() {
 
 <%def name="area_selection(area_id)">\
     %for id, name in area_ids[area_id]:
-<option value="${id}">${name}</option>
+<option value="${id}"\
+  %if area == id:
+ selected="selected"\
+  %endif
+>${name}</option>
     %endfor
 </%def>
 
@@ -213,14 +217,61 @@ ${','.join(bbox)}\
     %endif
 >
       <div>
-        <select name="a" id="area">
-          <option value="">Select an area...</option>
+        <div>
+          <select name="t" id="area-type">
+            %for id, name in (('co', 'Countries'), ('sa', 'SeaVoX Salt and Fresh Water Body Gazetteer'), ('cp', 'UK Charting Progress Sea Areas'), ('ir', 'ICES Rectangles')):
+            <option value="${id}"\
+              %if area_type == id:
+ selected="selected"\
+              %endif
+>${name}</option>
+            %endfor
+          </select>
+        </div>
+        <select class="area" id="co"\
+          %if not area_type or area_type == 'co':
+ name="a"\
+          %else:
+ style="display: none"\
+          %endif
+>
+          <option value="">Select a country...</option>
           <optgroup id="british-isles" label="British Isles">
 ${area_selection('british-isles')}
           </optgroup>
           <optgroup id="countries" label="Countries">
 ${area_selection('countries')}
           </optgroup>
+        </select>
+        <select class="area" id="sa"\
+          %if area_type == 'sa':
+ name="a"\
+          %else:
+ style="display: none"\
+          %endif
+>
+          <option value="">Select a sea area...</option>
+${area_selection('sea-areas')}
+        </select>
+        <select class="area" id="cp"\
+          %if area_type == 'cp':
+ name="a"\
+          %else:
+ style="display: none"\
+          %endif
+>
+          <option value="">Select a progress area...</option>
+${area_selection('progress-areas')}
+        </select>
+        <select class="area" id="ir"\
+          %if area_type == 'ir':
+ name="a"\
+          %else:
+ style="display: none"\
+          %endif
+>
+          <option value="">Select an ICES area...</option>
+${area_selection('ices-rectangles')}
         </select>
         <input type="submit" value="search"/>
         <input type="button" onclick="javascript:clear_area()" value="clear area"/>

@@ -25,9 +25,17 @@ class Areas(object):
             return area[0]
         return None
 
+    def getAreaType(self, id):
+        cur = self._db.cursor()
+        cur.execute('SELECT type FROM areas WHERE id = ?', (id,))
+        area = cur.fetchone()
+        if area:
+            return area[0]
+        return None
+
     def getBBOX(self, id):
         cur = self._db.cursor()
-        cur.execute('SELECT minx, miny, maxx, maxy from areas where id = ?', (id,))
+        cur.execute('SELECT minx, miny, maxx, maxy FROM areas WHERE id = ?', (id,))
         bbox = cur.fetchone()
         if bbox:
             return bbox
@@ -41,6 +49,21 @@ class Areas(object):
     def britishIsles(self):
         cur = self._db.cursor()
         cur.execute('SELECT id, name FROM british_isles')
+        return [row for row in cur]
+
+    def chartingProgressAreas(self):
+        cur = self._db.cursor()
+        cur.execute('SELECT id, name FROM charting_progress_areas')
+        return [row for row in cur]
+
+    def icesRectangles(self):
+        cur = self._db.cursor()
+        cur.execute('SELECT id, name FROM ices_rectangles')
+        return [row for row in cur]
+
+    def seaAreas(self):
+        cur = self._db.cursor()
+        cur.execute('SELECT id, name FROM sea_areas')
         return [row for row in cur]
 
     def __deepcopy__(self, memo):

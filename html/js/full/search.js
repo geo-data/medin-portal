@@ -157,9 +157,11 @@ function clear_box() {
 
 // remove the bounding box and deselect the area
 function clear_area() {
-    var select = $('#area')
-    select.val('');
-    select.change();
+    $('select.area')
+        .find(':selected[value!=""]')
+        .parents('select')
+        .val('')
+        .change();
 }
 
 function zoom_to_area(id) {
@@ -174,11 +176,25 @@ function zoom_to_area(id) {
 
 // Populate the area selection control
 function populate_areas() {
-    var select = $('#area');
+    var select = $('select.area');
 
+    // ensure the correct area selection is shown when changing area type
+    var area_types = $('#area-type').change(function() {
+        var id = $(this).val();
+        select.removeAttr('name').hide();
+        select.filter('#'+id).show().attr('name', 'a');
+    });
+    
     // ensure a bbox is created when an area is selected
     select.change(function() {
-        var id = $(this).attr('value');
+        var self = $(this);
+        // deselect any other selected area selections
+        select.not('#'+self.attr('id'))
+            .find(':selected[value!=""]')
+            .parents('select')
+            .val('');
+        
+        var id = self.attr('value');
         if (!id) {
             clear_box();
             check_query();      // update the query results
@@ -200,8 +216,7 @@ function populate_areas() {
 
     // if there's an existing area, select it
     if (area) {
-        select.val(area);
-        select.change();
+        select.filter(':visible').change();
     } else if (bbox) {
         add_box(bbox);
         map.zoomToExtent(bbox);   // zoom to the box
