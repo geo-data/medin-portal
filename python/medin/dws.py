@@ -749,16 +749,21 @@ class MetadataResponse(object):
         try:
             code = self.xpath.xpathEval('//gmd:referenceSystemInfo/gmd:MD_ReferenceSystem/gmd:referenceSystemIdentifier/gmd:RS_Identifier/gmd:code/gco:CharacterString/text()')[0].content
         except IndexError:
-            return ['Unknown spatial reference system']
+            return ['<span class="error">Unknown spatial reference system</span>']
 
         # get the XML corresponding to the code from the EPSG
-        from urllib2 import urlopen, HTTPError
+        from urllib2 import urlopen, URLError
         epsg_url = 'http://www.epsg-registry.org/export.htm?gml=%s' % code
 
         try:
             res = urlopen(epsg_url)
-        except HTTPError, e:
-            return ['The reference system url at %s could not be opened: %s' % (epsg_url, str(e))]
+        except URLError, e:
+            try:
+                status, msg = e.reason
+            except ValueError:
+                msg = str(e.reason)
+
+            return ['<span class="error">The reference system url at %s could not be opened: %s</span>' % (epsg_url, msg)]
         xml = res.read()
 
         # parse the XML
@@ -766,7 +771,7 @@ class MetadataResponse(object):
         try:
             document = libxml2.parseMemory(xml, len(xml))
         except libxml2.parserError, e:
-            return ['The reference system XML at %s could not be parsed: %s' % (epsg_url, str(e))]
+            return ['<span class="error">The reference system XML at %s could not be parsed: %s</span>' % (epsg_url, str(e))]
 
         # register the namespaces we need to search
         xpath = document.xpathNewContext()
