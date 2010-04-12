@@ -141,12 +141,12 @@ class SearchResponse(object):
         return self.reply.Status
 
     def __len__(self):
-        if self and self.count:
+        if self and self.hits:
             return len(getattr(self.reply.Documents, self.doc_type))
         return 0
 
     def __iter__(self):
-        if self and self.count:
+        if self and self.hits:
             docs = getattr(self.reply.Documents, self.doc_type)
         else:
             docs = []

@@ -60,7 +60,7 @@
       <div>
       % endif
         <% if defn: keyword = defn['short'] %>
-        <a href="${script_root}/full/catalogue?kw=${keyword | u}"
+        <a href="${script_root}/full/catalogue?q=${keyword | u}"
            title="Search for all metadata having the keyword '${keyword | x}'">${keyword | x}</a>
         % if defn:
           % if defn['long'] != defn['short']:
@@ -126,7 +126,7 @@
         <div>
         % endif
           % if defn:
-          <a href="${script_root}/full/catalogue?tc=${defn['short'] | u}"
+          <a href="${script_root}/full/catalogue?q=tc:${defn['short'] | u}"
              title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
             % if defn['long'] != defn['short']:
             - ${defn['long'] | x}
