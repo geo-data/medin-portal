@@ -641,8 +641,9 @@ class MetadataImage(object):
         import medin.spatial
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
+        areas = get_areas(environ)
 
-        r = self.request(gid)
+        r = self.request(gid, areas)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())

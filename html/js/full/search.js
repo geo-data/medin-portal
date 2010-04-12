@@ -157,11 +157,17 @@ function clear_box() {
 
 // remove the bounding box and deselect the area
 function clear_area() {
-    $('select.area')
+    // deselect any selected areas
+    var changed = $('select.area')
         .find(':selected[value!=""]')
         .parents('select')
         .val('')
-        .change();
+        .change().length;
+
+    // if no selection box was removed, try removing an user created
+    // box instead.
+    if (!changed)
+        clear_box();
 }
 
 function zoom_to_area(id) {
