@@ -17,6 +17,15 @@ class Areas(object):
             return (res[0], tuple(res[1:]))
         return None
 
+    def getAreaId(self, name, type):
+        cur = self._db.cursor()
+        name = '%'+name+'%'
+        cur.execute('SELECT id FROM areas WHERE name like ? AND type = ? ORDER BY length(name)', (name, type))
+        aid = cur.fetchone()
+        if aid:
+            return aid[0]
+        return None
+
     def getAreaName(self, id):
         cur = self._db.cursor()
         cur.execute('SELECT name FROM areas WHERE id = ?', (id,))

@@ -141,6 +141,35 @@
     </td>
   </tr>
   % endif
+
+  % if extent:
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Extent</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        % for i, details in enumerate(extent):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          ${details['title']}: 
+          % if details['id']:
+          <a href="${script_root}/full/catalogue?a=${details['id'] | u}"
+             title="Search for all metadata in the area '${details['name'] | x}'">${details['name'] | x}</a>
+          % else:
+          ${details['name'] | x}
+          % endif
+        </div>
+        % endfor
+      </div>
+    </td>
+  </tr>
+  % endif
   
   % for name, details in metadata:
   <tr>

@@ -456,8 +456,9 @@ class Metadata(MakoApp):
     def setup(self, environ):
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
+        areas = get_areas(environ)
 
-        r = self.request(gid)
+        r = self.request(gid, areas)
 
         # Check if the client needs a new version
         headers = []
@@ -483,6 +484,7 @@ class MetadataHTML(Metadata):
         linkage = r.online_resource()
         bbox = r.bbox()
         topic_category = r.topicCategory()
+        extent = r.extent()
         tvars = dict(gid=r.id,
                      author=r.author,
                      keywords=keywords,
@@ -490,6 +492,7 @@ class MetadataHTML(Metadata):
                      linkage=linkage,
                      bbox=bbox,
                      topic_category=topic_category,
+                     extent=extent,
                      abstract=r.abstract)
 
         headers.append(('Content-type', 'text/html'))

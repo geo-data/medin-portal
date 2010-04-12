@@ -355,7 +355,7 @@ def _assignContext(f):
 
 class MetadataResponse(object):
 
-    def __init__(self, gid, title, abstract, document):
+    def __init__(self, gid, title, abstract, document, areas):
         import re
         import libxml2
         from terms import Vocabulary
@@ -366,6 +366,7 @@ class MetadataResponse(object):
         self.id = gid
         self.title = title
         self.abstract = abstract
+        self.areas = areas
 
         try:
             self.document = libxml2.parseMemory(document, len(document))
@@ -398,7 +399,6 @@ class MetadataResponse(object):
                     ('Coupled resource', None), # TO BE IMPLEMENTED
                     ('Resource language', self.resource_language),
                     ('Spatial data service type', self.service_type),
-                    ('Extent', self.extent),
                     ('Vertical extent information', self.vertical_extent),
                     ('Spatial reference system', self.srs),
                     ('Temporal reference', self.temporal_reference),
@@ -624,20 +624,30 @@ class MetadataResponse(object):
 
     @_assignContext
     def extent(self):
+        # mapping from citation title to area code
+        code_map = {'Charting Progress 2 Sea Areas': 'cp',
+                    'International Hydrographic Bureau, Limits of Oceans and Seas': 'sa'}
+        
         extents = []
         for node in self.xpath.xpathEval('//gmd:geographicIdentifier/gmd:MD_Identifier'):
             self.xpath.setContextNode(node)
             try:
-                title = self.xpath.xpathEval('./gmd:authority/gmd:CI_Citation/gmd:title/gco:CharacterString/text()')[0].content
+                title = self.xpath.xpathEval('./gmd:authority/gmd:CI_Citation/gmd:title/gco:CharacterString/text()')[0].content.strip()
             except IndexError:
                 continue
 
             try:
-                code = self.xpath.xpathEval('./gmd:code/gco:CharacterString/text()')[0].content
+                name = self.xpath.xpathEval('./gmd:code/gco:CharacterString/text()')[0].content.strip()
             except IndexError:
                 continue
-            
-            extents.append('%s: %s' % (title, code))
+
+            try:
+                code = code_map[title]
+                area_id = self.areas.getAreaId(name, code)
+            except KeyError:
+                area_id = None
+
+            extents.append(dict(title=title, name=name, id=area_id))
         return extents
 
     @_assignContext
@@ -752,11 +762,13 @@ class MetadataResponse(object):
             return ['<span class="error">Unknown spatial reference system</span>']
 
         # get the XML corresponding to the code from the EPSG
-        from urllib2 import urlopen, URLError
+        from urllib2 import urlopen, URLError, HTTPError
         epsg_url = 'http://www.epsg-registry.org/export.htm?gml=%s' % code
 
         try:
             res = urlopen(epsg_url)
+        except HTTPError, e:
+            return ['<span class="error">The reference system url at %s could not be opened: %s</span>' % (epsg_url, str(e))]
         except URLError, e:
             try:
                 status, msg = e.reason
@@ -1095,7 +1107,7 @@ class MetadataRequest(Request):
 
         return response.listMember
         
-    def __call__(self, gid):
+    def __call__(self, gid, areas):
         """
         Connect to the DWS and retrieve a metadata entry by its ID
         """
@@ -1123,4 +1135,4 @@ class MetadataRequest(Request):
         abstract = document.Abstract
         xml = document.Document
         
-        return MetadataResponse(gid, title, abstract, xml)
+        return MetadataResponse(gid, title, abstract, xml, areas)
