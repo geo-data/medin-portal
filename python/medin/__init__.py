@@ -485,6 +485,7 @@ class MetadataHTML(Metadata):
         bbox = r.bbox()
         topic_category = r.topicCategory()
         extent = r.extent()
+        temporal_reference = r.temporal_reference()
         tvars = dict(gid=r.id,
                      author=r.author,
                      keywords=keywords,
@@ -493,6 +494,7 @@ class MetadataHTML(Metadata):
                      bbox=bbox,
                      topic_category=topic_category,
                      extent=extent,
+                     temporal_reference=temporal_reference,
                      abstract=r.abstract)
 
         headers.append(('Content-type', 'text/html'))
@@ -692,7 +694,8 @@ class MetadataDownload(object):
         if fmt not in self.request.getMetadataFormats():
             raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-        r = self.request(gid)
+        areas = get_areas(environ)
+        r = self.request(gid, areas)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())

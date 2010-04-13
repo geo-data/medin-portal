@@ -401,7 +401,6 @@ class MetadataResponse(object):
                     ('Spatial data service type', self.service_type),
                     ('Vertical extent information', self.vertical_extent),
                     ('Spatial reference system', self.srs),
-                    ('Temporal reference', self.temporal_reference),
                     ('Lineage', self.lineage),
                     ('Spatial resolution', self.spatial_resolution),
                     ('Additional information source', self.additional_info),
@@ -827,17 +826,19 @@ class MetadataResponse(object):
 
     @_assignContext
     def temporal_reference(self):
+        dates = {}
         try:
-            begin = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:beginPosition')[0].content
-            end = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:endPosition')[0].content
+            begin = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:beginPosition')[0].content.strip()
+            end = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:endPosition')[0].content.strip()
         except IndexError:
-            return []
+            dates['range'] = []
+        else:
+            try:
+                dates['range'] = [self.xsDate2pyDatetime(begin), self.xsDate2pyDatetime(end)]
+            except ValueError:
+                pass
 
-        begin = self.formatDate(begin)
-        end = self.formatDate(end)
-
-        details = ['The data spans the period from %s to %s inclusive.' % (begin, end)]
-
+        dates['single'] = []
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date'):
             self.xpath.setContextNode(node)
             try:
@@ -846,14 +847,18 @@ class MetadataResponse(object):
                 continue
 
             try:
-                code = self.xpath.xpathEval('./gmd:dateType/gmd:CI_DateTypeCode')[0].content
+                code = self.xpath.xpathEval('./gmd:dateType/gmd:CI_DateTypeCode')[0].content.strip()
             except IndexError:
                 continue
 
-            date = self.formatDate(date)
-            details.append('%s date was %s' % (code.capitalize(), date))
+            try:
+                date = self.xsDate2pyDatetime(date)
+            except ValueError:
+                continue
+            
+            dates['single'].append((code, date))
 
-        return details
+        return dates
 
     def lineage(self):
         try:

@@ -23,6 +23,14 @@
 </div>
 </%def>
 
+<%def name="format_date(date)">
+${date.strftime('%A %d %B %Y')}
+</%def>
+
+<%def name="format_search_date(date)">
+${date.strftime('%Y-%m-%d')}
+</%def>
+
 % if bbox:
 <div class="extent right">
   <div class="info">
@@ -164,6 +172,34 @@
           % else:
           ${details['name'] | x}
           % endif
+        </div>
+        % endfor
+      </div>
+    </td>
+  </tr>
+  % endif
+
+  % if temporal_reference:
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Temporal reference</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        %if temporal_reference['range']:
+        <div>
+          The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(temporal_reference['range'][0])}&amp;ed=${format_search_date(temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(temporal_reference['range'][0])} to ${format_date(temporal_reference['range'][1])}</a> inclusive.
+        </div>
+        %endif
+        % for i, (code, date) in enumerate(temporal_reference['single']):
+        % if i or temporal_reference['range']:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]
         </div>
         % endfor
       </div>
