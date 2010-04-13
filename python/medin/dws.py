@@ -448,6 +448,8 @@ class MetadataResponse(object):
 
     @_assignContext
     def keywords(self):
+        from terms import VocabError
+        
         keywords = {}
         for node in self.xpath.xpathEval('//gmd:descriptiveKeywords/gmd:MD_Keywords'):
             self.xpath.setContextNode(node)
@@ -478,6 +480,8 @@ class MetadataResponse(object):
                         defn = self.vocab.lookupTerm(code, word)
                     except LookupError:
                         defn = {}
+                    except VocabError, e:
+                        defn = {'error': e.message}
                 else:
                     defn = {}
 
@@ -579,12 +583,16 @@ class MetadataResponse(object):
         return [code]
 
     def topicCategory(self):
+        from terms import VocabError
+        
         categories = {}
         for node in self.xpath.xpathEval('//gmd:MD_TopicCategoryCode/text()'):
             try:
                 defn = self.vocab.lookupTerm('P051', node.content)
             except LookupError:
                 defn = {}
+            except VocabError, e:
+                defn = {'error': e.message}
             categories[node.content] = defn
 
         return categories

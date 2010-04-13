@@ -10,6 +10,12 @@ The module uses the WS SOAP interface. Further details are available at:
 import os
 import suds
 
+class VocabError(Exception):
+
+    @property
+    def message(self):
+        return self.args[0]
+
 class Vocabulary(object):
     
     def __init__(self, wsdl=None):
@@ -26,19 +32,34 @@ class Vocabulary(object):
         If the term does not match the 'short' entry key, then the
         'long' entry key is tried instead.
         """
-        
-        listKey = 'http://vocab.ndg.nerc.ac.uk/list/%s/current' % list
-        r = self.client.service.verifyTerm(listKey, term, 'short')
+
+        from suds import WebFault
+        from urllib2 import URLError, HTTPError
+
         try:
-            term = r.verifiedTerm
-        except AttributeError:
-            # try looking up the term as a 'long' entry
-            r = self.client.service.verifyTerm(listKey, term, 'long')
+            listKey = 'http://vocab.ndg.nerc.ac.uk/list/%s/current' % list
+            r = self.client.service.verifyTerm(listKey, term, 'short')
             try:
                 term = r.verifiedTerm
             except AttributeError:
-                raise LookupError('The term "%s" does not exist in the list %s' % (term, listKey))
+                # try looking up the term as a 'long' entry
+                r = self.client.service.verifyTerm(listKey, term, 'long')
+                try:
+                    term = r.verifiedTerm
+                except AttributeError:
+                    raise LookupError('The term "%s" does not exist in the list %s' % (term, listKey))
 
-        return dict(long=term.entryTerm,
-                    short=term.entryTermAbbr,
-                    defn=term.entryTermDef)
+            return dict(long=term.entryTerm,
+                        short=term.entryTermAbbr,
+                        defn=term.entryTermDef)
+        except WebFault, e:
+            raise VocabError(e.message)
+        except HTTPError, e:
+            raise VocabError(str(e))
+        except URLError, e:
+            try:
+                status, msg = e.reason
+            except ValueError:
+                msg = str(e.reason)
+
+            raise VocabError(msg)

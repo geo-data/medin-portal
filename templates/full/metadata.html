@@ -67,6 +67,9 @@ ${date.strftime('%Y-%m-%d')}
       % else:
       <div>
       % endif
+      % if 'error' in defn:
+        <span class="error">${defn['error']}</span>
+      % else:
         <% if defn:
              if defn['short']: keyword = defn['short']
              else: keyword = defn['long']
@@ -79,6 +82,7 @@ ${date.strftime('%Y-%m-%d')}
           % endif
         <br/>Definition: ${defn['defn'] | x}
         % endif
+      % endif
       </div>
     % endfor
   </div>
@@ -136,6 +140,9 @@ ${date.strftime('%Y-%m-%d')}
         % else:
         <div>
         % endif
+        % if 'error' in defn:
+          <span class="error">${defn['error']}</span>
+        % else:
           % if defn:
           <a href="${script_root}/full/catalogue?q=tc:${defn['short'] | u}"
              title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
@@ -146,6 +153,7 @@ ${date.strftime('%Y-%m-%d')}
           % else:
           ${keyword | x}
           % endif
+        % endif
         </div>
         % endfor
       </div>
