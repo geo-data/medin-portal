@@ -273,6 +273,9 @@ class Query(GETParams):
 
         return default
 
+    def setArea(self, value):
+        self['a'] = value
+
     def asDict(self, verify=True):
         """
         Return the query as a dictionary structure

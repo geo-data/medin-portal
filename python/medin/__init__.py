@@ -41,6 +41,9 @@ def check_etag(environ, etag):
 
     return server_etag
 
+def set_query(query, environ):
+    environ['QUERY_STRING'] = str(query)
+
 def get_query(environ):
     """Returns an object encapsulating the OpenSearch query parameters"""
     from medin.query import Query
@@ -340,10 +343,15 @@ class Results(MakoApp):
                    page_count = nav.page_count,
                    results=list(r))
 
+        title = 'Results'
+
+        area_name = q.getArea()
+        if area_name:
+            title += ' in %s' % area_name
+
         if r.hits:
-            title = 'Catalogue page %d of %d' % (nav.current_page, nav.page_count)
-        else:
-            title = 'Catalogue results'
+            title += ' (page %d of %d)' % (nav.current_page, nav.page_count)
+
         if search_term:
             title += ' for: %s' % search_term
 
@@ -396,6 +404,40 @@ class AtomResults(Results):
 
         headers = [('Content-type', 'application/atom+xml')]
         super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], headers, RESULT_SUMMARY)
+
+class AreaResults(object):
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        # we need to seed the query object with an area by translating
+        # the area name to an area id
+
+        areas = {'ices-rectangles': 'ir',
+                 'countries': 'co',
+                 'charting-progress': 'cp',
+                 'sea-areas': 'sa'}
+
+        area = environ['selector.vars']['area']
+        name = environ['selector.vars']['name']
+        
+        try:
+            area_type = areas[area]
+        except KeyError:
+            raise HTTPError('404 Not Found', 'The area is not recognised: %s' % area)
+        
+        areas = get_areas(environ)
+        aid = areas.getAreaId(name, area_type)
+        if not aid:
+            raise HTTPError('404 Not Found', 'The area name is not recognised: %s' % name)
+    
+        q = get_query(environ)
+        q.setArea(aid)
+        set_query(q, environ)
+
+        # delegate to the result app
+        return self.app(environ, start_response)
 
 class ResultSummary(object):
 
@@ -828,6 +870,9 @@ def wsgi_app():
     # create the app to return the required formats
     result_formats = medin.ResultFormat(HTMLResults, {'rss': RSSResults,
                                                       'atom': AtomResults})
+
+    # search by country
+    application.add('/{template}/areas/{area:segment}/{name:segment}', GET=AreaResults(result_formats))
 
     # display and navigate through the result set
     application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)

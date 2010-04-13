@@ -287,7 +287,11 @@ class SearchRequest(Request):
         search.TermSearch.extend(terms)
 
         # add the spatial criteria
-        bbox = query.getBBOX()
+        aid = query.getArea(cast=False)
+        if aid:
+            bbox = query.areas.getBBOX(aid)
+        else:
+            bbox = query.getBBOX()
         if bbox:
             (search.SpatialSearch.BoundingBox.LimitWest,
              search.SpatialSearch.BoundingBox.LimitSouth,

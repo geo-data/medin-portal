@@ -39,11 +39,11 @@ ${query_string}\
 % endif
     <link rel="alternate"
           type="application/rss+xml"
-          href="${resource_root}.rss${start_link()}"
+          href="${script_root}/full/catalogue.rss${start_link()}"
           title="MEDIN - ${title}">
     <link rel="alternate"
           type="application/atom+xml"
-          href="${resource_root}.atom${start_link()}"
+          href="${script_root}/full/catalogue.atom${start_link()}"
           title="MEDIN - ${title}">
 
     <meta name="totalResults" content="${hits}"/>
@@ -189,7 +189,7 @@ ${result_links()}
   <tr class="last">
   %endif
     <td>${start_index+i}.</td>
-    <td><a href="${resource_root}/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
+    <td><a href="${script_root}/full/catalogue/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
     <td>${res['originator']}</td>
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
   </tr>
@@ -217,6 +217,6 @@ selected="selected"\
 </form>
 
 <p>
-<a href="${resource_root}.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
-<a href="${resource_root}.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
+<a href="${script_root}/full/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
+<a href="${script_root}/full/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
 </p>
