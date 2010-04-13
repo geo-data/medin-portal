@@ -451,14 +451,14 @@ class MetadataResponse(object):
         keywords = {}
         for node in self.xpath.xpathEval('//gmd:descriptiveKeywords/gmd:MD_Keywords'):
             self.xpath.setContextNode(node)
-            # try and retrieve the keyword
+            # try and retrieve the keywords
             try:
-                words = self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text()')[0].content.strip()
+                words = [word.content.strip() for word in self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text()')]
             except IndexError:
                 continue
 
             # try and get a code and a title for the list to which the
-            # keyword belongs
+            # keywords belong
             try:
                 code = self.xpath.xpathEval('.//gmd:MD_KeywordTypeCode/@codeListValue')[0].content.strip()
                 title = code
@@ -471,20 +471,21 @@ class MetadataResponse(object):
                 else:
                     code = self.keywordListFromTitle(title)
 
-            # try and get a definition for the term from the list code
-            if code:
-                try:
-                    defn = self.vocab.lookupTerm(code, words)
-                except LookupError:
+            for word in words:
+                # try and get a definition for the term from the list code
+                if code:
+                    try:
+                        defn = self.vocab.lookupTerm(code, word)
+                    except LookupError:
+                        defn = {}
+                else:
                     defn = {}
-            else:
-                defn = {}
 
-            # add the definition to the keyword dictionary
-            try:
-                keywords[title][words] = defn
-            except KeyError:
-                defns = {words: defn}
+                # add the definition to the keyword dictionary
+                try:
+                    keywords[title][word] = defn
+                except KeyError:
+                    defns = {word: defn}
                 keywords[title] = defns
 
         return keywords

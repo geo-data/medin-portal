@@ -67,11 +67,14 @@ ${date.strftime('%Y-%m-%d')}
       % else:
       <div>
       % endif
-        <% if defn: keyword = defn['short'] %>
+        <% if defn:
+             if defn['short']: keyword = defn['short']
+             else: keyword = defn['long']
+        %>
         <a href="${script_root}/full/catalogue?q=${keyword | u}"
            title="Search for all metadata having the keyword '${keyword | x}'">${keyword | x}</a>
         % if defn:
-          % if defn['long'] != defn['short']:
+          % if defn['short'] and defn['long'] != defn['short']:
           - ${defn['long'] | x}
           % endif
         <br/>Definition: ${defn['defn'] | x}
