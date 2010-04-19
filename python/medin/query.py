@@ -171,8 +171,27 @@ class Query(GETParams):
 
         bbox = bbox.split(',', 3)
         if not len(bbox) == 4:
-            raise QueryError('The bounding box must be in the format minx,miny,maxx,maxy')
-        return bbox
+            if self.raise_errors:
+                raise QueryError('The bounding box must be in the format minx,miny,maxx,maxy')
+            return default
+        try:
+            bbox = [float(n) for n in bbox]
+        except ValueError:
+            if self.raise_errors:
+                raise QueryError('The bounding box must consist of numbers')
+            return default
+
+        if bbox[0] > bbox[2]:
+            if self.raise_errors:
+                raise QueryError('The bounding box east value is less than the west')
+            return default
+
+        if bbox[1] > bbox[3]:
+            if self.raise_errors:
+                raise QueryError('The bounding box north value is less than the south')
+            return default
+
+        return tuple(bbox)
 
     def setBBOX(self, bbox):
         self['bbox'] = ','.join((str(i) for i in box))
