@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE Map>
-<Map bgcolor="steelblue" srs="+proj=latlong +datum=WGS84">
+<Map bgcolor="white" srs="+proj=latlong +datum=WGS84">
 
   <Style name="AreaOfInterest">
     <Rule>
+	  <Filter>[type] = 'bbox'</Filter>
       <PolygonSymbolizer>
         <CssParameter name="fill">#ca0000</CssParameter>
 		<CssParameter name="fill-opacity">0.25</CssParameter>
@@ -13,6 +14,14 @@
         <CssParameter name="stroke-width">1.5</CssParameter>
       </LineSymbolizer>
     </Rule>
+    <Rule>
+	  <Filter>[type] = 'point'</Filter>
+	  <PointSymbolizer allow_overlap="yes"
+					   file="${root_dir}/data/symbols/star.png"
+					   type="png"
+					   width="25"
+					   height="24" />
+	</Rule>
   </Style>
 
   <Style name="Raster">

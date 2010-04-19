@@ -183,9 +183,31 @@ def metadata_image(bbox, mapfile):
     minx, miny, maxx, maxy = bbox
 
     # create the bounding box as a json string
-    bbox = dict(type='Polygon',
-                coordinates=[[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]])
-    json = tojson(bbox)
+    width, height = (maxx - minx, maxy - miny)
+    min_dim = 0.0125                        # minimum dimension for display as a rectangle (in degrees)
+    if width < min_dim or height < min_dim:   # it should be a point
+        feature = { "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [minx, miny]
+                        },
+                    "properties": {
+                        "type": "point"
+                        }
+                    }
+        width, height = (9, 9)
+    else:
+        feature = { "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]]
+                        },
+                    "properties": {
+                        "type": "bbox"
+                        }
+                    }
+
+    json = tojson(feature)
 
     # instantiate the map
     m = mapnik.Map(250, 250)
@@ -197,11 +219,16 @@ def metadata_image(bbox, mapfile):
 
     # create an image of the area of interest with a border
     border = 80.0                       # percentage border
-    dx = (maxx - minx) * (border / 100)
-    minx -= dx; maxx += dx
-    dy = (maxy - miny) * (border / 100)
-    miny -= dy; maxy += dy
-    bbox = mapnik.Envelope(mapnik.Coord(minx, miny), mapnik.Coord(maxx, maxy))
+    dx = width * (border / 100)
+    minx2 = minx - dx; maxx2 = maxx + dx
+    dy = height * (border / 100)
+    miny2 = miny - dy; maxy2 = maxy + dy
+
+    # don't create a border larger than the globe's extent
+    if minx2 < -180.0 or maxx2 > 180.0 or miny2 < -90.0 or maxy2 > 90.0:
+        minx2 = minx; maxx2 = maxx; miny2 = miny; maxy2 = maxy
+    
+    bbox = mapnik.Envelope(mapnik.Coord(minx2, miny2), mapnik.Coord(maxx2, maxy2))
     m.zoom_to_box(bbox)
     image = mapnik.Image(m.width, m.height)
     mapnik.render(m, image)
