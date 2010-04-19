@@ -166,8 +166,10 @@ function clear_area() {
 
     // if no selection box was removed, try removing an user created
     // box instead.
-    if (!changed)
+    if (!changed) {
         clear_box();
+        check_query();      // update the query results
+    }
 }
 
 function zoom_to_area(id) {
