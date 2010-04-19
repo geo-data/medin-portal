@@ -212,7 +212,7 @@ $(function() {
   %endif
   <input name="bbox" id="bbox" type="hidden" value="\
   %if bbox:
-${','.join(bbox)}\
+${','.join(map(str, bbox))}\
   %endif
 " />
 
