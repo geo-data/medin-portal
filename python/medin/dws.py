@@ -844,14 +844,14 @@ class MetadataResponse(object):
             begin = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:beginPosition')[0].content.strip()
             end = self.xpath.xpathEval('//gmd:EX_Extent/gmd:temporalElement/gmd:EX_TemporalExtent//gml:endPosition')[0].content.strip()
         except IndexError:
-            dates['range'] = []
+            pass
         else:
             try:
                 dates['range'] = [self.xsDate2pyDatetime(begin), self.xsDate2pyDatetime(end)]
             except ValueError:
                 pass
 
-        dates['single'] = []
+        single = []
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date'):
             self.xpath.setContextNode(node)
             try:
@@ -869,7 +869,10 @@ class MetadataResponse(object):
             except ValueError:
                 continue
             
-            dates['single'].append((code, date))
+            single.append((code, date))
+
+        if single:
+            dates['single'] = single
 
         return dates
 

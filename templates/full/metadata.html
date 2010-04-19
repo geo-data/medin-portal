@@ -199,13 +199,13 @@ ${date.strftime('%Y-%m-%d')}
     </td>
     <td class="content">
       <div class="cell">
-        %if temporal_reference['range']:
+        %if 'range' in temporal_reference:
         <div>
           The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(temporal_reference['range'][0])}&amp;ed=${format_search_date(temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(temporal_reference['range'][0])} to ${format_date(temporal_reference['range'][1])}</a> inclusive.
         </div>
         %endif
         % for i, (code, date) in enumerate(temporal_reference['single']):
-        % if i or temporal_reference['range']:
+        % if i or 'range' in temporal_reference:
         <div class="sibling">
         % else:
         <div>
