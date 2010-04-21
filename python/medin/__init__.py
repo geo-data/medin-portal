@@ -501,6 +501,8 @@ class Metadata(MakoApp):
         areas = get_areas(environ)
 
         r = self.request(gid, areas)
+        if not r:
+            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         headers = []
@@ -516,9 +518,6 @@ class MetadataHTML(Metadata):
 
     def setup(self, environ):
         r, headers = super(MetadataHTML, self).setup(environ)
-
-        if not r:
-            raise HTTPError('404 Not Found', 'The metadata resource does not exist')
 
         title = 'Metadata: %s' % r.title
         keywords = r.keywords()
@@ -688,13 +687,15 @@ class MetadataImage(object):
         areas = get_areas(environ)
 
         r = self.request(gid, areas)
+        if not r:
+            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())
 
         bbox = r.bbox()
         if not bbox:
-            raise HTTPError('404 Not Found', 'The metadata resource does not have a geographic bounding box')
+            raise HTTPError('404 Not Found', 'The metadata record does not have a geographic bounding box')
 
         # ensure the background raster datasource has been created
         template_lookup = TemplateLookup(environ)
@@ -738,6 +739,8 @@ class MetadataDownload(object):
 
         areas = get_areas(environ)
         r = self.request(gid, areas)
+        if not r:
+            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         etag = check_etag(environ, r.last_updated())

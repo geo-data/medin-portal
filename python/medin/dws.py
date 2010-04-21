@@ -1151,7 +1151,11 @@ class MetadataRequest(Request):
         if not status:
             raise DWSError('The Discovery Web Service failed: %s' % message)
 
-        document = response.Documents.DocumentFull[0]
+        try:
+            document = response.Documents.DocumentFull[0]
+        except (AttributeError, IndexError):
+            return None                 # no document found
+        
         title = document.Title
         abstract = document.Abstract
         xml = document.Document
