@@ -225,7 +225,7 @@ class OrderAnalyser(object):
     Receives and verifies sorting input from the query
     """
 
-    _field_map = {'updated': 'DatasetMetadataUpdateOrder',
+    _field_map = {'updated': 'DatasetMetadataUpdateDate',
                   'title': 'DiscoveryTitle',
                   'originator': 'DataCenter'}
 
@@ -267,7 +267,7 @@ class SearchRequest(Request):
         order_by = self.client.factory.create('ns0:OrderByType')
         order = query.getSort()
         if not order:
-            field = 'DatasetMetadataUpdateOrder'
+            field = 'DatasetMetadataUpdateDate'
             direction = 'descending'
         else:
             analyser = OrderAnalyser(*order)
