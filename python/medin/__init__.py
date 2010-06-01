@@ -500,43 +500,28 @@ class Metadata(MakoApp):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
 
-        r = self.request(gid, areas)
-        if not r:
+        parser = self.request(gid, areas)
+        if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         headers = []
-        if r:
-            etag = check_etag(environ, r.last_updated())
+        if parser:
+            etag = check_etag(environ, parser.date())
             headers.append(('Etag', etag))
 
-        return r, headers
+        return parser, headers
 
 class MetadataHTML(Metadata):
     def __init__(self):
         super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
-        r, headers = super(MetadataHTML, self).setup(environ)
+        parser, headers = super(MetadataHTML, self).setup(environ)
 
-        title = 'Metadata: %s' % r.title
-        keywords = r.keywords()
-        metadata = r.allElements()
-        linkage = r.online_resource()
-        bbox = r.bbox()
-        topic_category = r.topicCategory()
-        extent = r.extent()
-        temporal_reference = r.temporal_reference()
-        tvars = dict(gid=r.id,
-                     author=r.author,
-                     keywords=keywords,
-                     metadata=metadata,
-                     linkage=linkage,
-                     bbox=bbox,
-                     topic_category=topic_category,
-                     extent=extent,
-                     temporal_reference=temporal_reference,
-                     abstract=r.abstract)
+        metadata = parser.parse()
+        title = 'Metadata: %s' % metadata.title
+        tvars = dict(metadata=metadata)
 
         headers.append(('Content-type', 'text/html'))
 
@@ -547,15 +532,14 @@ class MetadataKML(Metadata):
         super(MetadataKML, self).__init__(['kml', 'catalogue', 'metadata-%s.kml'])
 
     def setup(self, environ):
-        r, headers = super(MetadataKML, self).setup(environ)
+        parser, headers = super(MetadataKML, self).setup(environ)
 
-        if r:
-            title = r.title
-            bbox = r.bbox()
-            tvars = dict(gid=r.id,
-                         bbox=bbox,
-                         author=r.author,
-                         abstract=r.abstract)
+        if parser:
+            title = parser.title()
+            tvars = dict(gid=parser.uid,
+                         bbox=parser.bbox(),
+                         author=parser.author(),
+                         abstract=parser.abstract())
         else:
             title = ''
             tvars = {}
@@ -686,14 +670,14 @@ class MetadataImage(object):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
 
-        r = self.request(gid, areas)
-        if not r:
+        parser = self.request(gid, areas)
+        if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, r.last_updated())
+        etag = check_etag(environ, parser.date())
 
-        bbox = r.bbox()
+        bbox = parser.bbox()
         if not bbox:
             raise HTTPError('404 Not Found', 'The metadata record does not have a geographic bounding box')
 
@@ -719,9 +703,9 @@ class MetadataImage(object):
         start_response('200 OK', headers)
         return [bytes]
 
-class MetadataDownload(object):
+class MetadataXML(object):
     """
-    WSGI app for downloading a metadata format
+    WSGI app for downloading metadata in XML format
     """
 
     def __init__(self):
@@ -738,18 +722,18 @@ class MetadataDownload(object):
             raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
         areas = get_areas(environ)
-        r = self.request(gid, areas)
-        if not r:
+        parser = self.request(gid, areas)
+        if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, r.last_updated())
+        etag = check_etag(environ, parser.date())
 
-        filename = r.id
+        filename = parser.uniqueID()
         if not splitext(filename)[1]:
             filename += '.xml'
 
-        document = str(r.document)
+        document = str(parser.document)
 
         headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
                    ('Content-Type', 'application/xml'),
@@ -757,6 +741,216 @@ class MetadataDownload(object):
 
         start_response('200 OK', headers)
         return [document]
+
+class MetadataCSV(object):
+    """
+    WSGI app for downloading metadata in CSV format
+    """
+
+    def __init__(self):
+        from medin.dws import MetadataRequest
+        self.request = MetadataRequest()
+
+    def __call__(self, environ, start_response):
+        import csv, itertools
+        from cStringIO import StringIO
+        from itertools import repeat
+
+        def iter_element_values(element_no, element_title, values):
+            """Returns an iterator suitable for passing to the CSV writerows method"""
+
+            if isinstance(values, Exception):
+                values = [['ERROR', values.message, values.detail]]
+            elif not values:
+                values = ['']
+            
+            for title, value in itertools.izip(itertools.chain([[element_no, element_title]], itertools.repeat(['', ''], len(values)-1)), values):
+                try:
+                    # it's a row
+                    yield title + value
+                except TypeError:
+                    # it's a scalar value
+                    yield title + [value]
+
+        def iter_contacts(contacts, depth=0):
+            if isinstance(contacts, Exception):
+                yield ['ERROR', contacts.message, contacts.detail]
+                raise StopIteration('End of error')
+            
+            for contact in contacts:
+                for attr in ('organisation', 'address', 'tel', 'fax', 'email', 'name', 'position'):
+                    val = getattr(contact, attr)
+                    if not val:
+                        continue
+
+                    row = list(repeat(None, depth))
+                    row.extend((attr.capitalize(), val))
+                    yield row
+
+                for role in contact.roles:
+                    row = list(repeat(None, depth))
+                    row.extend(('Role', role))
+                    yield row
+
+                for row in iter_contacts(contact.contacts, depth+1):
+                    yield row
+
+        def write_element(writer, number, name, element):
+            if isinstance(element, Exception):
+                row = [number, name, 'ERROR', element.message, element.detail]
+            else:
+                row = [number, name, element]
+
+            writer.writerow(row)
+        
+        gid = environ['selector.vars']['gid'] # the global metadata identifier
+        areas = get_areas(environ)
+        parser = self.request(gid, areas)
+        if not parser:
+            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
+
+        # Check if the client needs a new version
+        etag = check_etag(environ, parser.date())
+
+        metadata = parser.parse()
+
+        buf = StringIO()
+        writer = csv.writer(buf)
+
+        writer.writerow(['Element number', 'Element title', 'Element Values']) # header row
+
+        write_element(writer, 1, 'Title', metadata.title)
+        writer.writerows(iter_element_values(2, 'Alternative resource title', metadata.alt_titles))
+        write_element(writer, 3, 'Abstract', metadata.abstract)
+        write_element(writer, 4, 'Resource type', metadata.resource_type)
+
+        row = metadata.online_resource
+        if row and not isinstance(row, Exception):
+            row = [[i['link'], i['name'], i['description']] for i in row]
+        writer.writerows(iter_element_values(5, 'Resource locator', row))
+
+        write_element(writer, 6, 'Unique resource identifier', metadata.unique_id)
+        writer.writerow([7, 'Coupled resource', 'NOT IMPLEMENTED IN THE PORTAL YET'])
+        write_element(writer, 8, 'Resource language', metadata.resource_language)
+
+        row = metadata.topic_category
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for keyword, defn in row.items():
+                entry = []
+                if defn:
+                    if 'error' in defn:
+                        entry.append(defn['error'])
+                    elif defn['long'] != defn['short']:
+                        entry.extend((defn['short'], defn['long']))
+                    else:
+                        entry.append(defn['short'])
+                else:
+                    entry.append(keyword)
+
+                tmp.append(entry)
+            row = tmp
+        writer.writerows(iter_element_values(9, 'Topic category', row))
+
+        writer.writerows(iter_element_values(10, 'Spatial data service type', metadata.service_type))
+
+        row = metadata.keywords
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for title, defns in row.items():
+                for keyword, defn in defns.items():
+                    entry = [title]
+                    if defn:
+                        if 'error' in defn:
+                            entry.append(defn['error'])
+                        elif defn['long'] != defn['short']:
+                            entry.extend((defn['short'], defn['long']))
+                        else:
+                            entry.append(defn['short'])
+                    else:
+                        entry.append(keyword)
+
+                    tmp.append(entry)
+            row = tmp
+        writer.writerows(iter_element_values(11, 'Keywords', row))
+
+        row = metadata.bbox
+        if row and not isinstance(row, Exception):
+            row = [['West', metadata.bbox[0]],
+                    ['South', metadata.bbox[1]],
+                    ['East', metadata.bbox[2]],
+                    ['North', metadata.bbox[3]]]
+        writer.writerows(iter_element_values(12, 'Geographic extent', row))
+
+        row = metadata.extents
+        if row and not isinstance(row, Exception):
+            row = [[i['title'], i['name']] for i in row]
+        writer.writerows(iter_element_values(13, 'Extent', row))
+
+        writer.writerows(iter_element_values(14, 'Vertical extent information', metadata.vertical_extent))
+
+        row = metadata.reference_system
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for key in ('identifier', 'source', 'url', 'name', 'scope'):
+                if not row[key]:
+                    continue
+                tmp.append((key.capitalize(), row[key]))
+            row = tmp
+        writer.writerows(iter_element_values(15, 'Spatial reference system', row))
+
+        row = metadata.temporal_reference
+        if row and not isinstance(row, Exception):
+            tmp = []
+            if 'range' in row:
+                tmp.append(['Data start', str(row['range'][0])])
+                tmp.append(['Data end', str(row['range'][1])])
+
+            row = tmp + [[code, str(date)] for code, date in row['single']]
+        writer.writerows(iter_element_values(16, 'Temporal reference', row))
+
+        write_element(writer, 17, 'Lineage', metadata.lineage)
+
+        row = metadata.spatial_resolution
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for entry in row:
+                if 'distance' in entry:
+                    tmp.append(['Distance (m)', entry['distance']])
+                if 'scale' in entry:
+                    tmp.append(['Scale 1:', entry['scale']])
+            row = tmp
+        writer.writerows(iter_element_values(18, 'Spatial resolution', row))
+        
+        write_element(writer, 19, 'Additional information', metadata.additional_info)
+        writer.writerows(iter_element_values(20, 'Limitations on public access', metadata.access_limits))
+        writer.writerows(iter_element_values(21, 'Conditions for access and use constraints', metadata.access_conditions))
+        writer.writerows(iter_element_values(22, 'Responsible party', list(iter_contacts(metadata.responsible_party))))
+        writer.writerows(iter_element_values(23, 'Data format', metadata.data_format))
+        write_element(writer, 24, 'Frequency of update', metadata.update_frequency)
+        write_element(writer, 25, 'INSPIRE conformity', 'NOT IMPLEMENTED IN THE PORTAL YET')
+
+        date = metadata.date
+        if date and not isinstance(date, Exception): date = str(date)
+        write_element(writer, 26, 'Date of update of metadata', date)
+
+        write_element(writer, 27, 'Metadata standard name', metadata.name)  
+        write_element(writer, 28, 'Metadata standard version', metadata.version)
+        write_element(writer, 29, 'Metadata language', metadata.language)
+
+        buf.seek(0)                     # point to the start of the buffer
+
+        if metadata.unique_id:
+            filename = metadata.unique_id + '.csv'
+        else:
+            filename = gid + '.csv'
+
+        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
+                   ('Content-Type', 'application/vnd.ms-excel'),
+                   ('Etag', etag)]
+
+        start_response('200 OK', headers)
+        return buf
 
 class TemplateChoice(MakoApp):
     def __init__(self):
@@ -889,8 +1083,11 @@ def wsgi_app():
     # get an image representing the metadata bounds.
     application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=MetadataImage())
 
-    # download the metadata
-    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=MetadataDownload())
+    # download the metadata as CSV
+    application.add('/{template}/catalogue/{gid:segment}/csv', GET=MetadataCSV())
+
+    # download the metadata as XML
+    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=MetadataXML())
 
     # add our Error handler
     application = medin.error.ErrorHandler(application)

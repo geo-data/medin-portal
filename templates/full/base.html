@@ -42,6 +42,7 @@
         // -->
     </script>
     <script type="text/javascript" src="/js/jquery-1.4.2.js"></script>
+    <script type="text/javascript" src="/js/full/common.js"></script>
     
     ${self.header()}
     
@@ -98,12 +99,6 @@
           
           ${next.body()}
 
-          <pre>
-<%
-from pprint import pformat
-context.write(pformat(context.kwargs))
-%>
-          </pre>
           <!-- SwishCommand noindex -->
         </div>		
       </div>

@@ -1,64 +1,134 @@
-<%inherit file="base-ok.html"/>
+<%inherit file="base-ok.html"/>\
 
 <%def name="header()">
     <link rel="alternate"
           type="application/vnd.google-earth.kml+xml"
           href="${resource_root}/kml"
-          title="MEDIN - ${title}">
-</%def>
+          title="MEDIN - ${title}"/>
+</%def>\
 
 <%def name="left_menu()">\
 <div id="menu-contents">&nbsp;
   <div class="info">
     <h3>Download</h3>
-    <p>The complete metadata is available for downloading in the following
-      XML metadata formats:</p>
+    <p>The complete metadata is available for downloading in the following formats:</p>
     <ul>
-      <li><a href="${resource_root}/DC">Dublin Core format</a></li>
-      <li><a href="${resource_root}/DIF_9.4">GCMD DIF format</a> (version 9.4)</li>
-      <li><a href="${resource_root}/MEDIN_2.3">MEDIN format</a> (version 2.3.1)</li>
+      <li><a href="${resource_root}/csv">MEDIN format</a> (<abbr title="Comma Separated Values">CSV</abbr>)</li>
+      <li><a href="${resource_root}/MEDIN_2.3">MEDIN format</a> (XML version 2.3.1)</li>
+      <li><a href="${resource_root}/DC">Dublin Core format</a> (XML)</li>
+      <li><a href="${resource_root}/DIF_9.4">GCMD DIF format</a> (XML version 9.4)</li>
       <li><div><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</div></li>
     </ul>
   </div>
 </div>
-</%def>
+</%def>\
 
 <%def name="format_date(date)">
 ${date.strftime('%A %d %B %Y')}
-</%def>
+</%def>\
 
 <%def name="format_search_date(date)">
 ${date.strftime('%Y-%m-%d')}
-</%def>
+</%def>\
 
-% if bbox:
+<%def name="output_element(element, number)">
+  % if isinstance(element, Exception):
+    <div class="error">${element.message}. (<a href="javascript:toggle('error-${number}', 'details', 'hide details')" id="error-${number}-link" title="Show or hide the error details">details</a>)</div>
+    <div class="error" id="error-${number}" style="display:none">${element.detail}</div>
+  % else:
+    ${caller.body()}
+  % endif
+</%def>\
+
+<%def name="format_contacts(contacts, quote=False)">
+  % if quote:
+  <blockquote>
+  % endif
+        % for i, contact in enumerate(contacts):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+	<strong>
+	% if contact.organisation:
+	  ${contact.organisation | x}
+	% elif contact.name:
+	  ${contact.name | x}
+    % elif contact.position:
+      ${contact.position | x}
+	% else:
+	  Unnamed contact
+	% endif
+	</strong><br/>
+	% if contact.name and contact.organisation:
+	Individual name: ${contact.name | x}<br/>
+        % endif
+	% if contact.position and (contact.name or contact.organisation):
+	Position: ${contact.position | x}<br/>
+        % endif
+	% if contact.address:
+	Address: <a href="http://maps.google.co.uk/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=${contact.address | u}" title="View the location">${contact.address | x}</a><br/>
+        % endif
+	% if contact.email:
+	Email: ${contact.email | x}<br/>
+        % endif
+	% if contact.tel:
+	Telephone: ${contact.tel | x}<br/>
+        % endif
+	% if contact.fax:
+	Facsimile: ${contact.fax | x}<br/>
+        % endif
+	% if contact.roles:
+	Roles:
+	<ul>
+	  % for role in contact.roles:
+	  <li>${role}</li>
+	  % endfor
+        </ul>
+        % endif
+	% if contact.contacts:
+	${format_contacts(contact.contacts, True)}
+	% endif
+	</div>
+        % endfor
+    % if quote:
+  </blockquote>
+    % endif
+</%def>\
+
+% if metadata.bbox:
+<!-- Element 12 -->
 <div class="extent right">
   <div class="info">
   <h3>Geographic Extent</h3>
   <img class="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data"/>
   <p class="no-bottom">
-  The metadata covers the area West - East from ${bbox[0]}&deg; to
-  ${bbox[2]}&deg; and North - South from ${bbox[3]}&deg; to
-  ${bbox[1]}&deg;.
+  The metadata covers the area West - East from ${metadata.bbox[0]}&deg; to
+  ${metadata.bbox[2]}&deg; and North - South from ${metadata.bbox[3]}&deg; to
+  ${metadata.bbox[1]}&deg;.
 
   <a
-  href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}"
+  href="${script_root}/full/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
   title="Area search for metadata">Search</a> for all metadata within
   this area.
   </p>
   </div>
   <p class="lower-link right">
-    <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="image_no_border"> KML</a>
+    <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="image_no_border"/> KML</a>
   </p>
 </div>
-% endif
+% endif\
 
 <h2>Overview</h2>
 
-<p><strong>Abstract:</strong> ${abstract}</p>
-% if keywords:
+<!-- Element 3 -->
+<p><strong>Abstract:</strong> ${metadata.abstract}</p>
+
+% if metadata.keywords:
+<!-- Element 11 -->
 <p class="no-bottom"><strong>Keywords:</strong></p>
-  % for title, defns in keywords.items():
+  % for title, defns in metadata.keywords.items():
   <div><strong>${title}</strong></div>
   <div class="subitem">
     % for i, (keyword, defn) in enumerate(defns.items()):
@@ -87,13 +157,58 @@ ${date.strftime('%Y-%m-%d')}
     % endfor
   </div>
   % endfor
-% endif
+% endif\
 
 <h2>Details</h2>
 <p class="no-bottom">Details for the metadata are as follows:</p>
 
 <table summary="Metadata details" class="tabulate">
-  % if linkage:
+
+  % if metadata.alt_titles:
+  <!-- Element 2 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Alternative resource title</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.alt_titles}" number="${2}">
+        % for i, detail in enumerate(metadata.alt_titles):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.unique_id:
+  <!-- Element 6 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Unique resource identifier</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.alt_titles}" number="${6}">
+      ${metadata.unique_id}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.online_resource:
+  <!-- Element 5 -->
   <tr>
     <td class="heading">
       <div class="cell">
@@ -102,7 +217,8 @@ ${date.strftime('%Y-%m-%d')}
     </td>
     <td class="content">
       <div class="cell">
-        % for i, resource in enumerate(linkage):
+        <%self:output_element element="${metadata.online_resource}" number="${5}">
+        % for i, resource in enumerate(metadata.online_resource):
         % if i:
         <div class="sibling">
         % else:
@@ -120,12 +236,417 @@ ${date.strftime('%Y-%m-%d')}
           % endif
         </div>
         % endfor
+        </%self:output_element>
       </div>
     </td>
   </tr>
-  % endif
+  % endif\
 
-  % if topic_category:
+  % if metadata.access_limits:
+  <!-- Element 20 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Limitations on public access</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.access_limits}" number="${20}">
+        % for i, detail in enumerate(metadata.access_limits):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.access_conditions:
+  <!-- Element 21 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Conditions for access and use constraints</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.access_conditions}" number="${21}">
+        % for i, detail in enumerate(metadata.access_conditions):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.resource_type:
+  <!-- Element 4 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Resource type</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.resource_type}" number="${4}">
+      ${metadata.resource_type}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.data_format:
+  <!-- Element 23 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Data format</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.data_format}" number="${23}">
+        % for i, detail in enumerate(metadata.data_format):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  <!-- Element 7 to be implemented -->
+
+  % if metadata.service_type:
+  <!-- Element 10 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Spatial data service type</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.service_type}" number="${10}">
+        % for i, detail in enumerate(metadata.service_type):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${detail}</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.temporal_reference:
+  <!-- Element 16 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Temporal reference</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.temporal_reference}" number="${16}">
+        %if 'range' in metadata.temporal_reference:
+        <div>
+          The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
+        </div>
+        %endif
+        % for i, (code, date) in enumerate(metadata.temporal_reference['single']):
+        % if i or 'range' in metadata.temporal_reference:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]
+        </div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.extents:
+  <!-- Element 13 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Extent</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.extents}" number="${13}">
+        % for i, details in enumerate(metadata.extents):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          ${details['title']}: 
+          % if details['id']:
+          <a href="${script_root}/full/catalogue?a=${details['id'] | u}"
+             title="Search for all metadata in the area '${details['name'] | x}'">${details['name'] | x}</a>
+          % else:
+          ${details['name'] | x}
+          % endif
+        </div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.vertical_extent:
+  <!-- Element 14 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Vertical extent information</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.vertical_extent}" number="${14}">
+        <% count = 0 %>
+        % if 'min-value' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Minimum value: ${metadata.vertical_extent['min-value']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'max-value' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Maximum value: ${metadata.vertical_extent['max-value']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'crs' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate Reference System">CRS</abbr>: ${metadata.vertical_extent['crs']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'crs-id' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate Reference System">CRS</abbr> identifier ${metadata.vertical_extent['crs-id'][0]}: ${metadata.vertical_extent['crs-id'][1]}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'crs-name' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate Reference System">CRS</abbr> name: ${metadata.vertical_extent['crs-name']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'crs-scope' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate Reference System">CRS</abbr> scope: ${metadata.vertical_extent['crs-scope']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'cs-id' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate System">CS</abbr> identifier ${metadata.vertical_extent['cs-id'][0]}: ${metadata.vertical_extent['cs-id'][1]}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'cs-name' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate System">CS</abbr> name ${metadata.vertical_extent['cs-name']}
+          <% count+=1 %>
+        % endif
+        % if 'csaxis-id' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate System">CS</abbr> axis identifier ${metadata.vertical_extent['csaxis-id'][0]}: ${metadata.vertical_extent['csaxis-id'][1]}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'csaxis-info' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          <abbr title="Coordinate System">CS</abbr> axis is ${metadata.vertical_extent['csaxis-info'][0]} (${metadata.vertical_extent['csaxis-info'][1]})
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'datum-id' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Datum identifier ${metadata.vertical_extent['datum-id'][0]}: ${metadata.vertical_extent['datum-id'][1]}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'datum-name' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Datum name: ${metadata.vertical_extent['datum-name']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'datum-scope' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Datum scope: ${metadata.vertical_extent['datum-scope']}
+          <% count+=1 %>
+        % endif
+        </div>
+        % if 'datum-info' in metadata.vertical_extent:
+        % if count:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+          Datum details: ${metadata.vertical_extent['datum-info']}
+          <% count+=1 %>
+        % endif
+        </div>
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.reference_system:
+  <!-- Element 15 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Spatial reference system</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.reference_system}" number="${15}">
+        <div>
+          Identifier: ${metadata.reference_system['identifier']}
+        </div>
+        <div class="sibling">
+          Source: <a href="${metadata.reference_system['url']}">${metadata.reference_system['source']}</a>
+        </div>
+        % if metadata.reference_system['name']:
+        <div class="sibling">
+          Name: ${metadata.reference_system['name']}
+        </div>
+        % endif
+        % if metadata.reference_system['scope']:
+        <div class="sibling">
+          Scope: ${metadata.reference_system['scope']}
+        </div>
+        % endif
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.spatial_resolution:
+  <!-- Element 18 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Spatial resolution</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.spatial_resolution}" number="${18}">
+        % for i, detail in enumerate(metadata.spatial_resolution):
+        % if i:
+        <div class="sibling">
+        % else:
+        <div>
+        % endif
+        % if 'distance' in detail:
+	Distance: ${detail['distance']} meters
+	% elif 'scale' in detail:
+	Scale 1:${detail['scale']}
+	%endif
+	</div>
+        % endfor
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.topic_category:
+  <!-- Element 9 -->
   <tr>
     <td class="heading">
       <div class="cell">
@@ -134,7 +655,8 @@ ${date.strftime('%Y-%m-%d')}
     </td>
     <td class="content">
       <div class="cell">
-        % for i, (keyword, defn) in enumerate(topic_category.items()):
+        <%self:output_element element="${metadata.topic_category}" number="${9}">
+        % for i, (keyword, defn) in enumerate(metadata.topic_category.items()):
         % if i:
         <div class="sibling">
         % else:
@@ -156,87 +678,174 @@ ${date.strftime('%Y-%m-%d')}
         % endif
         </div>
         % endfor
+        </%self:output_element>
       </div>
     </td>
   </tr>
-  % endif
-
-  % if extent:
-  <tr>
-    <td class="heading">
-      <div class="cell">
-        <strong>Extent</strong>
-      </div>
-    </td>
-    <td class="content">
-      <div class="cell">
-        % for i, details in enumerate(extent):
-        % if i:
-        <div class="sibling">
-        % else:
-        <div>
-        % endif
-          ${details['title']}: 
-          % if details['id']:
-          <a href="${script_root}/full/catalogue?a=${details['id'] | u}"
-             title="Search for all metadata in the area '${details['name'] | x}'">${details['name'] | x}</a>
-          % else:
-          ${details['name'] | x}
-          % endif
-        </div>
-        % endfor
-      </div>
-    </td>
-  </tr>
-  % endif
-
-  % if temporal_reference:
-  <tr>
-    <td class="heading">
-      <div class="cell">
-        <strong>Temporal reference</strong>
-      </div>
-    </td>
-    <td class="content">
-      <div class="cell">
-        %if 'range' in temporal_reference:
-        <div>
-          The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(temporal_reference['range'][0])}&amp;ed=${format_search_date(temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(temporal_reference['range'][0])} to ${format_date(temporal_reference['range'][1])}</a> inclusive.
-        </div>
-        %endif
-        % for i, (code, date) in enumerate(temporal_reference['single']):
-        % if i or 'range' in temporal_reference:
-        <div class="sibling">
-        % else:
-        <div>
-        % endif
-        ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]
-        </div>
-        % endfor
-      </div>
-    </td>
-  </tr>
-  % endif
+  % endif\
   
-  % for name, details in metadata:
+  % if metadata.lineage:
+  <!-- Element 17 -->
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>${name}</strong>
+        <strong>Lineage</strong>
       </div>
     </td>
     <td class="content">
       <div class="cell">
-        % for i, detail in enumerate(details):
-        % if i:
-        <div class="sibling">
-        % else:
-        <div>
-        % endif
-        ${detail}</div>
-        % endfor
+        <%self:output_element element="${metadata.lineage}" number="${17}">
+      ${metadata.lineage}
+        </%self:output_element>
       </div>
     </td>
   </tr>
-  % endfor
+  % endif\
+
+  % if metadata.additional_info:
+  <!-- Element 19 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Additional information</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.additional_info}" number="${19}">
+      ${metadata.additional_info}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.responsible_party:
+  <!-- Element 22 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Responsible party</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.responsible_party}" number="${22}">
+	${format_contacts(metadata.responsible_party)}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  <!-- Element 25 to be implemented -->
+
+  % if metadata.resource_language:
+  <!-- Element 8 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Resource language</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.resource_language}" number="${25}">
+        ${metadata.resource_language}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+  
+  % if metadata.update_frequency:
+  <!-- Element 24 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Frequency of update</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.update_frequency}" number="${24}">
+        ${metadata.update_frequency}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.date:
+  <!-- Element 26 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Date of update of metadata</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.date}" number="${26}">
+        ${format_date(metadata.date)}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.name:
+  <!-- Element 27 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Metadata standard name</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.name}" number="${27}">
+        ${metadata.name}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.version:
+  <!-- Element 28 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Metadata standard version</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.version}" number="${28}">
+        ${metadata.version}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.language:
+  <!-- Element 29 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Metadata language</strong>
+      </div>
+    </td>
+    <td class="content">
+      <div class="cell">
+        <%self:output_element element="${metadata.version}" number="${28}">
+        ${metadata.language}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
 </table>

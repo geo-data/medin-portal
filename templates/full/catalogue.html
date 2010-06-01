@@ -3,9 +3,9 @@
 
 <%def name="start_link()">\
 % if first_link:
-?${first_link['link']}\
+?${first_link['link'] | x}\
 % else:
-${query_string}\
+${query_string | x}\
 % endif
 </%def>
 
@@ -13,7 +13,7 @@ ${query_string}\
 <div id="menu-contents">&nbsp;
   <div class="info">
     ${search_criteria()}
-    <p><a href="${script_root}/full${query_string}" title="Edit the current search criteria">Edit this search</a>.</p>
+    <p><a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">Edit this search</a>.</p>
   </div>
   <div class="info info-sibling">
     <h3>Bookmark this search</h3>
@@ -27,29 +27,29 @@ ${query_string}\
 % if first_link:
     <link rel="Start"
           type="text/html" 
-          href="${resource_root}?${first_link['link']}"
+          href="${resource_root}?${first_link['link'] | x}"
           title="Results page ${first_link['page']}" />
 % endif
 % if prev_links:
     <link rel="Prev"
           type="text/html" 
-          href="${resource_root}?${prev_links[-1]['link']}"
+          href="${resource_root}?${prev_links[-1]['link'] | x}"
           title="Results page ${prev_links[-1]['page']}" />
 % endif
 % if next_links:
     <link rel="Next"
           type="text/html" 
-          href="${resource_root}?${next_links[0]['link']}"
+          href="${resource_root}?${next_links[0]['link'] | x}"
           title="Results page ${next_links[0]['page']}" />
 % endif
     <link rel="alternate"
           type="application/rss+xml"
           href="${script_root}/full/catalogue.rss${start_link()}"
-          title="MEDIN - ${title}">
+          title="MEDIN - ${title}" />
     <link rel="alternate"
           type="application/atom+xml"
           href="${script_root}/full/catalogue.atom${start_link()}"
-          title="MEDIN - ${title}">
+          title="MEDIN - ${title}" />
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
@@ -93,13 +93,13 @@ $(function() {
 %>
 <span class="sort">\
 % if fsort['asc'][1]:
-<a href="${resource_root}?${fsort['desc'][0]}" title="Toggle ordering of results (currently ascending)">${name}</a>
+<a href="${resource_root}?${fsort['desc'][0] | x}" title="Toggle ordering of results (currently ascending)">${name}</a>
 <img class="sort asc" src="/images/transparent.png" alt="[sorted ascending]" title="Currently sorted by ${name}, ascending"/>\
 % elif fsort['desc'][1]:
-<a href="${resource_root}?${fsort['asc'][0]}" title="Toggle ordering of results (currently descending)">${name}</a>
+<a href="${resource_root}?${fsort['asc'][0] | x}" title="Toggle ordering of results (currently descending)">${name}</a>
 <img class="sort desc" src="/images/transparent.png" alt="[sorted descending]" title="Currently sorted by ${name}, descending"/>\
 % else:
-<a href="${resource_root}?${fsort['desc'][0]}" title="Toggle ordering of results">${name}</a>
+<a href="${resource_root}?${fsort['desc'][0] | x}" title="Toggle ordering of results">${name}</a>
 <img class="sort" src="/images/transparent.png" alt=""/>\
 % endif
 </span>
@@ -111,12 +111,12 @@ $(function() {
 % endif
 <div class="results-nav">
 % if first_link:
-<a href="${resource_root}?${first_link['link']}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
+<a href="${resource_root}?${first_link['link'] | x}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
 % if prev_links:
-<a href="${resource_root}?${prev_links[-1]['link']}" title="Results page ${prev_links[-1]['page']}">&lsaquo;&nbsp;Previous</a> 
+<a href="${resource_root}?${prev_links[-1]['link'] | x}" title="Results page ${prev_links[-1]['page']}">&lsaquo;&nbsp;Previous</a> 
 % for link in prev_links:
-<a href="${resource_root}?${link['link']}" title="Results page ${link['page']}">${link['page']}</a> 
+<a href="${resource_root}?${link['link'] | x}" title="Results page ${link['page']}">${link['page']}</a> 
 % endfor
 % endif
 
@@ -124,19 +124,19 @@ $(function() {
 
 % if next_links:
 % for link in next_links:
-<a href="${resource_root}?${link['link']}" title="Results page ${link['page']}">${link['page']}</a> 
+<a href="${resource_root}?${link['link'] | x}" title="Results page ${link['page']}">${link['page']}</a> 
 % endfor
-<a href="${resource_root}?${next_links[0]['link']}" title="Results page ${next_links[0]['page']}">Next&nbsp;&rsaquo;</a> 
+<a href="${resource_root}?${next_links[0]['link'] | x}" title="Results page ${next_links[0]['page']}">Next&nbsp;&rsaquo;</a> 
 % endif
 % if last_link:
-<a href="${resource_root}?${last_link['link']}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
+<a href="${resource_root}?${last_link['link'] | x}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
 % endif
 </div>
 </%def>
 
 
 %if hits == 0:
-<p>Your search did not return any results. Try <a href="${script_root}/full${query_string}" title="Edit the current search criteria">editing your search</a> 
+<p>Your search did not return any results. Try <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">editing your search</a> 
 %if log:
 to correct the errors.
 %else:
@@ -146,7 +146,7 @@ to make it less restrictive.
 <%return '' %>
 %endif
 <p class="info right">Not the results you're looking for? You
-  can <a href="${script_root}/full${query_string}" title="Edit the current search criteria">edit this search</a>\
+  can <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">edit this search</a>\
 %if log:
  to correct the errors\
 %endif
@@ -160,7 +160,7 @@ result.
 % if not results:
 % if hits:
  However, the results specified are out of range of the original search.
- Try browsing at <a href="${resource_root}?${first_link['link']}" title="The first result set">the beginning of the results</a>.
+ Try browsing at <a href="${resource_root}?${first_link['link'] | x}" title="The first result set">the beginning of the results</a>.
 % endif
 </p>
 <% return '' %>
@@ -194,7 +194,7 @@ ${result_links()}
   <tr class="last">
   %endif
     <td>${start_index+i}.</td>
-    <td><a href="${script_root}/full/catalogue/${res['id'] | u}" title="${res['title']}">${res['title']}</a></td>
+    <td><a href="${script_root}/full/catalogue/${res['id'] | x}" title="${res['title']}">${res['title']}</a></td>
     <td>${res['originator']}</td>
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
   </tr>
@@ -208,7 +208,7 @@ ${result_links()}
 % for c in (10, 15, 20, 30, 50, 100, 200):
     <option value="${c}"\
 % if c == count:
-selected="selected"\
+ selected="selected"\
 % endif
 >${c}</option>
 % endfor

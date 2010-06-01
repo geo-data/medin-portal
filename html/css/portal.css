@@ -133,7 +133,8 @@ blockquote {
     margin-top: 0.5em;
 }
 #menu-contents span.error,
-#bodycontent_wide span.error {
+#bodycontent_wide span.error,
+#bodycontent_wide div.error {
     color:#A00000;
 }
 #menu-contents a {

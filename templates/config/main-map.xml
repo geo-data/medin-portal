@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE Map>
+<Map srs="+proj=latlong +datum=WGS84">
+
+  <Style name="Raster">
+    <Rule>
+      <RasterSymbolizer>
+        <CssParameter name="opacity">1</CssParameter>
+        <CssParameter name="scaling">bilinear</CssParameter>
+      </RasterSymbolizer>
+    </Rule>
+  </Style>
+
+  <!-- <Style name="Grid"> -->
+  <!--   <Rule> -->
+  <!--     <LineSymbolizer> -->
+  <!--       <CssParameter name="stroke">#585858</CssParameter> -->
+  <!--       <CssParameter name="stroke-width">1</CssParameter> -->
+  <!--       <CssParameter name="stroke-opacity">0.5</CssParameter> -->
+  <!--     </LineSymbolizer> -->
+  <!--     <TextSymbolizer name="name" face_name="DejaVu Sans Bold" size="10" fill="#585858" wrap_width="20" opacity="0.75" allow_overlap="true" placement="line" avoid_edges="false" dx="6" dy="6" spacing="650" label_position_tolerance="0"/> -->
+  <!--   </Rule> -->
+  <!-- </Style> -->
+
+  <!-- <Datasource name="grids"> -->
+  <!--   <Parameter name="base">${root_dir}/data/vector/grids</Parameter> -->
+  <!--   <Parameter name="type">shape</Parameter> -->
+  <!-- </Datasource> -->
+  
+  <Layer name="Background" srs="+proj=latlong +datum=WGS84">
+    <StyleName>Raster</StyleName>
+    <Datasource>
+      <Parameter name="type">gdal</Parameter>
+      <Parameter name="file">${root_dir}/data/raster/background-wms.vrt</Parameter>
+    </Datasource>
+  </Layer>
+  
+  <!-- <Layer name="grid-20" srs="+proj=latlong +datum=WGS84" -->
+  <!--        minzoom="127500000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-20</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-10" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="127500000" -->
+  <!--        minzoom="63750000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-10</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-5" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="63750000" -->
+  <!--        minzoom="18000000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-5</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-1" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="18000000" -->
+  <!--        minzoom="3000000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-1</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-0.5" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="3000000" -->
+  <!--        minzoom="1200000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-0.5</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-0.1" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="1200000" -->
+  <!--        minzoom="200000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-0.1</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-0.05" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="200000" -->
+  <!--        minzoom="100000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-0.05</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+  <!-- <Layer name="grid-0.01" srs="+proj=latlong +datum=WGS84" -->
+  <!--        maxzoom="100000"> -->
+  <!--   <StyleName>Grid</StyleName> -->
+  <!--   <Datasource base="grids"> -->
+  <!--     <Parameter name="file">grid-0.01</Parameter> -->
+  <!--   </Datasource> -->
+  <!-- </Layer> -->
+</Map>
