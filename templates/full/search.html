@@ -15,6 +15,8 @@
     </style>
     <script type="text/javascript" src="/js/jquery-ui-1.8rc3.js"></script>
     <script type="text/javascript" src="/js/jquery.iclick.js"></script>
+    <script type="text/javascript" src="/js/jquery.alignwith.js"></script>
+    <script type="text/javascript" src="/js/jquery.ba-resize.js"></script>
     <script type="text/javascript" src="/js/openlayers/OpenLayers.js"></script>
     <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
@@ -34,6 +36,11 @@ var script_root = '${script_root}';
 
 // Initialise the page once loaded
 $(function() {
+    %if not area and not bbox:
+	// initialise the tooltips
+	init_tool_tips();
+	%endif
+	
     // initialise the date pickers
     $.datepicker.setDefaults({ dateFormat: 'yy-mm-dd' });
     init_date('start-date');
@@ -99,7 +106,7 @@ $(function() {
 <form id="search-form" method="get" action="${resource_root}/catalogue">
   <fieldset id="text-search">
     <legend><a href="javascript:toggle_fieldset('text-search')" title="Show or hide the text search">Search term</a></legend>
-    <div>
+    <div class="content">
       <input type="text" name="q" size="30"\
       %if search_term:
  value="${search_term}"\
@@ -185,7 +192,7 @@ $(function() {
     %endif
 >
     <legend><a href="javascript:toggle_fieldset('date-search')" title="Show or hide the date range">Date range</a></legend>
-    <div\
+    <div class="content"\
     %if not start_date and not end_date:
  style="display:none"\
     %endif
@@ -217,15 +224,19 @@ $(function() {
     </div>
   </fieldset>
 
-  <fieldset id="spatial-search"\
-    %if not area and not bbox:
- class="off"\
-    %endif
->
+  <fieldset id="spatial-search">
     <legend><a href="javascript:toggle_fieldset('spatial-search')" title="Show or hide the geographic search">Geographic search</a></legend>
-    <div\
+    %if not area and not bbox:
+	<div class="content" id="spatial-search-holder">
+	  <a href="javascript:init_spatial_search()"><img id="spatial-start" class="image_no_border" src="/images/earth-from-space.jpg" width="90" height="90" alt="Geographical search"/></a>
+	  <div id="spatial-start-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png"/><span class="tooltip-text">Click on the globe to start a geographic search</span></div>
+	</div>
+    %endif
+    <div id="spatial-search-content"\
     %if not area and not bbox:
  style="display:none"\
+    %else:
+ class="content"\
     %endif
 >
       <div>

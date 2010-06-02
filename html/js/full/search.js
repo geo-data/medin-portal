@@ -182,6 +182,12 @@ function zoom_to_area(id) {
     });
 }
 
+/* Refresh the map size and zoom to GB */
+function init_map_view() {
+    map.updateSize();
+    zoom_to_area('GB');
+}
+
 // Populate the area selection control
 function populate_areas() {
     var select = $('select.area');
@@ -237,8 +243,7 @@ function populate_areas() {
             if (id != 'spatial-search')
                 return;
 
-            map.updateSize();
-            zoom_to_area('GB');
+            init_map_view();      // initialise the map view
             $(this).unbind(event); // we don't need this event any more
         });
     }
@@ -249,6 +254,36 @@ function populate_areas() {
         $('#bbox').val(bounds.toBBOX()); // set the form element
         check_query();          // update the query results
     });
+}
+
+var tip_handler = null;         // handler for the search start tooltip
+/* Initialise the spatial search, replacing the lightweight search
+holder with the search proper. */
+function init_spatial_search() {
+    $('#spatial-search-holder').hide('fast', function() {
+        if (tip_handler)
+            $('#bodycontent_wide').unbind('resize', tip_handler); // remove the tooltip handler
+        $(this).empty().remove()  // remove the holder
+        $('#spatial-search-content').show('fast', function() {
+            init_map_view();    // initialise the map view
+        }).addClass('content'); // activate the search
+    });
+}
+
+// Initialise the tool tips
+function init_tool_tips() {
+    // function to align the tool tip
+    function align() {
+        $('#spatial-start-tip').alignWith('#spatial-start', 'clcr', {x:-10})
+    }
+
+    // assign the resize handler to a global variable
+    tip_handler = function() {
+        align();                // perform the alignment
+    };
+
+    align();                    // initial alignment
+    $('#bodycontent_wide').resize(tip_handler); // align whenever body size changes
 }
 
 function init_date(id) {
@@ -305,11 +340,11 @@ function toggle_fieldset(id) {
 
     if (fieldset.hasClass('off')) {
         fieldset.removeClass('off');
-        fieldset.children('div').show('fast', function() {
+        fieldset.children('div.content').show('fast', function() {
             $(document).trigger('fieldsetview', [id]);
         });
     } else {
-        fieldset.children('div').hide('fast', function() {
+        fieldset.children('div.content').hide('fast', function() {
             fieldset.addClass('off');
         });
     }

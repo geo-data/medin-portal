@@ -18,7 +18,8 @@ ${query_string | x}\
   <div class="info info-sibling">
     <h3>Bookmark this search</h3>
     <div>Drag the icon to your bookmark bar...</div>
-	<p style="text-align:center"><a href="${resource_root}${start_link()}" title="${title}"><img class="image_no_border" alt="${title}" src="/images/bookmark.png" width="103" height="25"/></a></p>
+	<p><a href="${resource_root}${start_link()}" title="${title}"><img id="bookmark" class="image_no_border" alt="${title}" src="/images/bookmark.png" width="103" height="25"/></a></p>
+	<div id="bookmark-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png"/><span class="tooltip-text">Drag this icon</span></div>
   </div>
 </div>
 </%def>
@@ -55,6 +56,8 @@ ${query_string | x}\
     <meta name="startIndex" content="${start_index}"/>
     <meta name="itemsPerPage" content="${count}"/>
 
+    <script type="text/javascript" src="/js/jquery.alignwith.js"></script>
+    <script type="text/javascript" src="/js/jquery.ba-resize.js"></script>
     <script type="text/javascript">
       <!--        
 
@@ -81,6 +84,13 @@ $(function() {
             img.attr('class', old_class);
         });
     });
+
+	// initialise the tooltips
+	function align() {
+        $('#bookmark-tip').alignWith('#bookmark', 'clcr', {x:-5})
+    }
+	align();
+	$(window).resize(function() { align(); });
 });
       -->
     </script>
