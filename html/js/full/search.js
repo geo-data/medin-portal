@@ -48,6 +48,7 @@ function init_map() {
     map.addControl(new OpenLayers.Control.PanZoom());
     map.addControl(new OpenLayers.Control.ArgParser());
     map.addControl(new OpenLayers.Control.Attribution());
+    map.addControl(new OpenLayers.Control.MousePosition());
 
     // ensure navigation is deactivated when the CTRL key is pressed
     // or the box is selected, otherwise it interferes with the box
