@@ -131,12 +131,12 @@ class Query(GETParams):
         return default
 
     def getStartDate(self, cast=True, default=''):
-        return self.asDate('sd', cast, default)
+        return self.asDate('sd', cast, default, True)
 
     def getEndDate(self, cast=True, default=''):
-        return self.asDate('ed', cast, default)
+        return self.asDate('ed', cast, default, False)
 
-    def asDate(self, key, cast, default):
+    def asDate(self, key, cast, default, is_start):
         try:
             date = self[key][0]
         except KeyError, AttributeError:
@@ -150,13 +150,20 @@ class Query(GETParams):
             return date
         except ValueError:
             try:
-                dt = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+                dt = datetime.datetime.strptime(date, '%Y')
                 if cast:
-                    return dt
+                    if is_start: return dt
+                    else: return dt.replace(month=12, day=31)
                 return date
             except ValueError:
-                if self.raise_errors:
-                    raise QueryError('The following date is not recognised: %s. Please specify the date in the format YYYY-MM-DD' % date)
+                try:
+                    dt = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+                    if cast:
+                        return dt
+                    return date
+                except ValueError:
+                    if self.raise_errors:
+                        raise QueryError('The following date is not recognised: %s. Please specify the date in the format YYYY-MM-DD' % date)
 
         return default
 
