@@ -36,6 +36,8 @@ var script_root = '${script_root}';
 
 // Initialise the page once loaded
 $(function() {
+    OpenLayers.ProxyHost="${script_root}/proxy?url=";
+    
     %if not area and not bbox:
 	// initialise the tooltips
 	init_tool_tips();
@@ -46,12 +48,7 @@ $(function() {
     init_date('start-date');
     init_date('end-date');
 
-    map = init_map();
-
-    var layer = new OpenLayers.Layer.TMS( "Bathy", 
-                                      "${script_root}/spatial/tms/",
-                                      { layername: 'bathymetry', type: 'png' } );
-    map.addLayer(layer);
+    map = init_map("${script_root}");
 
     // add the area selections
     populate_areas();

@@ -994,7 +994,43 @@ def get_bbox(environ, start_response):
                ('Etag', etag)]
     
     start_response('200 OK', headers)
-    return [json] 
+    return [json]
+
+def proxy(environ, start_response):
+    from medin.query import GETParams
+
+    params = GETParams(environ.get('QUERY_STRING', ''))
+    try:
+        url = params['url'][0]
+    except KeyError:
+        url = ''
+
+    valid_proxies = ('http://www.dassh.ac.uk:8081/geoserver/wfs',)
+    if not url.startswith(valid_proxies):
+        raise HTTPError('403 Forbidden', 'The url cannot be proxied: %s' % url)
+
+    import urllib2
+    response = urllib2.urlopen(url)
+    try:
+        response = urllib2.urlopen(url)
+    except urllib2.HTTPError, e:
+        raise HTTPError('%d Error' % e.getcode(), str(e))
+    except urllib2.URLError, e:
+        try:
+            status, msg = e.reason
+        except ValueError:
+            msg = str(e.reason)
+            status = 500
+    
+        raise HTTPError('%d Error' % status, msg)
+
+    # remove hop-by-hop headers (as defined at http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html)
+    for header in ('Keep-Alive', 'Proxy-Authenticate', 'Proxy-Authorization', 'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Connection', 'Server'):
+        del response.headers[header]
+        
+    headers = response.headers.items()
+    start_response('%s OK' % response.getcode(), headers)
+    return response
 
 class Timer(object):
     """
@@ -1041,6 +1077,9 @@ def wsgi_app():
     # applications are added is important; the most specific URL matches
     # must be before the more generic ones.
     application = Selector(consume_path=False)
+
+    # provide the proxying service for AJAX requests
+    #application.add('/proxy', GET=proxy) Not currently used
 
     # provide the Tile Mapping Service
     application.parser.patterns['tms'] = r'/.*'
