@@ -370,7 +370,11 @@ function init_date(id) {
                 // trigger the change event, which is used by the
                 // query checking code.
                 input.change();
-            }
+            },
+            changeMonth: true,
+            changeYear: true,
+            yearRange: 'c-20:c+20',
+            maxDate: '+0d'
         });
     }
 
