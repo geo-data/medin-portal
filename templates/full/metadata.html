@@ -224,13 +224,13 @@ ${date.strftime('%Y-%m-%d')}
         % else:
         <div>
         % endif
-          <a href="${resource['link']}" title="External link">
+          <a href="${resource['link']}" title="External link ${i+1}">\
             % if resource['name']:
-            ${resource['name']}
+${resource['name']}
             % else:
-            ${resource['link']}
+External link ${i+1}\
             % endif
-            </a>
+</a>
           % if resource['description']:
           - ${resource['description']}
           % endif
