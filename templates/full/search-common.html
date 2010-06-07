@@ -31,7 +31,7 @@
     %if criteria['area']:
       in <strong>${criteria['area']}</strong>
     %elif criteria['bbox']:
-      in <strong>your specified area</strong>
+      in <strong>N${'%.2f' % criteria['bbox'][3]} S${'%.2f' % criteria['bbox'][1]} E${'%.2f' % criteria['bbox'][2]} W${'%.2f' % criteria['bbox'][0]}</strong>
     %endif
     </span>
     <p id="result-count"><strong>${hits}</strong> 
