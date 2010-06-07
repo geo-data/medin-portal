@@ -328,8 +328,7 @@ class Query(GETParams):
         a['dates'] = dates
 
         # add the area
-        bbox = self.getBBOX(cast=False, default=False)
-        if bbox: bbox = True
+        bbox = self.getBBOX(default=False)
         a['bbox'] = bbox
         a['area'] = self.getArea(default=None)
 

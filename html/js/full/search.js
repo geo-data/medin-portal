@@ -33,7 +33,7 @@ function init_map(script_root) {
     var map = new OpenLayers.Map('map', options);
 
     // add the bathymetry layer
-    var layer = new OpenLayers.Layer.TMS( "Bathy", 
+    var layer = new OpenLayers.Layer.TMS( "Bathy",
                                       script_root+'/spatial/tms/',
                                       { layername: 'bathymetry',
 										type: 'png',
@@ -61,7 +61,7 @@ function init_map(script_root) {
                                               format: OpenLayers.Format.GeoJSON
                                           });
     map.addLayer(layer);
-    
+
     // add the ICES rectangles layer. This is a subset of data from the DASS WFS
     styleMap = new OpenLayers.StyleMap({
         'default': OpenLayers.Util.applyDefaults(
@@ -265,7 +265,7 @@ function populate_areas() {
         select.removeAttr('name').hide();
         select.filter('#'+id).show().attr('name', 'a');
     });
-    
+
     // ensure a bbox is created when an area is selected
     select.change(function() {
         var self = $(this);
@@ -274,7 +274,7 @@ function populate_areas() {
             .find(':selected[value!=""]')
             .parents('select')
             .val('');
-        
+
         var id = self.attr('value');
         if (!id) {
             clear_box();
@@ -487,8 +487,13 @@ function check_query() {
 
                 if (criteria['area'])
                     area.append('<span> in <strong>'+criteria['area']+'</strong></span>');
-                else if (criteria['bbox'])
-                    area.append('<span> in <strong>your specified area</strong></span>');
+                else if (criteria['bbox']) {
+                    var n = criteria['bbox'][3].toFixed(2);
+                    var s = criteria['bbox'][1].toFixed(2);
+                    var e = criteria['bbox'][2].toFixed(2);
+                    var w = criteria['bbox'][0].toFixed(2);
+                    area.append('<span> in <strong>'+n+'N '+s+'S '+e+'E '+w+'W</strong></span>');
+                }
             },
             complete: function(req, status) {
                 clearTimeout(timeout); // just to be sure!
