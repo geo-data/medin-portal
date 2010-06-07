@@ -1,3 +1,4 @@
+<%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>\
 
 <%def name="header()">
@@ -20,6 +21,16 @@
       <li><div><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</div></li>
     </ul>
     <p>This metadata complies with <a href="http://www.inspire-geoportal.eu" title="Infrastructure for Spatial Information in the European Community">INSPIRE</a> and <a href="http://www.gigateway.org.uk/metadata/standards.html" title="Geo-spatial Metadata Interoperability Initiative">GEMINI 2</a> standards.</p>
+  </div>
+  <div class="info info-sibling">
+    ${search_criteria()}
+    <p>
+    % if query_string:
+<a href="${script_root}/full/catalogue${query_string | x}" title="Go back to your search results">Return to your results</a>\
+    % else:
+<a href="${script_root}/full/catalogue" title="View the list of results">View these results</a>\
+    % endif
+ or <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">Edit this search</a>.</p>
   </div>
 </div>
 </%def>\

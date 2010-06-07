@@ -514,14 +514,24 @@ class Metadata(MakoApp):
 
 class MetadataHTML(Metadata):
     def __init__(self):
+        from medin.dws import SearchRequest
+        self.search_request = SearchRequest()
         super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
+        from medin.dws import RESULT_SIMPLE
+        
         parser, headers = super(MetadataHTML, self).setup(environ)
+
+        q = get_query(environ)
+        criteria = q.asDict(False)
+        r = self.search_request(q, RESULT_SIMPLE, environ['logging.logger'])
 
         metadata = parser.parse()
         title = 'Metadata: %s' % metadata.title
-        tvars = dict(metadata=metadata)
+        tvars = dict(metadata=metadata,
+                     criteria=criteria,
+                     hits=r.hits)
 
         headers.append(('Content-type', 'text/html'))
 
