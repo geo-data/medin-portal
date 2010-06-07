@@ -544,7 +544,12 @@ class MetadataKML(Metadata):
             title = ''
             tvars = {}
 
-        headers.append(('Content-type', 'application/vnd.google-earth.kml+xml'))
+        filename = parser.uniqueID()
+        if not filename: filename = 'metadata.kml'
+        else: filename += '.kml'
+        
+        headers.extend((('Content-type', 'application/vnd.google-earth.kml+xml'),
+                        ('Content-disposition', 'attachment; filename="%s"' % filename)))
 
         return TemplateContext(title, tvars=tvars, headers=headers)
 
