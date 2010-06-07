@@ -350,8 +350,8 @@ class TermParser(object):
     """
 
     # The following pattern is designed to parse out the <or>, <not>,
-    # <target> and <word> from a user query string. <or> is a pipe
-    # (|), <not> is a minus sign (-). <target> maps to a search target
+    # <target> and <word> from a user query string. <or> is a the word
+    # OR, <not> is a minus sign (-). <target> maps to a search target
     # and <word> is the actual query word.
     #
     # A related pattern which groups <or> and <not> into one operator
@@ -360,7 +360,7 @@ class TermParser(object):
     #
     # See http://docs.python.org/library/re.html for regular
     # expression details.
-    pattern = re.compile(r'(?P<or>[|])?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
+    pattern = re.compile(r'(?P<or>OR)?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
     
     targets = set(('', 'a', 'al', 'f', 'l', 'o', 'p', 'rt', 'tc'))
 
@@ -407,7 +407,7 @@ class TermAnalyser(object):
         """
 
         op_map = {'': 'and',
-                  '|': 'or'}
+                  'OR': 'or'}
         query = []
         for i, (op_or, op_not, target, word) in enumerate(tokens):
             op = op_map[op_or]
