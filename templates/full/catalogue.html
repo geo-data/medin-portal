@@ -115,11 +115,16 @@ $(function() {
 </span>
 </%def>
 
-<%def name="result_links()">
+<%def name="result_links(is_top)">
 % if page_count == 1:
 <% return '' %>
 % endif
-<div class="results-nav">
+<div class="nav">
+<div class="results-nav left"\
+% if is_top:
+ style="margin-top:0.75em"\
+% endif
+>
 % if first_link:
 <a href="${resource_root}?${first_link['link'] | x}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
@@ -142,6 +147,11 @@ $(function() {
 <a href="${resource_root}?${last_link['link'] | x}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
 % endif
 </div>
+<div class="right syndicate">
+  <a href="${script_root}/full/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
+  <a href="${script_root}/full/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
+</div>
+</div>
 </%def>
 
 
@@ -155,6 +165,7 @@ to make it less restrictive.
 </p>
 <%return '' %>
 %endif
+
 <p class="info right">Not the results you're looking for? You
   can <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">edit this search</a>\
 %if log:
@@ -184,8 +195,7 @@ all results
 % endif
 </strong>:</p>
 
-${result_links()}
-
+${result_links(True)}
 <table summary="Table of results" class="tabulate">
   <thead>
   <tr>
@@ -210,9 +220,9 @@ ${result_links()}
   </tr>
 % endfor
 </table>
-${result_links()}
+${result_links(False)}
 
-<form action="${resource_root}" method="get">
+<form action="${resource_root}" method="get" id="change-result-count">
 <p>
   <select name="c">
 % for c in (10, 15, 20, 30, 50, 100, 200):
@@ -231,7 +241,3 @@ ${result_links()}
 </p>
 </form>
 
-<p>
-<a href="${script_root}/full/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
-<a href="${script_root}/full/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
-</p>
