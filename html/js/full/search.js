@@ -217,9 +217,10 @@ function add_box(extent, selected) {
     map.controls[0].setBox(extent, selected);
 }
 
-function clear_box() {
+function clear_box(setval) {
     map.controls[0].removeBox();
-    $('#bbox').val(''); // set the form element
+    if (setval)
+        $('#bbox').val(''); // set the form element
 }
 
 // remove the bounding box and deselect the area
@@ -287,6 +288,7 @@ function populate_areas() {
                 } else {
                     var extent = new OpenLayers.Bounds(tbbox[0], tbbox[1], tbbox[2], tbbox[3]);
                     add_box(extent);
+                    $('#bbox').val(extent.toBBOX()); // set the bounding box form value
                     map.zoomToExtent(extent);   // zoom to the box
                 }
 
@@ -319,6 +321,27 @@ function populate_areas() {
     $(document).bind('drawbox movebox', function(event, bounds) {
         select.val('');         // unset any predefined area
         $('#bbox').val(bounds.toBBOX()); // set the form element
+        check_query();          // update the query results
+    });
+
+    // ensure the map box and search criteria are updated when the
+    // bounding box contents are changed
+    $('#bbox').change(function() {
+        var val = $(this).val();
+        select.val('');         // unset any predefined area
+
+        if (val) {
+            // edit/create the box and zoom to it
+            var extent = OpenLayers.Bounds.fromString(val);
+            if (extent) {
+                add_box(extent);
+                map.zoomToExtent(extent);
+            }
+        } else {
+            // remove the box
+            clear_box(false);
+        }
+
         check_query();          // update the query results
     });
 }

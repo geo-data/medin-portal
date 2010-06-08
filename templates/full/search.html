@@ -55,7 +55,7 @@ $(function() {
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
-    $('#search-form input[type=text]').change(function() {
+    $('#search-form input[type=text]:not(#bbox)').change(function() {
         check_query();
     });
 
@@ -175,13 +175,7 @@ $(function() {
     %endif
     %if count:
     <input name="c" type="hidden" value="${count}" />
-    %endif
-    <input name="bbox" id="bbox" type="hidden" value="\
-    %if bbox:
-  ${','.join(map(str, bbox))}\
-    %endif
-" />
-    
+    %endif    
   </fieldset>
   <fieldset id="date-search"\
     %if not start_date and not end_date:
@@ -329,6 +323,14 @@ ${area_selection('ices-rectangles')}
       <div id="map-holder">
         <div id="map"></div>
       </div>
+      <h3>Edit the search box coordinates</h3>
+      <input size="38" name="bbox" id="bbox" type="text" value="\
+    %if bbox:
+  ${','.join(map(str, bbox))}\
+    %endif
+" />
+      <input type="submit" value="search"/>
+      <div>Coordinates should use decimal degrees in the format <strong>West,South,East,North</strong>.</div>
     </div>
   </fieldset>
 </form>
