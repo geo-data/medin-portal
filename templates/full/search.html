@@ -114,8 +114,8 @@ $(function() {
       <p>Words typed in 'as is' will result in a full text search that
       requires all words to be present in matching metadata, e.g.:</p>
       
-      <blockquote><div><kbd>aerosol pollution
-      troposphere</kbd></div></blockquote>
+      <blockquote><div><kbd>acoustic currents
+      sediment</kbd></div></blockquote>
       
       <p>will find all documents containing <strong>all</strong> of the
       above words.</p>
@@ -123,23 +123,23 @@ $(function() {
       <p>Words can be excluded from result matches using the
       <strong>minus sign</strong> (<strong>-</strong>) e.g.:</p>
       
-      <blockquote><div><kbd><strong>-</strong>aerosol pollution
-      <strong>-</strong>troposphere</kbd></div></blockquote>
+      <blockquote><div><kbd><strong>-</strong>acoustic currents
+      <strong>-</strong>sediment</kbd></div></blockquote>
       
-      <p>will find all documents that contain <kbd>pollution</kbd> but
-      <strong>not</strong> <kbd>aerosol</kbd> <strong>or</strong>
-      <kbd>troposphere</kbd>.</p>
+      <p>will find all documents that contain <kbd>currents</kbd> but
+      <strong>not</strong> <kbd>acoustic</kbd> <strong>or</strong>
+      <kbd>sediment</kbd>.</p>
       
       <p>Instead of finding all matching terms, alternative matches can
       be specified using the word <strong>OR</strong>
       (in capitals) e.g.:</p>
       
-      <blockquote><div><kbd>aerosol <strong>OR</strong> pollution
-      troposphere</kbd></div></blockquote>
+      <blockquote><div><kbd>acoustic <strong>OR</strong> currents
+      sediment</kbd></div></blockquote>
       
-      <p>will find all documents that contain <kbd>troposphere</kbd> and
-      <strong>either</strong> <kbd>aerosol</kbd> <strong>or</strong>
-      <kbd>pollution</kbd>.</p>
+      <p>will find all documents that contain <kbd>sediment</kbd> and
+      <strong>either</strong> <kbd>acoustic</kbd> <strong>or</strong>
+      <kbd>currents</kbd>.</p>
       
       <p>As well as running full text searches, more specific search
       targets can be specified by prefixing words with a target
@@ -160,13 +160,13 @@ $(function() {
       <p>The identifier is separated from the word using a
       <strong>colon</strong> (<strong>:</strong>) e.g.:</p>
       
-      <blockquote><div><kbd>aerosol <strong>tc:</strong>pollution
-      <strong>p:</strong>troposphere</kbd></div></blockquote>
+      <blockquote><div><kbd>acoustic <strong>tc:</strong>oceans
+      <strong>p:</strong>sediment</kbd></div></blockquote>
       
-      <p>will match all documents that contain <kbd>aerosol</kbd> that
+      <p>will match all documents that contain <kbd>acoustic</kbd> that
       also have a <strong>topic category</strong> containing
-      <kbd>pollution</kbd> and a <strong>parameter</strong> containing
-      <kbd>troposphere</kbd>.</p>
+      <kbd>oceans</kbd> and a <strong>parameter</strong> containing
+      <kbd>sediment</kbd>.</p>
       </div>
     </div>
     
