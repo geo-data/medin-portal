@@ -271,11 +271,11 @@ class Comment(object):
             try:
                 server = config.get('SMTP', 'server')
             except NoOptionError:
-                server = None
+                server = 'localhost'
             try:
                 port = config.get('SMTP', 'port')
             except NoOptionError:
-                port = None
+                port = 25
 
             if not email: from_addr = '"MEDIN Portal Comment" <%s>' % to_addr
             else: from_addr = email
