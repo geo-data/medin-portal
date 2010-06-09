@@ -116,15 +116,13 @@ $(function() {
 </%def>
 
 <%def name="result_links(is_top)">
-% if page_count == 1:
-<% return '' %>
-% endif
 <div class="nav">
 <div class="results-nav left"\
 % if is_top:
  style="margin-top:0.75em"\
 % endif
 >
+% if page_count > 1:
 % if first_link:
 <a href="${resource_root}?${first_link['link'] | x}" title="Results page ${first_link['page']}">&laquo;&nbsp;First</a>
 % endif
@@ -145,6 +143,9 @@ $(function() {
 % endif
 % if last_link:
 <a href="${resource_root}?${last_link['link'] | x}" title="Results page ${last_link['page']}">Last&nbsp;&raquo;</a>
+% endif
+% else:
+&nbsp;
 % endif
 </div>
 <div class="right syndicate">
