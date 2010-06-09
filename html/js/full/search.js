@@ -409,7 +409,7 @@ function init_date(id) {
         input.show();
     }
 
-    text.one('click', function() {
+    text.one('click', function(event) {
         $(this).hide();
         input.show();
 
@@ -421,11 +421,15 @@ function init_date(id) {
         input.datepicker('show');
 
         // for subsequent clicks
-        text.click(function() {
+        text.click(function(event) {
             $(this).hide();
             input.show();
             input.datepicker('show');
+
+			return false;		// prevent the default action
         });
+
+		return false;			// prevent the default action
     });
 }
 
