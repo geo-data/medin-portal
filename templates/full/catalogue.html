@@ -215,8 +215,8 @@ ${result_links(True)}
   <tr class="last">
   %endif
     <td>${start_index+i}.</td>
-    <td><a href="${script_root}/full/catalogue/${res['id'] | x}${query_string | x}" title="${res['title']}">${res['title']}</a></td>
-    <td>${res['originator']}</td>
+    <td><a href="${script_root}/full/catalogue/${res['id'] | x}${query_string | x}" title="${res['title'] | x}">${res['title'] | x}</a></td>
+    <td>${res['originator'] | x}</td>
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
   </tr>
 % endfor
