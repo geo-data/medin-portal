@@ -46,6 +46,20 @@ class LoggerAdapter(wsgilogging.LoggerAdapter):
     def userError(self, msg, *args, **kwargs):
         return self.log(USER_ERROR, msg, *args, **kwargs)
 
+class Handler(wsgilogging.Handler):
+    """
+    A handler that provides easy access to info, warning and error logs
+    """
+
+    def notices(self):
+        return self.records(('USER_INFO',))
+
+    def warnings(self):
+        return self.records(('USER_WARNING',))
+
+    def errors(self):
+        return self.records(('USER_ERROR',))
+
 class WSGILog(wsgilogging.WSGILog):
     """
     A WSGILog that uses a custom LoggerAdapter
@@ -53,3 +67,6 @@ class WSGILog(wsgilogging.WSGILog):
 
     def getLogger(self, environ, logger, extras):
          return LoggerAdapter(logger, extras)
+
+    def getHandler(self, environ):
+        return Handler()

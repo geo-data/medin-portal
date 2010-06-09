@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 0.95
+__version__ = 0.96
 
 from errata import HTTPError
 
@@ -107,6 +107,15 @@ def get_db(environ):
     db = _dbs[thread_id] = sqlite3.connect(filepath)
     return db
 
+def get_post(environ):
+    """
+    Return the contents of a POST as a cgi.FieldStorage instance
+    """
+    from cgi import FieldStorage
+    
+    fp = environ['wsgi.input']
+    return FieldStorage(fp, environ=environ)
+
 # Utility classes
 
 class Proxy:
@@ -129,7 +138,154 @@ class Proxy:
         
         return getattr(self.__obj, name)
 
+class WSGIWrapper(object):
+    """
+    Wrap a WSGI application with an instance of a specified class
+
+    This is a factory class that acts as a callable and wraps a WSGI
+    application with a specific class instance. This saves having to
+    supply the construction arguments multiple times to the same class.
+    """
+
+    def __init__(self, class_name, param_name, **kwargs):
+        self.class_name = class_name
+        self.param_name = param_name
+        self.kwargs = kwargs
+
+    def __call__(self, app):
+        kwargs = self.kwargs.copy()
+        kwargs[self.param_name] = app
+        return self.class_name(**kwargs)
+
 # The WSGI Applications
+
+class Config(object):
+    """
+    WSGI middleware used to configure an application
+
+    This adds a key to the environ dictionary called config that has a
+    ConfigParser instance as its value. This instance is created from
+    an INI file whose name is specified in the constructor. This file
+    must reside in the etc directory of the application root
+    directory.
+    """
+
+    def __init__(self, app, name):
+        self.app = app
+        self.name = name
+        self.config = None
+    
+    def getConfig(self, environ):
+        if self.config:
+            return self.config
+
+        import os.path
+        from ConfigParser import SafeConfigParser
+        
+        ini_file = os.path.join(environ.root, 'etc', self.name)
+        try:
+            fp = open(ini_file, 'r')
+        except Exception, e:
+            raise HTTPError('500 Configuration Error', 'the INI file could not be read: %s' % str(e))
+
+        try:
+            self.config = config = SafeConfigParser()
+            config.readfp(fp)
+        finally:
+            fp.close()
+
+        return config
+
+    def __call__(self, environ, start_response):
+        environ['config'] = self.getConfig(environ)
+        
+        # delegate to the wrapped app
+        return self.app(environ, start_response)
+
+class Comment(object):
+    """
+    WSGI middleware application for processing user comments
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    def sendComment(self, from_addr, to_addr, subject, comment, server, port):
+        """
+        Email a comment
+
+        See
+        http://docs.python.org/library/email-examples.html#email-examples
+        for email examples.
+        """
+        # Import smtplib for the actual sending function
+        import smtplib
+
+        # Import the email modules we'll need
+        from email.mime.text import MIMEText
+
+        # Create a text/plain message
+        msg = MIMEText(comment)
+        msg['Subject'] = subject
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+
+        # Send the message via our own SMTP server, but don't include the
+        # envelope header.
+        s = smtplib.SMTP(server, port)
+        s.sendmail(from_addr, [to_addr], msg.as_string())
+        s.quit()
+
+    def __call__(self, environ, start_response):
+        form = get_post(environ)
+        comment = form.getfirst('comment')
+        check = form.getfirst('comment-check')
+        request_uri = environ.request_uri()
+
+        if check:
+            # try and catch any spam bots as they usually fill in hidden fields
+            msg_warn(environ, 'The comment failed the spam filter and was not submitted')
+        if environ['HTTP_REFERER'] != request_uri:
+            msg_error(environ, 'The comment must be submitted from the appropriate page')
+        if not comment:
+            msg_warn(environ, 'You did not fill in the comment field')
+        else:
+            from ConfigParser import NoOptionError
+            
+            email = form.getfirst('comment-email')
+            title = form.getfirst('comment-title', 'Unknown page')
+            name = form.getfirst('comment-name', 'an anonymous user')
+            ip = environ['REMOTE_ADDR']
+            subject = 'Comment on ' + title
+            
+            msg = "The following comment was sent by %s (IP address %s) using the page at %s\n" % (name, ip, request_uri)
+            if email:
+                msg += "This user's email address is <%s> (you can contact them by replying to this message).\n\n" % email
+            else:
+                msg += "This user did not provide an email address.\n\n"
+            msg += comment
+
+            # get required variables from the configuration
+            config = environ['config']
+            to_addr = config.get('DEFAULT', 'email')
+            try:
+                server = config.get('SMTP', 'server')
+            except NoOptionError:
+                server = None
+            try:
+                port = config.get('SMTP', 'port')
+            except NoOptionError:
+                port = None
+
+            if not email: from_addr = '"MEDIN Portal Comment" <%s>' % to_addr
+            else: from_addr = email
+
+            # email the comment
+            self.sendComment(from_addr, to_addr, subject, msg, server, port)
+            msg_info(environ, 'Thank you for your comment')
+        
+        # delegate to the wrapped app
+        return self.app(environ, start_response)
 
 class OpenSearch(MakoApp):
     def __init__(self):
@@ -474,17 +630,16 @@ class ResultFormat(object):
         try:
             fmt = environ['selector.vars']['format']
         except KeyError:
-            app_class = self.default
+            app = self.default
         else:
             if fmt is not None:
                 try:
-                    app_class = self.formats[fmt]
+                    app = self.formats[fmt]
                 except KeyError:
                     raise HTTPError('404 Not Found', 'The format is not supported: %s' % fmt)
             else:
-                app_class = self.default
+                app = self.default
 
-        app = app_class()
         return app(environ, start_response)
 
 class Metadata(MakoApp):
@@ -629,9 +784,9 @@ class EnvironProxy(Proxy):
             return self.resource_uri() + '?' + self['QUERY_STRING']
         return self.resource_uri()
 
-class Config(object):
+class Environ(object):
     """
-    WSGI middleware that wraps the environment with an Environ instance
+    WSGI middleware that wraps the environment with an EnvironProxy instance
     """
 
     def __init__(self, app):
@@ -1087,6 +1242,9 @@ def wsgi_app():
     from medin.spatial import tilecache
     from medin.log import WSGILog
 
+    # create the WSGI configuration middleware
+    config = WSGIWrapper(Config, 'app', name='portal.ini')
+
     # Create a WSGI application for URI delegation using Selector
     # (http://lukearno.com/projects/selector/). The order that child
     # applications are added is important; the most specific URL matches
@@ -1110,7 +1268,10 @@ def wsgi_app():
     application.add('/opensearch/catalogue/{template}.xml', GET=OpenSearch())
 
     # the default entry point for the search
-    application.add('/{template}[/]', GET=Search())
+    app = Search()
+    application.add('/{template}[/]',
+                    GET=app,
+                    POST=config(Comment(app)))
 
     # the API for analysing search criteria passed in via GET parameters
     application.add('/{template}/query.json', GET=query_criteria)
@@ -1119,17 +1280,25 @@ def wsgi_app():
     application.add('/{template}.json', GET=ResultSummary())
 
     # create the app to return the required formats
-    result_formats = medin.ResultFormat(HTMLResults, {'rss': RSSResults,
-                                                      'atom': AtomResults})
+    app = HTMLResults()
+    result_formats = medin.ResultFormat(app, {'rss': RSSResults(),
+                                              'atom': AtomResults()})
 
     # search by country
-    application.add('/{template}/areas/{area:segment}/{name:segment}', GET=AreaResults(result_formats))
+    application.add('/{template}/areas/{area:segment}/{name:segment}',
+                    GET=AreaResults(result_formats),
+                    POST=config(Comment(AreaResults(app))))
 
     # display and navigate through the result set
-    application.add('/{template}/catalogue[.{format:word}]', GET=result_formats)
+    application.add('/{template}/catalogue[.{format:word}]',
+                    GET=result_formats,
+                    POST=config(Comment(app)))
 
     # display the metadata
-    application.add('/{template}/catalogue/{gid:segment}', GET=MetadataHTML())
+    app = MetadataHTML()
+    application.add('/{template}/catalogue/{gid:segment}',
+                    GET=app,
+                    POST=config(Comment(app)))
 
     # get the metadata as in KML format
     application.add('/{template}/catalogue/{gid:segment}/kml', GET=MetadataKML())
@@ -1164,7 +1333,7 @@ def wsgi_app():
     application = WSGILog(application, logger)
 
     # add the Environ configuration middleware
-    application = Config(application)
+    application = Environ(application)
 
     # start the timer
     application = WSGITimer(application)

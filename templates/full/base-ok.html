@@ -1,8 +1,11 @@
 <%inherit file="base.html"/>
 
 <div id="messages">
-%for record in log:
-          <p class="error">${record.getMessage()}.</p>
+%for record in errors + warnings:
+          <p class="error">${record.getMessage() | x}.</p>
+%endfor
+%for record in notices:
+          <p class="notice">${record.getMessage() | x}.</p>
 %endfor
 </div>
 

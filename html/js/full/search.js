@@ -429,21 +429,6 @@ function init_date(id) {
     });
 }
 
-function toggle_fieldset(id) {
-    var fieldset = $('#'+id);
-
-    if (fieldset.hasClass('off')) {
-        fieldset.removeClass('off');
-        fieldset.children('div.content').show('fast', function() {
-            $(document).trigger('fieldsetview', [id]);
-        });
-    } else {
-        fieldset.children('div.content').hide('fast', function() {
-            fieldset.addClass('off');
-        });
-    }
-}
-
 var query_check = 0;
 function check_query() {
     query_check += 1;

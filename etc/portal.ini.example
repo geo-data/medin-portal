@@ -1,0 +1,16 @@
+; The Portal configuration file
+
+; This file should be edited as appropriate and copied to the
+; etc/portal.ini directory
+
+; The format of this file uses standard INI syntax as described at:
+; http://docs.python.org/lib/module-ConfigParser.html
+
+[DEFAULT]
+email = enquiries@oceannet.org
+
+[SMTP]
+; Uncomment and edit the following options to cater for non default
+; SMTP settings
+;server = localhost
+;port = 25

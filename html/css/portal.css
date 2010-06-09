@@ -82,6 +82,12 @@ img.asc {
     padding: 0.2em;
     color: black;
 }
+#bodycontent_wide p.notice {
+    border:1px solid #cfcf3d;
+    background-color:#ffffbf;
+    padding: 0.2em;
+    color: black;
+}
 fieldset {
     padding: 0.5em;
     margin-bottom: 0.75em;
@@ -201,6 +207,11 @@ img.loading {
 .ui-icon-gripsmall-diagonal-sw { background-position: -4px 1px; }
 .ui-icon-gripsmall-diagonal-nw { background-position: -19px -4px; }
 .ui-icon-gripsmall-diagonal-ne { background-position: -29px -4px; }
+
+#comment .ui-resizable-se {
+bottom:17px;
+right:6px;
+}
 
 /* Tooltip styling */
 div.tooltip {
