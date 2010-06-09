@@ -48,7 +48,7 @@ class MakoApp(object):
         headers = []
         # check whether the etag is valid
         if self.check_etag:
-            from medin import check_etag
+            from medin.views import check_etag
             etag = check_etag(environ, ''.join(self.path))
             headers.append(('Etag', etag))
         
