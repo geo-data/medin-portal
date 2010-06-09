@@ -217,9 +217,9 @@ function add_box(extent, selected) {
     map.controls[0].setBox(extent, selected);
 }
 
-function clear_box(setval) {
+function clear_box(skip_bbox) {
     map.controls[0].removeBox();
-    if (setval)
+    if (!skip_bbox)
         $('#bbox').val(''); // set the form element
 }
 
@@ -339,7 +339,7 @@ function populate_areas() {
             }
         } else {
             // remove the box
-            clear_box(false);
+            clear_box(true);
         }
 
         check_query();          // update the query results
