@@ -22,7 +22,7 @@ class Request(object):
         if wsdl is None:     
             wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
-        self.client = suds.client.Client(wsdl, timeout=15)
+        self.client = suds.client.Client(wsdl, timeout=10)
 
     def __call__(query, logger):
         raise NotImplementedError('The query must be overridden in a subclass')
@@ -46,7 +46,7 @@ class Request(object):
         except Exception, e:
             try:
                 status, reason = e.args[0]
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 msg = str(e)
                 if not msg: msg = 'No reason provided'
                 raise DWSError('The Discovery Web Service failed: %s' % msg)
@@ -57,6 +57,7 @@ class Request(object):
                     if not reason: reason = 'No reason provided'
                     msg = 'The Discovery Web Service failed: %s' % reason
                 raise DWSError(msg, status)
+
 
 class TermBuilder(object):
     """
