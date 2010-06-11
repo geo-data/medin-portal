@@ -51,11 +51,12 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    def __init__(self, qsl, areas, fields, *args, **kwargs):
+    def __init__(self, qsl, areas, fields, max_count=300, *args, **kwargs):
         super(Query, self).__init__(qsl, *args, **kwargs)
         self.raise_errors = False
         self.areas = areas
         self.fields = fields
+        self.max_count = max_count
 
     def verify(self):
         """
@@ -248,12 +249,18 @@ class Query(GETParams):
             return count
 
         try:
-            return int(count)
+            count = int(count)
         except ValueError:
             if self.raise_errors:
                 raise QueryError('The number of results to return must be a number')
+            return default
 
-        return default
+        if count > self.max_count:
+            if self.raise_errors:
+                raise QueryError('The number of results to return cannot be greater than %d' % self.max_count)
+            return self.max_count
+
+        return count
 
     def setCount(self, value):
         self['c'] = value
