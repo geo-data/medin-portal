@@ -290,24 +290,29 @@ function populate_areas() {
     });
 }
 
+// initialise the spatial search controls
+function init_spatial_search() {
+    // initialise the map
+    init_map();
+
+    // add the area selections
+    populate_areas();
+
+    // make the map full width
+    $('#map').css('width', '100%');
+    map.updateSize();
+}
+
 var tip_handler = null;         // handler for the search start tooltip
 /* Initialise the spatial search, replacing the lightweight search
 holder with the search proper. */
-function init_spatial_search() {
+function show_spatial_search() {
     $('#spatial-search-holder').hide('fast', function() {
         if (tip_handler)
             $('#bodycontent_wide').unbind('resize', tip_handler); // remove the tooltip handler
         $(this).empty().remove()  // remove the holder
         $('#spatial-search-content').show('fast', function() {
-            // initialise the map
-            init_map();
-
-            // add the area selections
-            populate_areas();
-
-            // make the map full width
-            $('#map').css('width', '100%');
-            map.updateSize();
+            init_spatial_search(); // initialise the spatial search controls
         }).addClass('content'); // activate the search
     });
 }

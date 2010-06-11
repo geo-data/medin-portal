@@ -42,6 +42,9 @@ $(function() {
     %if not area and not bbox:
 	// initialise the tooltips
 	init_tool_tips();
+    %else:
+    // initialise the spatial search
+    init_spatial_search();
 	%endif
 	
     // initialise the date pickers
