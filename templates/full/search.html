@@ -212,7 +212,7 @@ $(function() {
     <legend><a href="javascript:toggle_fieldset('spatial-search')" title="Show or hide the geographic search">Geographic search</a></legend>
     %if not area and not bbox:
 	<div class="content" id="spatial-search-holder">
-	  <a href="javascript:init_spatial_search()"><img id="spatial-start" class="image_no_border" src="/images/earth-from-space.jpg" width="90" height="90" alt="Geographical search"/></a>
+	  <a href="javascript:show_spatial_search()"><img id="spatial-start" class="image_no_border" src="/images/earth-from-space.jpg" width="90" height="90" alt="Geographical search"/></a>
 	  <div id="spatial-start-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png"/><span class="tooltip-text">Click on the globe to start a geographic search</span></div>
 	</div>
     %endif
