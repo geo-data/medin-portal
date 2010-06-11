@@ -54,12 +54,6 @@ $(function() {
     $('#search-form input[type=text]:not(#bbox)').change(function() {
         check_query();
     });
-
-    // if the current form contents don't match the original query
-    // string (i.e. the user has pressed the back button), then check
-    // the query
-    if (!compare_vars(parse_GET('${query_string}'), $('#search-form').serializeArray()))
-        check_query();
 });
 
         // -->

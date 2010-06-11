@@ -171,46 +171,6 @@ function parse_GET(str) {
     return vars;
 }
 
-// compare an array of get variables to see if they are the same
-function compare_vars(vars1, vars2) {
-    function cmp(a, b) {
-        return (b.name < a.name) - (a.name < b.name);
-    }
-
-    // get rid of variables with no value
-    function compact(array) {
-        var a = [];
-        for (i = 0; i < array.length; i++) {
-            if (array[i].value)
-                a.push(array[i]);
-        }
-        return a;
-    }
-
-    // compact the arrays
-    vars1 = compact(vars1);
-    vars2 = compact(vars2);
-
-    // sort the arrays to be equal
-    vars1.sort(cmp);
-    vars2.sort(cmp);
-
-    // test the equality of the arrays
-    if (vars1.length != vars2.length)
-        return false;
-
-    for (var i = 0; i < vars1.length; i++) {
-
-        if (vars1[i].name !== vars2[i].name)
-            return false;
-
-        if (vars1[i].value !== vars2[i].value)
-            return false;
-    }
-
-    return true;
-}
-
 function add_box(extent, selected) {
     map.controls[0].setBox(extent, selected);
 }
