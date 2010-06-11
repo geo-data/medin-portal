@@ -19,7 +19,7 @@ ${query_string | x}\
     <h3>Bookmark this search</h3>
     <div>Drag the icon to your bookmark bar...</div>
 	<p><a href="${resource_root}${start_link()}" title="${title}"><img id="bookmark" class="image_no_border" alt="${title}" src="/images/bookmark.png" width="103" height="25"/></a></p>
-	<div id="bookmark-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png"/><span class="tooltip-text">Drag this icon</span></div>
+	<div id="bookmark-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png" alt=""/><span class="tooltip-text">Drag this icon</span></div>
   </div>
 </div>
 </%def>
@@ -205,6 +205,7 @@ ${result_links(True)}
     <th>${sort_links('Metadata update date', 'updated')}</th>
   </tr>
   </thead>
+  <tbody>
 <%
   last = len(results)-1
 %>
@@ -220,6 +221,7 @@ ${result_links(True)}
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
   </tr>
 % endfor
+  </tbody>
 </table>
 ${result_links(False)}
 
