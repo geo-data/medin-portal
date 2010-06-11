@@ -4,7 +4,10 @@
 <%def name="header()">
     <style type="text/css">
         #map {
-            width: 100%;
+            /* it is important to assign absolute pixel sizes for IE
+            in map divs that are initially hidden (see
+            http://stackoverflow.com/questions/1081812/javascript-unspecified-error-in-open-layers) */
+            width: 400px;
             height: 400px;
             border: 1px solid #ADACA8;
         }
@@ -45,11 +48,6 @@ $(function() {
     $.datepicker.setDefaults({ dateFormat: 'yy-mm-dd' });
     init_date('start-date');
     init_date('end-date');
-
-    map = init_map("${script_root}");
-
-    // add the area selections
-    populate_areas();
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.

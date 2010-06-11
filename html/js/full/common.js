@@ -31,7 +31,7 @@ $(function() {
         if (id != 'comment')
             return;
 
-		$('#comment-form textarea').resizable({handles:'se'})
+		$('#comment-form textarea').resizable({handles:'se'});
         $(this).unbind(event); // we don't need this event any more
     });
 });

@@ -21,7 +21,7 @@ var BOX_DESELECTED = {
 };
 
 // top level function to initialise the map
-function init_map(script_root) {
+function init_map() {
     var extent = new OpenLayers.Bounds(-180, -90, 180, 90);
     var options = {
         restrictedExtent: extent,
@@ -30,7 +30,7 @@ function init_map(script_root) {
         controls: []            // we will add our own controls
     }
 
-    var map = new OpenLayers.Map('map', options);
+    map = new OpenLayers.Map('map', options); // assign the map to the global variable
 
     // add the bathymetry layer
     var layer = new OpenLayers.Layer.TMS( "Bathy",
@@ -151,8 +151,6 @@ function init_map(script_root) {
             nav.activate();
         }
     });
-
-    return map;
 }
 
 // parse GET variable string into an array
@@ -250,12 +248,6 @@ function zoom_to_area(id) {
     });
 }
 
-/* Refresh the map size and zoom to GB */
-function init_map_view() {
-    map.updateSize();
-    zoom_to_area('GB');
-}
-
 // Populate the area selection control
 function populate_areas() {
     var select = $('select.area');
@@ -305,16 +297,8 @@ function populate_areas() {
         map.zoomToExtent(bbox);   // zoom to the box
     } else {
         // zoom to the UK as a default
-
-        // The map is hidden to begin with and needs to be initialised
-        // when it is first shown
-        $(document).bind('fieldsetview', function(event, id) {
-            if (id != 'spatial-search')
-                return;
-
-            init_map_view();      // initialise the map view
-            $(this).unbind(event); // we don't need this event any more
-        });
+        map.updateSize();
+        zoom_to_area('GB');
     }
 
     // capture the drawbox and movebox events and act accordingly
@@ -355,7 +339,15 @@ function init_spatial_search() {
             $('#bodycontent_wide').unbind('resize', tip_handler); // remove the tooltip handler
         $(this).empty().remove()  // remove the holder
         $('#spatial-search-content').show('fast', function() {
-            init_map_view();    // initialise the map view
+            // initialise the map
+            init_map();
+
+            // add the area selections
+            populate_areas();
+
+            // make the map full width
+            $('#map').css('width', '100%');
+            map.updateSize();
         }).addClass('content'); // activate the search
     });
 }
