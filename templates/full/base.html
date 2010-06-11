@@ -20,10 +20,11 @@
     <meta name="Classification" content="Science" />
     <meta name="Owner" content="Marine Environmental Data and Information Network (MEDIN)" />
     % if author:
-    <meta name="Author" content="${author | h}" />
+    <meta name="Author" content="Application: GeoData Insitute, Content: ${author | h}" />
     % else:
-    <meta name="Author" content="MEDIN partnership" />
+    <meta name="Author" content="GeoData Institute on behalf of the MEDIN partnership" />
     % endif
+    <meta name="progid" content="medin-portal-${version}" />
     <meta name="Reply-to" content="enquiries@oceannet.org" />
     <meta name="Copyright" content="© ${year} Marine Environmental Data and Information Network (MEDIN)" />
     <meta name="MSSmartTagsPreventParsing" content="TRUE" />
@@ -120,8 +121,8 @@
         </div>
       </div>
       <div class="clear">
-        <div id="copyright">MEDIN Catalogue Search version ${version} ©${year}<br />
-          Hosted by the <a href="http://www.bodc.ac.uk/">British Oceanographic Data Centre (BODC)</a>.
+        <div id="copyright">MEDIN Catalogue Search version ${version} ©${year}<img class="image_no_border" style="margin-left:0.25em;vertical-align:middle" src="/images/medin-icon-small.png" width="16" height="16" title="MEDIN Portal Logo" alt="Portal logo"/><br />
+          Developed by the <a href="http://www.geodata.soton.ac.uk/">GeoData Institute<img class="image_no_border" style="margin-left:0.5em;vertical-align:middle" src="/images/geodata-icon.png" width="16" height="16" title="GeoData Institute" alt="GeoData logo"/></a>
         </div>
       </div>
     </div>
