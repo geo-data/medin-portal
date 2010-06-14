@@ -41,6 +41,14 @@ td.content {
     border-top:0.5em solid white;
     padding: 0;
 }
+div.element-info {
+    background-color: #DAD8FF;
+	display: none;
+}
+#bodycontent_wide div.element-info p {
+    color:black;
+    font-size:100%;
+}
 #bodycontent_wide .no-bottom {
     margin-bottom: 0;
     padding-bottom: 0;

@@ -62,47 +62,47 @@ ${date.strftime('%Y-%m-%d')}
         % else:
         <div>
         % endif
-	<strong>
-	% if contact.organisation:
-	  ${contact.organisation | x}
-	% elif contact.name:
-	  ${contact.name | x}
+    <strong>
+    % if contact.organisation:
+      ${contact.organisation | x}
+    % elif contact.name:
+      ${contact.name | x}
     % elif contact.position:
       ${contact.position | x}
-	% else:
-	  Unnamed contact
-	% endif
-	</strong><br/>
-	% if contact.name and contact.organisation:
-	Individual name: ${contact.name | x}<br/>
+    % else:
+      Unnamed contact
+    % endif
+    </strong><br/>
+    % if contact.name and contact.organisation:
+    Individual name: ${contact.name | x}<br/>
         % endif
-	% if contact.position and (contact.name or contact.organisation):
-	Position: ${contact.position | x}<br/>
+    % if contact.position and (contact.name or contact.organisation):
+    Position: ${contact.position | x}<br/>
         % endif
-	% if contact.address:
-	Address: <a href="http://maps.google.co.uk/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=${contact.address | u}" title="View the location">${contact.address | x}</a><br/>
+    % if contact.address:
+    Address: <a href="http://maps.google.co.uk/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=${contact.address | u}" title="View the location">${contact.address | x}</a><br/>
         % endif
-	% if contact.email:
-	Email: ${contact.email | x}<br/>
+    % if contact.email:
+    Email: ${contact.email | x}<br/>
         % endif
-	% if contact.tel:
-	Telephone: ${contact.tel | x}<br/>
+    % if contact.tel:
+    Telephone: ${contact.tel | x}<br/>
         % endif
-	% if contact.fax:
-	Facsimile: ${contact.fax | x}<br/>
+    % if contact.fax:
+    Facsimile: ${contact.fax | x}<br/>
         % endif
-	% if contact.roles:
-	Roles:
-	<ul>
-	  % for role in contact.roles:
-	  <li>${role}</li>
-	  % endfor
+    % if contact.roles:
+    Roles:
+    <ul>
+      % for role in contact.roles:
+      <li>${role}</li>
+      % endfor
         </ul>
         % endif
-	% if contact.contacts:
-	${format_contacts(contact.contacts, True)}
-	% endif
-	</div>
+    % if contact.contacts:
+    ${format_contacts(contact.contacts, True)}
+    % endif
+    </div>
         % endfor
     % if quote:
   </blockquote>
@@ -181,10 +181,15 @@ ${date.strftime('%Y-%m-%d')}
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Alternative resource title</strong>
+        <strong>Alternative resource title</strong> (<a href="javascript:toggle('element-2', 'info', 'hide info')" id="element-2-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-2" class="cell element-info">
+        <p>The alternative title is used to add the names by which the
+        resource (e.g. dataset) may be known and may include short
+        name, other name, acronym or alternative language title.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.alt_titles}" number="${2}">
         % for i, detail in enumerate(metadata.alt_titles):
@@ -206,10 +211,21 @@ ${date.strftime('%Y-%m-%d')}
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Unique resource identifier</strong>
+        <strong>Unique resource identifier</strong> (<a href="javascript:toggle('element-6', 'info', 'hide info')" id="element-6-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-6" class="cell element-info">
+        <p>A Unique Resource Identifier allows a dataset to be identified
+        by a code. This code is generally assigned by the data owner
+        and commonly consists of the organisation which manages the
+        dataset and a number or code which is used to uniquely
+        identify it within the databases of the organisation. If this
+        code is unique then it is possible for an organisation to
+        identify a dataset that a 3rd party may be referring to and
+        also to quickly identify where dataset records may be
+        duplicated in a portal.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.alt_titles}" number="${6}">
       ${metadata.unique_id}
@@ -224,10 +240,13 @@ ${date.strftime('%Y-%m-%d')}
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Resource locator</strong>
+        <strong>Resource locator</strong> (<a href="javascript:toggle('element-5', 'info', 'hide info')" id="element-5-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-5" class="cell element-info">
+        <p>The online location of the resource.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.online_resource}" number="${5}">
         % for i, resource in enumerate(metadata.online_resource):
@@ -259,10 +278,16 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Limitations on public access</strong>
+        <strong>Limitations on public access</strong> (<a href="javascript:toggle('element-20', 'info', 'hide info')" id="element-20-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-20" class="cell element-info">
+        <p>This element describes any restrictions imposed on the
+        resource for security and other reasons using the controlled
+        ISO vocabulary RestrictionCode. If there are no limitations on
+        public access, this must be indicated.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.access_limits}" number="${20}">
         % for i, detail in enumerate(metadata.access_limits):
@@ -284,10 +309,15 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Conditions for access and use constraints</strong>
+        <strong>Conditions for access and use constraints</strong> (<a href="javascript:toggle('element-21', 'info', 'hide info')" id="element-21-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-21" class="cell element-info">
+        <p>This element describes any restrictions and legal
+        restraints on using the data.  Any known constraints such as
+        fees should be identified.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.access_conditions}" number="${21}">
         % for i, detail in enumerate(metadata.access_conditions):
@@ -309,10 +339,17 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Resource type</strong>
+        <strong>Resource type</strong> (<a href="javascript:toggle('element-4', 'info', 'hide info')" id="element-4-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-4" class="cell element-info">
+        <p>Identify the type of resource e.g. a dataset using the
+        controlled vocabulary, MD_ScopeCode from ISO 19115.  In order
+        to comply with INSPIRE the resource type must be a dataset, a
+        series (collection of datasets with a common specification) or
+        a service.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.resource_type}" number="${4}">
       ${metadata.resource_type}
@@ -327,10 +364,17 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Data format</strong>
+        <strong>Data format</strong> (<a href="javascript:toggle('element-23', 'info', 'hide info')" id="element-23-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-23" class="cell element-info">
+        <p>Indicate the formats in which digital data can be provided
+        for transfer. A controlled vocabulary has been defined for use
+        by MEDIN which is <a
+        href="http://vocab.ndg.nerc.ac.uk/client/vocabServer.jsp">M010
+        ‘MEDIN data format categories’</a>.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.data_format}" number="${23}">
         % for i, detail in enumerate(metadata.data_format):
@@ -354,10 +398,16 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Spatial data service type</strong>
+        <strong>Spatial data service type</strong> (<a href="javascript:toggle('element-10', 'info', 'hide info')" id="element-10-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-10" class="cell element-info">
+        <p>An element required by INSPIRE for metadata about data
+        services e.g. web services.  If a service is being described
+        it must be assigned a service type from the INSPIRE Service
+        type code list.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.service_type}" number="${10}">
         % for i, detail in enumerate(metadata.service_type):
@@ -379,10 +429,17 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Temporal reference</strong>
+        <strong>Temporal reference</strong> (<a href="javascript:toggle('element-16', 'info', 'hide info')" id="element-16-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-16" class="cell element-info">
+        <p>It is recommended that all known temporal references of the
+        resource are included. The temporal extent of the resource
+        (e.g. the time period over which data were collected) and the
+        date of publication (i.e. the date at which it was made
+        publicly available) are mandatory.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.temporal_reference}" number="${16}">
         %if 'range' in metadata.temporal_reference:
@@ -410,10 +467,20 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Extent</strong>
+        <strong>Extent</strong> (<a href="javascript:toggle('element-13', 'info', 'hide info')" id="element-13-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-13" class="cell element-info">
+        <p>Keywords selected from controlled vocabularies to describe
+        the spatial extent of the resource.  MEDIN strongly recommends
+        the use of the <a
+        href="http://www.bodc.ac.uk/data/codes_and_formats/seavox/">SeaVox
+        Sea Areas</a> which is a managed vocabulary and has a
+        worldwide distribution. Other vocabularies available including
+        <a href="http://www.ices.dk/">ICES areas and rectangles</a> or
+        Charting Progress 2 regions may be used.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.extents}" number="${13}">
         % for i, details in enumerate(metadata.extents):
@@ -442,10 +509,16 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Vertical extent information</strong>
+        <strong>Vertical extent information</strong> (<a href="javascript:toggle('element-14', 'info', 'hide info')" id="element-14-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-14" class="cell element-info">
+        <p>This element should only be filled in if the Coordinate
+        Reference System is registered in the <a
+        href="http://epsg-registry.org/">‘European Petroleum Survey
+        Group (EPSG) database</a>.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.vertical_extent}" number="${14}">
         <% count = 0 %>
@@ -599,10 +672,30 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Spatial reference system</strong>
+        <strong>Spatial reference system</strong> (<a href="javascript:toggle('element-15', 'info', 'hide info')" id="element-15-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-15" class="cell element-info">
+        <p>Describes the system of spatial referencing (typically a
+        coordinate reference system) used in the resource.  This
+        should be derived from the <a
+        href="http://www.epsg.org/Geodetic.html">EPSG register of
+        geodetic parameters</a>. To find a code click on the OGP
+        Online Registry and if you know the title (eg WGS84) then type
+        this in the ‘Name’ field and click search. The name, code and
+        further information is displayed. If you are looking for a
+        specific type of reference system such as ‘vertical’ then
+        click in the ‘Type’ box, hover over coordinate reference
+        system and click on vertical and then click the search button
+        and all recorded vertical reference systems are shown. If you
+        want to search for a reference system in a particular part of
+        the world (e.g. Northern Ireland Grid) the you may do so by
+        submitting a term to the ‘Area’ box or fill out the lat and
+        longs then click search. The website also provides a database
+        of the reference systems and web services to access the
+        information.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.reference_system}" number="${15}">
         <div>
@@ -632,10 +725,31 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Spatial resolution</strong>
+        <strong>Spatial resolution</strong> (<a href="javascript:toggle('element-18', 'info', 'hide info')" id="element-18-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-18" class="cell element-info">
+        <p>Provides an indication of the spatial resolution of the
+        data. The element has largely been derived for the mapping
+        community and is currently poorly defined however MEDIN
+        recommends that you provide the average distance
+        (i.e. resolution) between sampling locations in meters. For
+        example, if a dataset was composed of a grid of stations which
+        have an average distance between stations of 2 km then 2000
+        meters should be recorded. In the case of a multibeam survey
+        it should be the average distance between each sounding or
+        ‘ping’ on the sea bed. For transect data such as an intertidal
+        beach survey or a single beam echo sounder survey the
+        resolution should be taken as the distance between the
+        transect lines.</p>
+        <p>For single samples and observational data MEDIN recommends
+        using ‘not applicable’.</p>
+        <p>MEDIN is in discussions with GEMINI and ISO to allow the
+        use of scale for this element (e.g. pressure) and also to
+        allow the use of ‘unknown’. GEMINI accepts that in many cases
+        only approximate values can be given.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.spatial_resolution}" number="${18}">
         % for i, detail in enumerate(metadata.spatial_resolution):
@@ -645,11 +759,11 @@ External link ${i+1}\
         <div>
         % endif
         % if 'distance' in detail:
-	Distance: ${detail['distance']} meters
-	% elif 'scale' in detail:
-	Scale 1:${detail['scale']}
-	%endif
-	</div>
+    Distance: ${detail['distance']} meters
+    % elif 'scale' in detail:
+    Scale 1:${detail['scale']}
+    %endif
+    </div>
         % endfor
         </%self:output_element>
       </div>
@@ -662,10 +776,23 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Topic category</strong>
+        <strong>Topic category</strong> (<a href="javascript:toggle('element-9', 'info', 'hide info')" id="element-9-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-9" class="cell element-info">
+        <p>This element is mandatory for INSPIRE and must be
+        included. This indicates the main theme(s) of the data
+        resource.  It is required for INSPIRE compliance.  The
+        relevant topic category should be selected from the ISO
+        MD_TopicCategory list. Within MEDIN the parameter group
+        keywords from the <a
+        href="http://vocab.ndg.nerc.ac.uk/client/vocabServer.jsp">controlled
+        vocabulary P021</a> are mapped to the ISO Topic Categories so
+        it is possible to generate the topic categories automatically
+        once the keywords from BODC Parameter Discovery Vocabulary
+        (P021) have been selected.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.topic_category}" number="${9}">
         % for i, (keyword, defn) in enumerate(metadata.topic_category.items()):
@@ -701,10 +828,20 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Lineage</strong>
+        <strong>Lineage</strong> (<a href="javascript:toggle('element-17', 'info', 'hide info')" id="element-17-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-17" class="cell element-info">
+        <p>Lineage includes the background information, history of the
+        sources of data used and can include data quality statements.
+        The lineage element can include information about: source
+        material; data collection methods used; data processing
+        methods used; quality control processes.  This should include
+        any data collection standards used.  Additional information
+        source to record relevant references to the data e.g. reports,
+        articles, website.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.lineage}" number="${17}">
       ${metadata.lineage}
@@ -719,10 +856,16 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Additional information</strong>
+        <strong>Additional information</strong> (<a href="javascript:toggle('element-19', 'info', 'hide info')" id="element-19-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-19" class="cell element-info">
+        <p>Any references to external information that are considered
+        useful, e.g. project website, report, journal article may be
+        recorded.  It should not be used to record additional
+        information about the resource.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.additional_info}" number="${19}">
       ${metadata.additional_info}
@@ -737,13 +880,26 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Responsible party</strong>
+        <strong>Responsible party</strong> (<a href="javascript:toggle('element-22', 'info', 'hide info')" id="element-22-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-22" class="cell element-info">
+        <p>Provides a description of an organization or person who has
+        a role for the dataset or resource. A full list of roles is
+        available in 6. MEDIN mandates that the roles of ‘Originator’
+        and ‘Custodian’ (data holder) and the role of ‘Distributor’
+        should be entered if different to the Custodian. The ‘Metadata
+        point of contact’ is also mandatory. Other types of
+        responsible party may be specified from the controlled
+        vocabulary (see 6 for codelist) if desired.</p>
+        <p>If the data has been lodged with a MEDIN approved Data
+        Archive Centre then the DAC should be specified as the
+        Custodian.</p>
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.responsible_party}" number="${22}">
-	${format_contacts(metadata.responsible_party)}
+    ${format_contacts(metadata.responsible_party)}
         </%self:output_element>
       </div>
     </td>
@@ -757,10 +913,13 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Resource language</strong>
+        <strong>Resource language</strong> (<a href="javascript:toggle('element-8', 'info', 'hide info')" id="element-8-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-8" class="cell element-info">
+        Describes the language(s) of any textual information contained within the resource.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.resource_language}" number="${25}">
         ${metadata.resource_language}
@@ -775,10 +934,16 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Frequency of update</strong>
+        <strong>Frequency of update</strong> (<a href="javascript:toggle('element-24', 'info', 'hide info')" id="element-24-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-24" class="cell element-info">
+        This describes the frequency that the resource (data set) is
+        modified or updated and should be included if known.  For
+        example if the data set is from a monitoring programme which
+        samples once per year then the frequency is annually.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.update_frequency}" number="${24}">
         ${metadata.update_frequency}
@@ -793,10 +958,15 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Date of update of metadata</strong>
+        <strong>Date of update of metadata</strong> (<a href="javascript:toggle('element-26', 'info', 'hide info')" id="element-26-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-26" class="cell element-info">
+        This describes the last date the metadata was updated on. If
+        the metadata has not been updated it should give the date on
+        which it was created.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.date}" number="${26}">
         ${format_date(metadata.date)}
@@ -811,10 +981,13 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Metadata standard name</strong>
+        <strong>Metadata standard name</strong> (<a href="javascript:toggle('element-27', 'info', 'hide info')" id="element-27-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-27" class="cell element-info">
+        Identify the metadata standard used to create the metadata.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.name}" number="${27}">
         ${metadata.name}
@@ -829,10 +1002,13 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Metadata standard version</strong>
+        <strong>Metadata standard version</strong> (<a href="javascript:toggle('element-28', 'info', 'hide info')" id="element-28-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-28" class="cell element-info">
+        Identify the version of the metadata standard used to create the metadata.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.version}" number="${28}">
         ${metadata.version}
@@ -847,10 +1023,13 @@ External link ${i+1}\
   <tr>
     <td class="heading">
       <div class="cell">
-        <strong>Metadata language</strong>
+        <strong>Metadata language</strong> (<a href="javascript:toggle('element-29', 'info', 'hide info')" id="element-29-link" title="Show or hide the element information">info</a>)
       </div>
     </td>
     <td class="content">
+      <div id="element-29" class="cell element-info">
+        Describes the language(s) elements of the metadata.
+      </div>
       <div class="cell">
         <%self:output_element element="${metadata.version}" number="${28}">
         ${metadata.language}
