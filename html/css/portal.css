@@ -252,3 +252,22 @@ div.tooltip {
   margin-top: 2em;
   clear:both;
 }
+
+#text-search {
+  clear:both;
+}
+table.help td {
+  vertical-align:top;
+  line-height:1.3em; 
+}
+table.help td:first-child {
+  font-weight:bold;
+}
+div.example {
+  margin:0.5em 0
+}
+#bodycontent_wide div.example kbd {
+  background-color:white;
+  padding:0.3em;
+  border:1px solid gray;
+}

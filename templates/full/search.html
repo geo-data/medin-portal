@@ -67,7 +67,9 @@ $(function() {
 <div id="menu-contents">&nbsp;
   <div class="info">
     ${search_criteria()}
+    %if query_string:
     <p><a href="${resource_root}" title="Clear this search and start again">Start a new search</a>.</p>
+    %endif
   </div>
   <div class="info info-sibling">
     <h3>Shortcut search</h3>
@@ -93,6 +95,47 @@ $(function() {
     %endfor
 </%def>
 
+%if query_string:
+<p class="info right">You can <a href="${resource_root}" title="Clear this search and start again">start a new search</a>.</p>
+%endif
+<p>Welcome to the MEDIN portal. <a
+href="javascript:toggle('introduction', 'View', 'Hide')"
+id="introduction-link" title="Show or hide the introduction">View</a>
+the introduction.</p>
+
+<div style="display:none" id="introduction">
+<h3>Introduction</h3>
+<p>The MEDIN portal is a metadata discovery service providing users
+with a single point of access to a well-balanced, authoritative marine
+metadata catalogue.</p>
+<p class="notice">Please note this is a ‘work in progress’ and there
+will be an increase in number of records and coverage over the next 12
+to 18 months.</p>
+<p>Metadata records are available for UK marine data sets across all
+subject areas and disciplines. This includes UK organisations
+undertaking data collection in non-UK waters. There are other portals
+which contain data for more specific data themes or from a European
+rather than a UK perspective.</p>
+<p>The main sources of metadata are the network of MEDIN accredited
+Data Archiving Centres (DACs). These currently include geographic and
+geological data from the British Geological Survey (BGS),
+oceanographic data from the British Oceanographic Data Centre (BODC),
+bathymetry data from the UK Hydrographic Office (UKHO) and habitat and
+species data from the Data Archive on Seabed Species and Habitats
+(DASSH).</p>
+<p>It is expected that the following major datasets and catalogues
+will be incorporated into the portal in the near future: the UK
+Directory for Marine Observing Systems (UKDMOS), MERMAN, and marine
+metadata from the National Biodiversity Network (NBN).</p>
+<p>The portal search facility allows for the copy and paste of the URL
+to ‘keep a search’ and return to the generated results page or send
+the link to others. There is also open search functionality on the
+portal.</p>
+<p>If your dataset(s) are not here and you would like them included
+please email <a
+href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
+</div>
+
 <form id="search-form" method="get" action="${resource_root}/catalogue">
   <fieldset id="text-search">
     <legend><a href="javascript:toggle_fieldset('text-search')" title="Show or hide the text search">Search term</a></legend>
@@ -101,66 +144,135 @@ $(function() {
       %if search_term:
  value="${search_term}"\
       %endif
-/> <input type="submit" value="search"/>
+/> <input type="submit" value="search"/> (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">Advanced search</a>)
       <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
-      <div id="search-term-help" style="display: none">
+      <div id="advanced-search" style="display:none">
+      <h3>Advanced search</h3>
       <p>Words typed in 'as is' will result in a full text search that
-      requires all words to be present in matching metadata, e.g.:</p>
-      
-      <blockquote><div><kbd>acoustic currents
-      sediment</kbd></div></blockquote>
-      
-      <p>will find all documents containing <strong>all</strong> of the
-      above words.</p>
+      requires all words to be present in the results.</p>      
+      <blockquote>
+        <div>
+          <p><strong>Example</strong>: type the following to find all
+          documents containing the words <kbd>acoustic</kbd>
+          <strong>and</strong> <kbd>currents</kbd>
+          <strong>and</strong> <kbd>sediment</kbd>:</p>
+        </div>
+        <div class="example"><kbd>acoustic currents sediment</kbd></div>
+      </blockquote>
       
       <p>Words can be excluded from result matches using the
-      <strong>minus sign</strong> (<strong>-</strong>) e.g.:</p>
-      
-      <blockquote><div><kbd><strong>-</strong>acoustic currents
-      <strong>-</strong>sediment</kbd></div></blockquote>
-      
-      <p>will find all documents that contain <kbd>currents</kbd> but
-      <strong>not</strong> <kbd>acoustic</kbd> <strong>or</strong>
-      <kbd>sediment</kbd>.</p>
+      <strong>minus sign</strong> (<strong>-</strong>).</p>
+      <blockquote>
+        <div>
+          <p><strong>Example</strong>: type the following to find all
+          documents that contain <kbd>currents</kbd> but
+          <strong>not</strong> <kbd>acoustic</kbd> <strong>or</strong>
+          <kbd>sediment</kbd>:</p>
+        </div>
+        <div class="example"><kbd><strong>-</strong>acoustic currents <strong>-</strong>sediment</kbd></div>
+      </blockquote>
       
       <p>Instead of finding all matching terms, alternative matches can
       be specified using the word <strong>OR</strong>
-      (in capitals) e.g.:</p>
-      
-      <blockquote><div><kbd>acoustic <strong>OR</strong> currents
-      sediment</kbd></div></blockquote>
-      
-      <p>will find all documents that contain <kbd>sediment</kbd> and
-      <strong>either</strong> <kbd>acoustic</kbd> <strong>or</strong>
-      <kbd>currents</kbd>.</p>
+      (in capitals)</p>
+      <blockquote>
+        <div>
+          <p><strong>Example</strong>: type the following to find
+          all documents that contain <kbd>sediment</kbd> and
+          <strong>either</strong> <kbd>acoustic</kbd>
+          <strong>or</strong> <kbd>currents</kbd>:</p>
+        </div>
+        <div class="example"><kbd>acoustic <strong>OR</strong> currents sediment</kbd></div>
+      </blockquote>
       
       <p>As well as running full text searches, more specific search
-      targets can be specified by prefixing words with a target
+      targets can be specified by prefixing search terms with a target
       identifier.  Available target identifiers and how they relate to
       search fields are as follows:</p>
       
-      <blockquote><div>
-        <strong>a</strong>  => Author<br/>
-        <strong>p</strong>  => Parameter<br/>
-        <strong>rt</strong> => Resource type<br/>
-        <strong>tc</strong> => Topic category<br/>
-        <strong>l</strong>  => Lineage<br/>
-        <strong>al</strong> => Public access limits<br/>
-        <strong>o</strong>  => Data originator<br/>
-        <strong>f</strong>  => Data format<br/>
-      </div></blockquote>
+      <table class="help" summary="Available target identifiers" style="margin-left:1.5em">
+          <tbody>
+            <tr>
+              <td>a</td><td>= Author</td>
+            </tr>
+            <tr>
+              <td>p</td><td>= Parameter</td>
+            </tr>
+            <tr>
+              <td>rt</td><td>= Resource type</td>
+            </tr>
+            <tr>
+              <td>tc</td><td>= Topic category</td>
+            </tr>
+            <tr>
+              <td>l</td><td>= Lineage</td>
+            </tr>
+            <tr>
+              <td>al</td><td>= Public access limits</td>
+            </tr>
+            <tr>
+              <td>o</td><td>= Data originator</td>
+            </tr>
+            <tr>
+              <td>f</td><td>= Data format</td>
+            </tr>
+          </tbody>
+      </table>
       
-      <p>The identifier is separated from the word using a
-      <strong>colon</strong> (<strong>:</strong>) e.g.:</p>
-      
-      <blockquote><div><kbd>acoustic <strong>tc:</strong>oceans
-      <strong>p:</strong>sediment</kbd></div></blockquote>
-      
-      <p>will match all documents that contain <kbd>acoustic</kbd> that
-      also have a <strong>topic category</strong> containing
-      <kbd>oceans</kbd> and a <strong>parameter</strong> containing
-      <kbd>sediment</kbd>.</p>
+      <p>The identifier is separated from the search term using a
+      <strong>colon</strong> (<strong>:</strong>)</p>
+      <blockquote>
+        <div>
+          <p><strong>Example</strong>: type the following to find
+          all documents that contain <kbd>acoustic</kbd> that also
+          have a <strong>topic category</strong> containing
+          <kbd>oceans</kbd> and a <strong>parameter</strong>
+          containing <kbd>sediment</kbd>:</p>
+        </div>
+        <div class="example"><kbd>acoustic <strong>tc:</strong>oceans<strong> p:</strong>sediment</kbd></div>
+      </blockquote>
       </div>
+
+      <div id="search-term-help" style="display:none">
+        <h3>Search help</h3>
+        <p>The ‘advanced search’ allows the user to search specific metadata fields. The following explains the targeted field names.</p>
+		<table class="help" summary="Target field definitions">
+          <tbody>
+		  <tr>
+			<td>Author</td>
+			<td>a free text field to search for the author of the metadata.</td>
+		  </tr>
+		  <tr>
+			<td>Parameter</td>
+			<td>parameters are those in the BODC Parameter Discovery Vocabulary (P021) list and are terms describing fine-grained related groups of measurements. <a href="http://seadatanet.maris2.nl/v_bodc_vocab/vocabrelations.aspx">This</a> is a user friendly interface showing the relationship between list P021 and other parameter lists P081 and P031.</td>
+          </tr>
+          <tr>
+            <td>Resource type</td>
+            <td>describes the nature of the information, for example, dataset, service, series, model, feature or software. All terms can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
+          </tr>
+          <tr>
+            <td>Topic category</td>
+            <td>describes the main theme(s) of the data resource selected from the ISO 19115/TC 211 topic category list. This list can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>. Examples of topic category related to the marine environment include ‘biota’, ‘oceans’, ‘geoscientific information’ and ‘transportation’. Any term that is made up of more than one word must be combined e.g. ‘geoscientificinformation’.</td>
+          </tr>
+          <tr>
+            <td>Lineage</td>
+            <td>a free text field that can include background information, source material, data collection methods, data processing methods and quality control procedures.</td>
+          </tr>
+          <tr>
+            <td>Public access limits</td>
+            <td>describes restrictions imposed on the resource. All terms are selected from a controlled vocabulary that can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
+          </tr>
+          <tr>
+            <td>Data originator</td>
+            <td>free text field to search for the person or organisation that created the resource.</td>
+          </tr>
+          <tr>
+            <td>Data format</td>
+            <td>describes the formats in which digital data can be provided for example, database, image or GIS. This list is <a href="http://vocab.ndg.nerc.ac.uk/client/vocabServer.jsp">MEDIN controlled vocabulary M010</a>.</td>
+          </tr>
+          </tbody>
+        </table>
+	  </div>
     </div>
     
     %if sort:
@@ -204,7 +316,21 @@ $(function() {
  style="display:none"\
     %endif
   /> <input type="submit" value="search"/></div>
-      <div>Dates should either be in the format <strong>YYYY-MM-DD</strong> or <strong>YYYY</strong>.</div>
+      <div>Dates should either be in the format <strong><abbr title="Year-month-day">YYYY-MM-DD</abbr></strong> or <strong><abbr title="Year">YYYY</abbr></strong>. (<a href="javascript:toggle('date-help', 'help', 'hide help')" id="date-help-link" title="Show or hide the help">help</a>)</div>
+      <div id="date-help" style="display:none">
+        <p>A full date search requires the format
+        YYYY-MM-DD. Alternatively, only the years can be entered and
+        the portal will search between 1st January and 31st December
+        for those years specified.</p>
+        <p>If the user wishes to find data which may not contain a
+        start date (e.g. historic data) or an end date (e.g. ongoing
+        monitoring programmes) then the user must specify
+        <strong>either</strong> a start date <strong>or</strong> an
+        end date. Specifying only a start date will return records
+        whose temporal coverage starts on or after that date.  If only
+        an end date is specified then the records returned will end on
+        or before that date.</p>
+      </div>
     </div>
   </fieldset>
 
@@ -234,7 +360,17 @@ $(function() {
 >${name | x}</option>
             %endfor
           </select>
+		  (<a href="javascript:toggle('area-type-help', 'help', 'hide help')" id="area-type-help-link" title="Show or hide the help">help</a>)
         </div>
+		<div id="area-type-help" style="display:none">
+		  <p>The user can select by country, SeaVox region, UK
+		  Charting Progress Sea Area and ICES statistical
+		  rectangles. Currently only one area at a time can be
+		  selected.</p>
+		  <p>Countries are in alphabetical order and if the beginning
+		  letter of the country is typed the list shifts to the start
+		  of countries beginning with that letter.</p>
+		</div>
         <select class="area" id="co"\
           %if not area_type or area_type == 'co':
  name="a"\
