@@ -36,8 +36,8 @@ function init_map() {
     var layer = new OpenLayers.Layer.TMS( "Bathy",
                                       script_root+'/spatial/tms/',
                                       { layername: 'bathymetry',
-										type: 'png',
-									    displayInLayerSwitcher: false } );
+                                        type: 'png',
+                                        displayInLayerSwitcher: false } );
     map.addLayer(layer);
 
     // add the UK Charting Progress Sea Areas
@@ -97,24 +97,32 @@ function init_map() {
                                       });*/
     map.addLayer(layer);
 
-    // the layer to contain the area box
-    var boxes = new OpenLayers.Layer.Boxes("boxes", { displayInLayerSwitcher: false });
-    map.addLayer(boxes);
-
-    // the custom control to draw area boxes
-    var control = new OpenLayers.Control.BoxDraw();
-    control.box_layer = boxes;
-    map.addControl(control);
-    control.activate();
-
     // default controls
     var nav = new OpenLayers.Control.Navigation();
     map.addControl(nav);
     map.addControl(new OpenLayers.Control.PanZoom());
     map.addControl(new OpenLayers.Control.ArgParser());
     map.addControl(new OpenLayers.Control.Attribution());
-    map.addControl(new OpenLayers.Control.MousePosition());
     map.addControl(new OpenLayers.Control.LayerSwitcher());
+
+    // the graticule layer
+    map.addControl(new OpenLayers.Control.Graticule({
+        numPoints: 2, 
+        labelled: true,
+        visible: true
+    }));
+
+    map.addControl(new OpenLayers.Control.MousePosition());
+    
+    // the layer to contain the area box
+    var boxes = new OpenLayers.Layer.Boxes("boxes", { displayInLayerSwitcher: false });
+    map.addLayer(boxes);
+
+    // the custom control to draw area boxes
+    var control = map.box_control = new OpenLayers.Control.BoxDraw();
+    control.box_layer = boxes;
+    map.addControl(control);
+    control.activate();
 
     // ensure navigation is deactivated when the CTRL key is pressed
     // or the box is selected, otherwise it interferes with the box
@@ -172,11 +180,11 @@ function parse_GET(str) {
 }
 
 function add_box(extent, selected) {
-    map.controls[0].setBox(extent, selected);
+    map.box_control.setBox(extent, selected);
 }
 
 function clear_box(skip_bbox) {
-    map.controls[0].removeBox();
+    map.box_control.removeBox();
     if (!skip_bbox)
         $('#bbox').val(''); // set the form element
 }
@@ -383,10 +391,10 @@ function init_date(id) {
             input.show();
             input.datepicker('show');
 
-			return false;		// prevent the default action
+            return false;       // prevent the default action
         });
 
-		return false;			// prevent the default action
+        return false;           // prevent the default action
     });
 }
 

@@ -224,6 +224,15 @@ bottom:17px;
 right:6px;
 }
 
+/* Search page styling */
+
+#bodycontent_wide div.olControlMousePosition {
+  background-image:url("/images/opaque.png");
+  bottom:0px;
+  padding:0 0.5em;
+  right:0px;
+}
+
 /* Tooltip styling */
 div.tooltip {
   padding:4px 0px;
