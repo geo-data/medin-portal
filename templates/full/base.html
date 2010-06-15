@@ -84,7 +84,7 @@
 
         <div id="lh_col"><div id="p7TMnav">
           <div class="p7bottom"><a href="http://www.oceannet.org/" id="home" tabindex="6">Home</a></div>
-          <div class="p7bottom p7currentmark"><a href="http://www.oceannet.org/data_discovery_portal/" id="data_discovery_portal" tabindex="7">Data discovery portal</a></div>
+          <div class="p7bottom p7currentmark"><a href="${script_root}/full" id="data_discovery_portal" tabindex="7">Data discovery portal</a></div>
           <div class="p7bottom"><a href="http://www.oceannet.org/online_data_by_theme/" id="online_data_by_theme" tabindex="8" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Online data by theme</a></div>
           <div class="p7bottom"><a href="http://www.oceannet.org/data_submission/" id="data_submission" tabindex="28">Data submission</a></div>
           <div class="p7bottom"><a href="http://www.oceannet.org/marine_data_standards/" id="marine_data_standards" tabindex="29" onclick="P7_TMenu(this,9);return this.href!=window.location.href;">Marine data standards</a></div>
@@ -128,13 +128,13 @@
       </div>
     </div>
     <script type="text/javascript">
-      if (window.location.host=="www.oceannet.org") {
+      if (window.location.host=="portal.oceannet.org") {
       var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
       document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
       }
     </script>
     <script type="text/javascript">
-      if (window.location.host=="www.oceannet.org") {
+      if (window.location.host=="portal.oceannet.org") {
       try {
       var pageTracker = _gat._getTracker("UA-8045808-1");
       pageTracker._trackPageview();
