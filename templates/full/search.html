@@ -62,7 +62,6 @@ $(function() {
         check_query();
     });
 });
-
         // -->
     </script>
 </%def>
@@ -144,6 +143,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
   <fieldset id="text-search">
     <legend><a href="javascript:toggle_fieldset('text-search')" title="Show or hide the text search">Search term</a></legend>
     <div class="content">
+      <div><label for="search-term">Type your search terms below, using the pop-up menus to query specific metadata fields.</label></div>
       <input id="search-term" type="text" name="q" size="30"\
       %if search_term:
  value="${search_term}"\
