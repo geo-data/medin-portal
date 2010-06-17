@@ -341,6 +341,210 @@ function init_tool_tips() {
     $('#bodycontent_wide').resize(tip_handler); // align whenever body size changes
 }
 
+/* Initialise the search term controls.
+ *
+ * This provides the popup with the dropdowns and text boxes used to
+ * compile searches for specific metadata fields.
+ */
+function init_search_term() {
+    var caret = null;           // contains the position of the cursor caret
+    var controls_active = false; // flags whether the controls are currently active
+
+    // a wrapper for setting the status; can be extended for debugging
+    var set_control_status = function(status) {
+        controls_active = status;
+    };
+
+    // hide the search term controls
+    var hide = function() {
+        if (!controls_active)
+            $('#search-term-controls').hide();
+    };
+
+    // update the query status
+    var term_change = function() {
+        if (!controls_active)
+            check_query();
+    };
+
+    // ensure the query status is updated when the search term changes
+    var search_term = $('#search-term').change(term_change);
+
+    // activate a target control based on a substring match in the
+    // current search term.
+    var pattern = /(\w+)$/;
+    function set_target(range_end) {
+        var text = search_term.val().substr(0, range_end);
+        var match = text.match(pattern);
+        if (match) {
+            var target = match[1];
+            $('#target-type').val(target).change();
+        }
+    }
+
+    search_term.keypress(
+        // If a colon is typed activate the associated target control
+        function(event) {
+            switch (event.which) {
+            case 58:                // colon (:)
+                var range = search_term.caret();
+                set_target(range.end);
+                break;
+            }
+        }
+    ).keydown(
+        /* Capture backspace key strokes so we can set the appropriate
+        target controls when a target is reached */
+        function(event) {
+            caret = search_term.caret();
+            switch (event.which) {
+            case 8:                 // backspace
+                if (search_term.val().charAt(caret.end-2) == ':')
+                    set_target(caret.end-2)
+                break;
+            }
+        }
+    ).focus(
+        // Show the controls when the search term receives focus
+        function() {
+            $('#search-term-controls').show().alignWith(search_term, 'bltl');
+        }
+    ).blur(hide); // hide the controls when the search term looses focus
+
+    // Flag the controls as being active
+    var activate_controls = function() {
+        set_control_status(true);
+        caret = search_term.caret(); // store the caret position
+    };
+
+    // Flag the controls as not being active
+    var deactivate_controls = function() {
+        set_control_status(false);
+        search_term.focus().caret(caret.end); // set the caret position based
+    };
+
+    // Flag the control status when the mouse moves over the control area
+    $('#search-term-controls').hover(activate_controls, deactivate_controls);
+
+    // Deal with the target control selector
+    $('#target-type').focus(
+        // take control of determining the search term control status
+        function() {
+            $('#search-term-controls').unbind('mouseenter mouseleave');
+            set_control_status(true);
+        }
+    ).blur(
+        // relinquish control of determining the search term control status
+        function() {
+            $('#search-term-controls').hover(activate_controls, deactivate_controls);
+            deactivate_controls();
+        }
+    ).change(
+        // When a target is choosen activate that target's control
+        function() {
+            var value = $(this).val();
+            if (value) {
+                var id = '#target-'+value;
+                $('.target:not('+id+')').hide();
+                $('#target-controls').show();
+                $(id).val('').show();
+                if (controls_active) {
+                    $(id).focus();
+                }
+            } else {
+                $('#target-controls').hide();
+                deactivate_controls();
+            }
+        }
+    );
+
+
+    // Return activation control to the generic search term container
+    $('#target-type option').click(function() {
+        $('#search-term-controls').hover(activate_controls, deactivate_controls);
+    });
+
+    $('.target').focus(
+        // Assume contol of the control status on focus
+        function() {
+            $('#search-term-controls').unbind('mouseenter mouseleave');
+            set_control_status(true);
+        }
+    ).blur(
+        // Relinquish control of the control status on blur
+        function() {
+            $('#search-term-controls').hover(activate_controls, deactivate_controls);
+            deactivate_controls();
+        }
+    ).change(
+        // Insert the choosen target value into the correct place in
+        // the search term.
+        function() {
+            var self = $(this);
+            var value = self.val();
+
+            if (value) {
+                var caret_start = caret.start;
+                var caret_end = caret.end;
+                var terms = search_term.val(); // current search terms
+
+                // create the target string
+                var target = self.attr('id').substr(7);
+                var new_term = target+':'+value;
+            
+                // in case the cursor has been placed just before a colon,
+                // move it after the colon.
+                if (terms.charAt(caret_end) == ':')
+                    caret_end += 1;
+
+                // if the caret is not at the beginning we need to
+                // check the preceding characters
+                if (caret_end) {
+                    char_check:
+                    switch (terms.charAt(caret_end-1)) {
+                    case ':':
+                        // ensure the current target is replaced
+                        var i = terms.substr(0, caret_end-1).lastIndexOf(' ');
+                        if (i != -1)
+                            caret_start = i+1;
+                        else
+                            caret_start = 0;
+                        break;
+                    case '-':
+                        // ensure the exclusion character is respected
+                        switch (terms.charAt(caret_end-2)) {
+                        case '':
+                        case ' ':
+                            break char_check; // the outer switch
+                        }
+                    case ' ':
+                        // a preceding space is fine
+                        break;
+                    default:
+                        // we need to prefix the new term with a space
+                        new_term = ' '+new_term;
+                    }
+                }
+
+                // suffix with a space if adding the term in the middle of a string
+                if (caret_end != terms.length && terms.charAt(caret_end) != ' ')
+                    new_term += ' ';
+            
+                // Insert the new term at the caret then restore caret
+                var prefix = terms.substr(0, caret_start) + new_term;
+                terms = prefix + terms.substr(caret_end, terms.length);
+                search_term.val(terms);
+                caret.end = prefix.length;
+                
+                self.blur();
+                term_change();  // ensure the query status is updated
+            } else {
+                self.blur();
+            }
+        }
+    );
+}
+
 function init_date(id) {
     var input = $('#'+id);
     var text = $('#'+id+'-text');

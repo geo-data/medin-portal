@@ -874,7 +874,8 @@ class Parser(object):
                     'trademark': 'A name, symbol, or other device identifying a product, officially registered and legally restricted to the use of the owner or manufacturer.',
                     'license': 'Formal permission required to do something.',
                     'intellectualPropertyRights': 'Rights to financial benefit from and control of distribution of non-tangible property that is a result of creativity.',
-                    'restricted': 'Withheld from general circulation or disclosure.'}
+                    'restricted': 'Withheld from general circulation or disclosure.',
+                    'otherRestrictions': 'Limitation not listed.'}
 
         details = []
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:accessConstraints/gmd:MD_RestrictionCode'):

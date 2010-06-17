@@ -232,6 +232,14 @@ right:6px;
   padding:0 0.5em;
   right:0px;
 }
+#search-term-controls {
+  background-color:#EFEFEF;
+  border:1px solid gray;
+  padding:0.5em;
+}
+.target {
+  display:none;
+}
 
 /* Tooltip styling */
 div.tooltip {
