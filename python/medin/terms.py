@@ -25,35 +25,20 @@ class Vocabulary(object):
 
         self.client = suds.client.Client(wsdl)
 
-    def lookupTerm(self, list, term):
-        """
-        Return the definition of a term based on the entry key term
+    def getListKey(self, list_id):
+        return 'http://vocab.ndg.nerc.ac.uk/list/%s/current' % list_id
 
-        If the term does not match the 'short' entry key, then the
-        'long' entry key is tried instead.
+    def _callService(self, method, *args, **kwargs):
         """
-
+        Wrap the call to the SOAP service with some error checking
+        """
         from suds import WebFault
         from urllib2 import URLError, HTTPError
-
+        
         try:
-            listKey = 'http://vocab.ndg.nerc.ac.uk/list/%s/current' % list
-            r = self.client.service.verifyTerm(listKey, term, 'short')
-            try:
-                term = r.verifiedTerm
-            except AttributeError:
-                # try looking up the term as a 'long' entry
-                r = self.client.service.verifyTerm(listKey, term, 'long')
-                try:
-                    term = r.verifiedTerm
-                except AttributeError:
-                    raise LookupError('The term "%s" does not exist in the list %s' % (term, listKey))
-
-            return dict(long=term.entryTerm,
-                        short=term.entryTermAbbr,
-                        defn=term.entryTermDef)
+            return method(*args, **kwargs)
         except WebFault, e:
-            raise VocabError(e.message)
+            raise VocabError(e.args[0])
         except HTTPError, e:
             raise VocabError(str(e))
         except URLError, e:
@@ -63,3 +48,193 @@ class Vocabulary(object):
                 msg = str(e.reason)
 
             raise VocabError(msg)
+
+    def lookupTerm(self, list_id, term):
+        """
+        Return the definition of a term based on the entry key term
+
+        If the term does not match the 'short' entry key, then the
+        'long' entry key is tried instead.
+        """
+        listKey = self.getListKey(list_id)
+        r = self._callService(self.client.service.verifyTerm, listKey, term, 'short')
+        try:
+            term = r.verifiedTerm
+        except AttributeError:
+            # try looking up the term as a 'long' entry
+            r = self._callService(self.client.service.verifyTerm, listKey, term, 'long')
+            try:
+                term = r.verifiedTerm
+            except AttributeError:
+                raise LookupError('The term "%s" does not exist in the list %s' % (term, listKey))
+
+        return dict(long=term.entryTerm,
+                    short=term.entryTermAbbr,
+                    defn=term.entryTermDef)
+
+    def getList(self, list_id):
+        """
+        Return all entries in a list
+        """
+        listKey = self.getListKey(list_id)
+        r = self._callService(self.client.service.getList, listKey)
+
+        try:
+            return [dict(term=entry.entryTerm,
+                         abbr=entry.entryTermAbbr,
+                         defn=entry.entryTermDef) for entry in r[0]]
+        except TypeError:
+            return []
+
+class MEDINVocabulary(Vocabulary):
+    """
+    Vocabulary object providing consistent API to all MEDIN vocabs
+
+    Some MEDIN vocabularies are available via the vocabulary service,
+    others are available as static lists. This object provides a
+    common interface to all vocabs.
+    """
+
+    # the static lists
+    static = {'resource-types': [
+        {'defn': "Information applies to the attribute value",
+         'abbr': "attribute",
+         'term': "attribute"},
+        {'defn': "Information applies to the characteristic of the feature",
+         'abbr': "attributeType",
+         'term': "attributeType"},
+        {'defn': "Information applies to the collection hardware class",
+         'abbr': "collectionHardware",
+         'term': "collectionHardware"},
+        {'defn': "Information applies to the collection session ",
+         'abbr': "collectionSession",
+         'term': "collectionSession"},
+        {'defn': "Information applies to a single dataset.",
+         'abbr': "dataset",
+         'term': "dataset"},
+        {'defn': "Information applies to a group of datasets linked by a common specification.",
+         'abbr': "series",
+         'term': "series"},
+        {'defn': "Information applies to the non geographic dataset.",
+         'abbr': "nonGeographicDataset",
+         'term': "nonGeographicDataset"},
+        {'defn': "Information applies to a dimension group",
+         'abbr': "dimensionGroup",
+         'term': "dimensionGroup"},
+        {'defn': "Information applies to a feature",
+         'abbr': "feature",
+         'term': "feature"},
+        {'defn': "Information applies to a feature type",
+         'abbr': "featureType",
+         'term': "featureType"},
+        {'defn': "Information applies to a property type",
+         'abbr': "propertyType",
+         'term': "propertyType"},
+        {'defn': "Information applies to a field session",
+         'abbr': "fieldSession",
+         'term': "fieldSession"},
+        {'defn': "Information applies to a computer program or routine",
+         'abbr': "software",
+         'term': "software"},
+        {'defn': "Information applies to a facility to view, download data e.g. web service",
+         'abbr': "service",
+         'term': "service"},
+        {'defn': "Information applies to a copy  or imitation of an existing or hypothetical object",
+         'abbr': "model",
+         'term': "model"},
+        {'defn': "Information applies to a tile, a spatial subset of geographic information",
+         'abbr': "tile",
+         'term': "tile"}],
+              'access-types': [
+        {'defn': "Exclusive right to the publication, production, or sale of the rights to a literary, dramatic, musical, or artistic work, or to the use of a commercial print or label, granted by law for a specified period of time to an author, composer, artist, distributor",
+         'abbr': "copyright",
+         'term': "copyright"},
+        {'defn': "Government has granted exclusive right to make, sell, use or license an invention or discovery.",
+         'abbr': "patent",
+         'term': "patent"},
+        {'defn': "Produced or sold information awaiting a patent.",
+         'abbr': "patentPending",
+         'term': "patentPending"},
+        {'defn': "A name, symbol, or other device identifying a product, officially registered and legally restricted to the use of the owner or manufacturer.",
+         'abbr': "trademark",
+         'term': "trademark"},
+        {'defn': "Formal permission required to do something.",
+         'abbr': "license",
+         'term': "license"},
+        {'defn': "Rights to financial benefit from and control of distribution of non-tangible property that is a result of creativity.",
+         'abbr': "intellectualPropertyRights",
+         'term': "intellectualPropertyRights"},
+        {'defn': "Withheld from general circulation or disclosure.",
+         'abbr': "restricted",
+         'term': "restricted"},
+        {'defn': "Limitation not listed.",
+         'abbr': "otherRestrictions",
+         'term': "otherRestrictions"}]}
+
+    def __init__(self, *args, **kwargs):
+        super(MEDINVocabulary, self).__init__(*args, **kwargs)
+        self.lists = {}
+
+    def getStaticVocab(self, list_id):
+        if list_id in self.static:
+            try:
+                return self.lists[list_id]
+            except KeyError:
+                vocab = self.lists[list_id] = StaticVocabList(self.static[list_id])
+                return vocab
+        raise KeyError('The list is not static: '+list_id)
+
+    def lookupTerm(self, list_id, term):
+        # try and get the list as a static vocabulary
+        try:
+            vocab = self.getStaticVocab(list_id)
+        except KeyError:
+            pass
+        else:
+            return vocab.lookupTerm(term)
+
+        # get the list via SOAP
+        return super(MEDINVocabulary, self).lookupTerm(list_id, term)
+
+    def getList(self, list_id):
+        # try and get the list as a static vocabulary
+        try:
+            vocab = self.getStaticVocab(list_id)
+        except KeyError:
+            pass
+        else:
+            return vocab.getList()
+
+        # get the list via SOAP
+        return super(MEDINVocabulary, self).getList(list_id)
+
+class StaticVocabList(object):
+    """
+    An interface for accessing a static list
+    """
+    def __init__(self, vocab):
+        self.vocab = vocab
+
+    def lookupTerm(self, term):
+        term = term.lower()
+        try:
+            entry = self.vocab[self.map[term]]
+            return dict(long=entry['term'],
+                        short=entry['abbr'],
+                        defn=entry['defn'])
+        except KeyError:
+            raise LookupError('The term "%s" does not exist in the list' % term)
+        except AttributeError:
+            pass
+
+        # the mapping does not exist; let's create it...
+        self.map = {}
+        for i, entry in enumerate(self.vocab):
+            self.map[entry['abbr'].lower()] = i
+
+        # ...and try again
+        return self.lookupTerm(term)
+
+    def getList(self):
+        from copy import deepcopy
+        return deepcopy(self.vocab)

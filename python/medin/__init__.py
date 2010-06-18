@@ -1,7 +1,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 1.0
+__version__ = 1.1
 
 from errata import HTTPError           # for HTTP exceptions
 import medin.error
@@ -210,7 +210,7 @@ def wsgi_app():
     """
     from medin import views
     from medin.spatial import tilecache
-    from medin.log import WSGILog
+    from medin.log import WSGILog, ExcludeUserMessageFilter
 
     # create the WSGI configuration middleware
     config = WSGIWrapper(Config, 'app', name='portal.ini')
@@ -297,6 +297,13 @@ def wsgi_app():
     #smtp_handler.setLevel(logging.ERROR)
     #logger.addHandler(smtp_handler)
     logger.setLevel(logging.DEBUG)
+
+    # set up the handler for the standard error stream
+    error_log = logging.StreamHandler()
+    error_log.setLevel(logging.DEBUG)
+    error_log.addFilter(ExcludeUserMessageFilter()) # we don't want user messages being logged
+    logger.addHandler(error_log)
+
     #scl = logging.getLogger('suds.client')
     #scl.setLevel(logging.DEBUG)
     #scl.addHandler(logging.StreamHandler())

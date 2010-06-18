@@ -70,3 +70,22 @@ class WSGILog(wsgilogging.WSGILog):
 
     def getHandler(self, environ):
         return Handler()
+
+class LevelExcludeFilter(logging.Filter):
+    """
+    Filter that excludes records with from specific logging levels
+    """
+    def __init__(self, levels, *args, **kwargs):
+        logging.Filter.__init__(self, *args, **kwargs)
+        self.levels = levels            # level numbers to exclude
+
+    def filter(self, record):
+        return record.levelno not in self.levels
+
+class ExcludeUserMessageFilter(LevelExcludeFilter):
+    """
+    Filter that excludes user messages
+    """
+    def __init__(self, *args, **kwargs):
+        levels = [USER_INFO, USER_WARNING, USER_ERROR]
+        LevelExcludeFilter.__init__(self, levels, *args, **kwargs)

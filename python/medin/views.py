@@ -215,11 +215,15 @@ class OpenSearch(MakoApp):
 class Search(MakoApp):
     def __init__(self):
         from medin.dws import SearchRequest
+        from medin.terms import MEDINVocabulary
+
         self.request = SearchRequest()
+        self.vocab = MEDINVocabulary()
         super(Search, self).__init__(['%s', 'search.html'])
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
+        from medin.terms import VocabError
         
         areas = get_areas(environ)
         q = get_query(environ)
@@ -252,6 +256,31 @@ class Search(MakoApp):
                     'progress-areas': areas.chartingProgressAreas(),
                     'ices-rectangles': areas.icesRectangles()}
 
+        # get the vocabulary lists
+        try:
+            params = self.vocab.getList('P021')
+        except VocabError, e:
+            msg = 'The parameter list could not be retrieved'
+            msg_error(environ, msg)
+            environ['logging.logger'].exception(msg)
+            params = None
+        try:
+            topics = self.vocab.getList('P051')
+        except VocabError, e:
+            msg = 'The topic category list could not be retrieved'
+            msg_error(environ, msg)
+            environ['logging.logger'].exception(msg)
+            topics = None
+        try:
+            formats = self.vocab.getList('M010')
+        except VocabError, e:
+            msg = 'The data format list could not be retrieved'
+            msg_error(environ, msg)
+            environ['logging.logger'].exception(msg)
+            formats = None
+        resources = self.vocab.getList('resource-types')
+        access = self.vocab.getList('access-types')
+
         tvars=dict(search_term=search_term,
                    hits=r.hits,
                    criteria=criteria,
@@ -262,6 +291,11 @@ class Search(MakoApp):
                    area=area,
                    area_type=area_type,
                    area_ids=area_ids,
+                   parameters=params,
+                   topic_categories=topics,
+                   data_formats=formats,
+                   resource_types=resources,
+                   access_types=access,
                    bbox=bbox)
 
         return TemplateContext('Search the MEDIN Data Archive Centres', tvars=tvars)
@@ -441,7 +475,7 @@ class HTMLResults(Results):
         
         headers = [('Content-type', 'text/html')]
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers, RESULT_BRIEF)
-
+        
     def setup(self, environ):
         from copy import deepcopy
 
