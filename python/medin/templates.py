@@ -34,18 +34,29 @@ class TemplateLookup(object):
 class MakoApp(object):
     """Base class creating WSGI application for rendering Mako templates"""
 
-    def __init__(self, path, expand=True, check_etag=True):
+    def __init__(self, path, expand=True, check_etag=True, content_type='text/plain'):
         self.path = path
         self.expand = expand
         self.check_etag = check_etag
+        self.content_type = content_type
 
     def setup(self, environ):
         return TemplateContext('')
 
+    def getContentType(self, environ):
+        if isinstance(self.content_type, str):
+            return self.content_type
+        
+        template = self.get_template_name(environ)
+        try:
+            return self.content_type[template]
+        except KeyError:
+            raise KeyError('No Content-Type specified for template: %s' % template)
+        
     def __call__(self, environ, start_response):
         """The standard WSGI interface"""
 
-        headers = []
+        headers = [('Content-Type', self.getContentType(environ))]
         # check whether the etag is valid
         if self.check_etag:
             from medin.views import check_etag
@@ -122,7 +133,9 @@ class TemplateContext(object):
     def __init__(self, title, headers=None, tvars=None, status='200 OK'):
         self.status = status
         if headers is None:
-            headers = [('Content-type', 'text/html')]
+            headers = [('Content-type', 'application/xhtml+xml'),
+                       # always check validation and always obey freshness information
+                       ('Cache-Control', 'no-cache, must-revalidate')] 
         self.headers = headers
         self.title = title
         if tvars is None:

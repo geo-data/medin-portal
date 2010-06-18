@@ -239,6 +239,9 @@ class Query(GETParams):
     def setSort(self, value):
         self['s'] = ','.join((str(i) for i in value))
 
+    def delSort(self):
+        del self['s']
+
     def getCount(self, cast=True, default=20):
         try:
             count = self['c'][0]

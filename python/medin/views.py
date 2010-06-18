@@ -29,7 +29,7 @@ def check_etag(environ, etag):
     from medin import __version__
 
     # format the etag to include the application version
-    server_etag = '"%s (v%s)"' % (etag, str(__version__))
+    server_etag = '"%s (v%s)"' % (etag.encode('ascii', 'ignore'), str(__version__))
 
     try:
         client_etag = environ['HTTP_IF_NONE_MATCH']
@@ -205,11 +205,12 @@ class Comment(object):
 
 class OpenSearch(MakoApp):
     def __init__(self):
-        super(OpenSearch, self).__init__(['opensearch', 'catalogue', '%s.xml'])
+        super(OpenSearch, self).__init__(['opensearch', 'catalogue', '%s.xml'],
+                                         content_type='application/opensearchdescription+xml')
 
     def setup(self, environ):
         title = 'MEDIN Catalogue'
-        headers = [('Content-type', 'application/opensearchdescription+xml')]
+        headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
         return TemplateContext(title, headers=headers)
 
 class Search(MakoApp):
@@ -219,7 +220,9 @@ class Search(MakoApp):
 
         self.request = SearchRequest()
         self.vocab = MEDINVocabulary()
-        super(Search, self).__init__(['%s', 'search.html'])
+        content_type = {'full': 'text/html',
+                        'light': 'application/xhtml+xml'}
+        super(Search, self).__init__(['%s', 'search.html'], check_etag=False, content_type=content_type)
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -232,15 +235,33 @@ class Search(MakoApp):
             for error in errors:
                 msg_error(environ, error)
 
-        # we need to get the number of hits for the query
+        # We need to get the number of hits for the query.
+        # firstly save the current count setting:
         count = q.getCount(default=None)
-        q.setCount(0)
+        q.setCount(0)                   # we only need one result
+
+        # secondly get the results in descending order so the result
+        # can be used in an etag (as it is the latest).
+        sort = q.getSort(cast=False)
+        q.setSort('updated,0')
+
+        # run the query
         r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
+
+        # check the etag
+        docid = list(r)[0]
+        etag = check_etag(environ, docid)
+
+        # revert the query to its previous state
         if count is not None:
             q.setCount(count) # reset the count to it's previous value
         else:
             q.delCount() # delete the count as it wasn't there originally
-
+        if sort is not None:
+            q.setSort(sort)
+        else:
+            q.delSort()
+        
         search_term = q.getSearchTerm(cast=False)
         sort = q.getSort(cast=False)
         bbox = q.getBBOX()
@@ -298,7 +319,10 @@ class Search(MakoApp):
                    access_types=access,
                    bbox=bbox)
 
-        return TemplateContext('Search the MEDIN Data Archive Centres', tvars=tvars)
+        headers = [('Etag', etag), # propagate the result update time to the HTTP layer
+                   ('Cache-Control', 'no-cache, must-revalidate')]
+
+        return TemplateContext('Search the MEDIN Data Archive Centres', tvars=tvars, headers=headers)
 
 class Navigation(object):
     """
@@ -408,13 +432,12 @@ class Navigation(object):
 
 class Results(MakoApp):
 
-    def __init__(self, path, headers, result_type):
+    def __init__(self, path, result_type, content_type):
         from medin.dws import SearchRequest
         
-        self.headers = headers
         self.result_type = result_type
         self.request = SearchRequest()
-        super(Results, self).__init__(path, check_etag=False)
+        super(Results, self).__init__(path, check_etag=False, content_type=content_type)
 
     def setup(self, environ):
         from copy import copy
@@ -460,12 +483,8 @@ class Results(MakoApp):
         if search_term:
             title += ' for: %s' % search_term
 
-        # modify the headers. We need a local copy of the base headers
-        # so we don't alter the instance
-        headers = copy(self.headers)
-
-        # propagate the result update time to the HTTP layer
-        headers.append(('Etag', etag))
+        headers = [('Etag', etag), # propagate the result update time to the HTTP layer
+                   ('Cache-Control', 'no-cache, must-revalidate')] # add the cache controls
 
         return TemplateContext(title, tvars=tvars, headers=headers)
 
@@ -473,8 +492,9 @@ class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
         
-        headers = [('Content-type', 'text/html')]
-        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], headers, RESULT_BRIEF)
+        content_type = {'full': 'text/html',
+                        'light': 'application/xhtml+xml'}
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF, content_type)
         
     def setup(self, environ):
         from copy import deepcopy
@@ -500,15 +520,15 @@ class RSSResults(Results):
     def __init__(self):
         from medin.dws import RESULT_SUMMARY
 
-        headers = [('Content-type', 'application/rss+xml')]
-        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'], headers, RESULT_SUMMARY)
+        super(RSSResults, self).__init__(['rss', 'catalogue', '%s.xml'], RESULT_SUMMARY,
+                                         content_type='application/rss+xml')
 
 class AtomResults(Results):
     def __init__(self):
         from medin.dws import RESULT_SUMMARY
 
-        headers = [('Content-type', 'application/atom+xml')]
-        super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], headers, RESULT_SUMMARY)
+        super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], RESULT_SUMMARY,
+                                          content_type='application/atom+xml')
 
 class AreaResults(object):
 
@@ -564,7 +584,7 @@ class ResultSummary(object):
                        'hits': r.hits,
                        'time': environ['portal.timer'].runtime()})
         
-        headers = [('Content-type', 'application/json')]
+        headers = [('Content-Type', 'application/json')]
 
         start_response('200 OK', headers)
         return [json]
@@ -593,11 +613,11 @@ class ResultFormat(object):
 
 class Metadata(MakoApp):
 
-    def __init__(self, path):
+    def __init__(self, path, content_type):
         from medin.dws import MetadataRequest
 
         self.request = MetadataRequest()
-        super(Metadata, self).__init__(path, check_etag=False)
+        super(Metadata, self).__init__(path, check_etag=False, content_type=content_type)
 
     def setup(self, environ):
 
@@ -612,7 +632,8 @@ class Metadata(MakoApp):
         headers = []
         if parser:
             etag = check_etag(environ, parser.date())
-            headers.append(('Etag', etag))
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         return parser, headers
 
@@ -620,7 +641,10 @@ class MetadataHTML(Metadata):
     def __init__(self):
         from medin.dws import SearchRequest
         self.search_request = SearchRequest()
-        super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
+
+        content_type = {'full': 'text/html',
+                        'light': 'application/xhtml+xml'}
+        super(MetadataHTML, self).__init__(['%s', 'metadata.html'], content_type=content_type)
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -637,13 +661,12 @@ class MetadataHTML(Metadata):
                      criteria=criteria,
                      hits=r.hits)
 
-        headers.append(('Content-type', 'text/html'))
-
         return TemplateContext(title, tvars=tvars, headers=headers)
 
 class MetadataKML(Metadata):
     def __init__(self):
-        super(MetadataKML, self).__init__(['kml', 'catalogue', 'metadata-%s.kml'])
+        super(MetadataKML, self).__init__(['kml', 'catalogue', 'metadata-%s.kml'],
+                                          content_type='application/vnd.google-earth.kml+xml')
 
     def setup(self, environ):
         parser, headers = super(MetadataKML, self).setup(environ)
@@ -662,8 +685,7 @@ class MetadataKML(Metadata):
         if not filename: filename = 'metadata.kml'
         else: filename += '.kml'
         
-        headers.extend((('Content-type', 'application/vnd.google-earth.kml+xml'),
-                        ('Content-disposition', 'attachment; filename="%s"' % filename)))
+        headers.append(('Content-disposition', 'attachment; filename="%s"' % filename))
 
         return TemplateContext(title, tvars=tvars, headers=headers)
 
@@ -740,7 +762,8 @@ class MetadataImage(object):
         bytes = image.tostring('png')
 
         headers = [('Content-Type', 'image/png'),
-                   ('Etag', etag)]
+                   ('Etag', etag),
+                   ('Cache-Control', 'no-cache, must-revalidate')]
 
         start_response('200 OK', headers)
         return [bytes]
@@ -779,7 +802,8 @@ class MetadataXML(object):
 
         headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
                    ('Content-Type', 'application/xml'),
-                   ('Etag', etag)]
+                   ('Etag', etag),
+                   ('Cache-Control', 'no-cache, must-revalidate')]
 
         start_response('200 OK', headers)
         return [document]
@@ -989,17 +1013,20 @@ class MetadataCSV(object):
 
         headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
                    ('Content-Type', 'application/vnd.ms-excel'),
-                   ('Etag', etag)]
+                   ('Etag', etag),
+                   ('Cache-Control', 'no-cache, must-revalidate')]
 
         start_response('200 OK', headers)
         return buf
 
 class TemplateChoice(MakoApp):
     def __init__(self):
-        super(TemplateChoice, self).__init__(['light', 'templates.html'], False)
+        super(TemplateChoice, self).__init__(['light', 'templates.html'], False,
+                                             content_type='application/xhtml+xml')
 
     def setup(self, environ):
-        return TemplateContext('Choose Your Search Format')
+        headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
+        return TemplateContext('Choose Your Search Format', headers=headers)
 
 def query_criteria(environ, start_response):
     from json import dumps as tojson
@@ -1012,7 +1039,8 @@ def query_criteria(environ, start_response):
     json = tojson(q.asDict())
     
     headers = [('Content-Type', 'application/json'),
-               ('Etag', etag)]
+               ('Etag', etag),
+               ('Cache-Control', 'max-age=3600, must-revalidate')]
     
     start_response('200 OK', headers)
     return [json]
@@ -1033,7 +1061,8 @@ def get_bbox(environ, start_response):
     json = tojson(bbox)
     
     headers = [('Content-Type', 'application/json'),
-               ('Etag', etag)]
+               ('Etag', etag),
+               ('Cache-Control', 'max-age=3600, must-revalidate')]
     
     start_response('200 OK', headers)
     return [json]
