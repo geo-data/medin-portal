@@ -274,9 +274,9 @@ class Parser(object):
     def __init__(self, uid, document, areas):
         import re
         import libxml2
-        from terms import Vocabulary
+        from terms import MEDINVocabulary
 
-        self.vocab = Vocabulary() # instantiate the Vocabulary interface
+        self.vocab = MEDINVocabulary() # instantiate the Vocabulary interface
         self.areas = areas
         self.uid = uid
 
@@ -371,33 +371,23 @@ class Parser(object):
 
     def resourceType(self):
         """Element 4: Resource Type"""
+        from terms import VocabError
         
-        types = {'attribute': 'Information applies to the attribute value',
-                 'attributeType': 'Information applies to the characteristic of the feature',
-                 'collectionHardware': 'Information applies to the collection hardware class',
-                 'collectionSession': 'Information applies to the collection session',
-                 'dataset': 'Information applies to a single dataset.',
-                 'series': 'Information applies to a group of datasets linked by a common specification.',
-                 'nonGeographicDataset': 'Information applies to the non geographic dataset.',
-                 'dimensionGroup': 'Information applies to a dimension group',
-                 'feature': 'Information applies to a feature',
-                 'featureType': 'Information applies to a feature type',
-                 'propertyType': 'Information applies to a property type',
-                 'fieldSession': 'Information applies to a field session',
-                 'software': 'Information applies to a computer program or routine',
-                 'service': 'Information applies to a facility to view, download data e.g. web service',
-                 'model': 'Information applies to a copy or imitation of an existing or hypothetical object',
-                 'tile': 'Information applies to a tile, a spatial subset of geographic information'}
-
         try:
             code = self.xpath.xpathEval('//gmd:hierarchyLevel/gmd:MD_ScopeCode/text()')[0].content.strip()
         except IndexError:
             return None
 
         try:
-            return types[code]
-        except KeyError:
-            return code
+            defn = self.vocab.lookupTerm('resource-types', code)
+        except LookupError:
+            defn = {'short':code,
+                    'long':code,
+                    'defn':'Unknown term'}
+        except VocabError, e:
+            defn = {'error': e.message}
+
+        return defn
 
     @_assignContext
     def onlineResource(self):
@@ -463,7 +453,6 @@ class Parser(object):
 
     def topicCategory(self):
         """Element 9: Topic Category"""
-        
         from terms import VocabError
         
         categories = {}
@@ -472,7 +461,9 @@ class Parser(object):
             try:
                 defn = self.vocab.lookupTerm('P051', key)
             except LookupError:
-                defn = {}
+                defn = {'short':key,
+                        'long':key,
+                        'defn':'Unknown term'}
             except VocabError, e:
                 defn = {'error': e.message}
             categories[key] = defn
@@ -541,7 +532,9 @@ class Parser(object):
                     try:
                         defn = self.vocab.lookupTerm(code, word)
                     except LookupError:
-                        defn = {}
+                        defn = {'short':word,
+                                'long':word,
+                                'defn':'Unknown term'}
                     except VocabError, e:
                         defn = {'error': e.message}
                 else:
@@ -867,29 +860,25 @@ class Parser(object):
 
     def accessLimits(self):
         """Element 20: Limitations On Public Access"""
+        from terms import VocabError
         
-        codelist = {'copyright': 'Exclusive right to the publication, production, or sale of the rights to a literary, dramatic, musical, or artistic work, or to the use of a commercial print or label, granted by law for a specified period of time to an author, composer, artist, distributor',
-                    'patent': 'Government has granted exclusive right to make, sell, use or license an invention or discovery.',
-                    'patentPending': 'Produced or sold information awaiting a patent.',
-                    'trademark': 'A name, symbol, or other device identifying a product, officially registered and legally restricted to the use of the owner or manufacturer.',
-                    'license': 'Formal permission required to do something.',
-                    'intellectualPropertyRights': 'Rights to financial benefit from and control of distribution of non-tangible property that is a result of creativity.',
-                    'restricted': 'Withheld from general circulation or disclosure.',
-                    'otherRestrictions': 'Limitation not listed.'}
-
-        details = []
+        limits = []
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:accessConstraints/gmd:MD_RestrictionCode'):
-            code = node.content.strip()
+            key = node.content.strip()
             try:
-                details.append(codelist[code])
-            except KeyError:
-                if code != 'otherRestrictions':
-                    details.append(code)
+                defn = self.vocab.lookupTerm('access-types', key)
+            except LookupError:
+                defn = {'short':key,
+                        'long':key,
+                        'defn':'Unknown term'}
+            except VocabError, e:
+                defn = {'error': e.message}
+            limits.append(defn)
 
-        for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:accessConstraints/gmd:otherConstraints'):
-            details.append(node.content.strip())
+        for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:otherConstraints'):
+            limits.append({'other': node.content.strip()})
 
-        return details
+        return limits
 
     def accessConditions(self):
         """Element 21: Conditions Applying For Access And Use"""
@@ -994,22 +983,25 @@ class Parser(object):
     @_assignContext
     def dataFormat(self):
         """Element 23: Data Format"""
+        from terms import VocabError
         
-        formats = []
+        formats = {}
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceFormat/gmd:MD_Format'):
             self.xpath.setContextNode(node)
             try:
-                name = self.xpath.xpathEval('./gmd:name/gco:CharacterString')[0].content.strip()
+                key = self.xpath.xpathEval('./gmd:name/gco:CharacterString')[0].content.strip()
             except KeyError:
                 continue
 
             try:
-                version = self.xpath.xpathEval('./gmd:version/gco:CharacterString/text()')[0].content.strip()
-                name += ' (version %s)' % version
-            except IndexError:
-                pass
-
-            formats.append(name)
+                defn = self.vocab.lookupTerm('M010', key)
+            except LookupError:
+                defn = {'short':key,
+                        'long':key,
+                        'defn':'Unknown term'}
+            except VocabError, e:
+                defn = {'error': e.message}
+            formats[key] = defn
 
         return formats
 

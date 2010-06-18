@@ -156,8 +156,8 @@ ${date.strftime('%Y-%m-%d')}
              if defn['short']: keyword = defn['short']
              else: keyword = defn['long']
         %>
-        <a href="${script_root}/full/catalogue?q=${keyword | u}"
-           title="Search for all metadata having the keyword '${keyword | x}'">${keyword | x}</a>
+        <a href="${script_root}/full/catalogue?q=p:${keyword | u}"
+           title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
         % if defn:
           % if defn['short'] and defn['long'] != defn['short']:
           - ${defn['long'] | x}
@@ -286,17 +286,29 @@ External link ${i+1}\
         <p>This element describes any restrictions imposed on the
         resource for security and other reasons using the controlled
         ISO vocabulary RestrictionCode. If there are no limitations on
-        public access, this must be indicated.</p>
+        public access, this must be indicated. All terms are can be
+        found in the <a
+        href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN
+        discovery standard</a>.</p>
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.access_limits}" number="${20}">
-        % for i, detail in enumerate(metadata.access_limits):
+        % for i, defn in enumerate(metadata.access_limits):
         % if i:
         <div class="sibling">
         % else:
         <div>
         % endif
-        ${detail}</div>
+        % if 'error' in defn:
+          <span class="error">${defn['error']}</span>
+        % elif 'other' in defn:
+          Other constraints: ${defn['other'] | x}
+        % else:
+          <a href="${script_root}/full/catalogue?q=al:${defn['short'] | u}"
+             title="Search for all metadata having the access limit '${defn['short'] | x}'">${defn['short'] | x}</a>
+          <br/>Definition: ${defn['defn'] | x}
+        % endif
+        </div>
         % endfor
         </%self:output_element>
       </div>
@@ -348,11 +360,22 @@ External link ${i+1}\
         controlled vocabulary, MD_ScopeCode from ISO 19115.  In order
         to comply with INSPIRE the resource type must be a dataset, a
         series (collection of datasets with a common specification) or
-        a service.</p>
+        a service. All terms can be found in the <a
+        href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN
+        discovery standard</a></p>
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.resource_type}" number="${4}">
-      ${metadata.resource_type}
+        <% defn = metadata.resource_type %>
+        <div>
+        % if 'error' in defn:
+          <span class="error">${defn['error']}</span>
+        % else:
+          <a href="${script_root}/full/catalogue?q=rt:${defn['short'] | u}"
+             title="Search for all metadata having the resource type '${defn['short'] | x}'">${defn['short'] | x}</a>
+          <br/>Definition: ${defn['defn'] | x}
+        % endif
+        </div>
         </%self:output_element>
       </div>
     </td>
@@ -370,20 +393,30 @@ External link ${i+1}\
     <td class="content">
       <div id="element-23" class="cell element-info">
         <p>Indicate the formats in which digital data can be provided
-        for transfer. A controlled vocabulary has been defined for use
-        by MEDIN which is <a
-        href="http://vocab.ndg.nerc.ac.uk/client/vocabServer.jsp">M010
-        ‘MEDIN data format categories’</a>.</p>
+        for transfer. <a
+        href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FM010%2Fcurrent&amp;earliestRecord=&amp;submit=submit">MEDIN
+        controlled vocabulary M010</a> lists the valid terms.</p>
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.data_format}" number="${23}">
-        % for i, detail in enumerate(metadata.data_format):
+        % for i, (keyword, defn) in enumerate(metadata.data_format.items()):
         % if i:
         <div class="sibling">
         % else:
         <div>
         % endif
-        ${detail}</div>
+        % if 'error' in defn:
+          <span class="error">${defn['error']}</span>
+        % else:
+          % if defn:
+          <a href="${script_root}/full/catalogue?q=f:${defn['long'] | u}"
+             title="Search for all metadata having the data format '${defn['long'] | x}'">${defn['long'] | x}</a>
+          <br/>Definition: ${defn['defn'] | x}
+          % else:
+          ${keyword | x}
+          % endif
+        % endif
+        </div>
         % endfor
         </%self:output_element>
       </div>
@@ -784,14 +817,15 @@ External link ${i+1}\
         <p>This element is mandatory for INSPIRE and must be
         included. This indicates the main theme(s) of the data
         resource.  It is required for INSPIRE compliance.  The
-        relevant topic category should be selected from the ISO
-        MD_TopicCategory list. Within MEDIN the parameter group
-        keywords from the <a
-        href="http://vocab.ndg.nerc.ac.uk/client/vocabServer.jsp">controlled
-        vocabulary P021</a> are mapped to the ISO Topic Categories so
-        it is possible to generate the topic categories automatically
-        once the keywords from BODC Parameter Discovery Vocabulary
-        (P021) have been selected.</p>
+        relevant topic category should be selected from the <a
+        href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP051%2Fcurrent&amp;earliestRecord=&amp;submit=submit">ISO
+        19115/TC 211 Topic Category list</a>. Within MEDIN the
+        parameter group keywords from the <a
+        href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP021%2Fcurrent&amp;earliestRecord=&amp;submit=submit">BODC
+        Parameter Discovery Vocabulary (P021) list</a> are mapped to
+        the ISO Topic Categories so it is possible to generate the
+        topic categories automatically once the keywords from BODC
+        Parameter Discovery Vocabulary (P021) have been selected.</p>
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.topic_category}" number="${9}">
