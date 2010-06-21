@@ -634,7 +634,7 @@ class Metadata(MakoApp):
         # Check if the client needs a new version
         headers = []
         if parser:
-            etag = check_etag(environ, parser.date())
+            etag = check_etag(environ, str(parser.date()))
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
 
@@ -742,7 +742,7 @@ class MetadataImage(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, parser.date())
+        etag = check_etag(environ, str(parser.date()))
 
         bbox = parser.bbox()
         if not bbox:
@@ -795,7 +795,7 @@ class MetadataXML(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, parser.date())
+        etag = check_etag(environ, str(parser.date()))
 
         filename = parser.uniqueID()
         if not splitext(filename)[1]:
@@ -879,7 +879,7 @@ class MetadataCSV(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, parser.date())
+        etag = check_etag(environ, str(parser.date()))
 
         metadata = parser.parse()
 

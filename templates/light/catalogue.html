@@ -1,3 +1,169 @@
-<%inherit file="base.html"/>
+<%inherit file="base-ok.html"/>
+<%def name="start_link()">\
+% if first_link:
+?${first_link['link'] | x}\
+% else:
+${query_string | x}\
+% endif
+</%def>
 
-The results
+<%def name="header()">
+% if first_link:
+    <link rel="Start"
+          type="application/xhtml+xml" 
+          href="${resource_root}?${first_link['link'] | x}"
+          title="Results page ${first_link['page']}" />
+% endif
+% if prev_links:
+    <link rel="Prev"
+          type="application/xhtml+xml" 
+          href="${resource_root}?${prev_links[-1]['link'] | x}"
+          title="Results page ${prev_links[-1]['page']}" />
+% endif
+% if next_links:
+    <link rel="Next"
+          type="text/html" 
+          href="${resource_root}?${next_links[0]['link'] | x}"
+          title="Results page ${next_links[0]['page']}" />
+% endif
+    <link rel="alternate"
+          type="application/rss+xml"
+          href="${script_root}/light/catalogue.rss${start_link()}"
+          title="MEDIN - ${title}" />
+    <link rel="alternate"
+          type="application/atom+xml"
+          href="${script_root}/light/catalogue.atom${start_link()}"
+          title="MEDIN - ${title}" />
+
+    <meta name="totalResults" content="${hits}"/>
+    <meta name="startIndex" content="${start_index}"/>
+    <meta name="itemsPerPage" content="${count}"/>
+</%def>
+
+<%def name="nav_links()">
+  <li><a href="${script_root}/light" title="Start a new search">New search</a></li>
+  <li><a href="${script_root}/light${start_link()}" title="Edit this search">Edit search</a></li>
+</%def>
+
+<%def name="result_links()">
+<p class="nav">
+% if page_count > 1:
+% if first_link:
+<a href="${resource_root}?${first_link['link'] | x}" title="Results page ${first_link['page']}">First</a>
+% endif
+% if prev_links:
+<a href="${resource_root}?${prev_links[-1]['link'] | x}" title="Results page ${prev_links[-1]['page']}">Previous</a> 
+% for link in prev_links:
+<a href="${resource_root}?${link['link'] | x}" title="Results page ${link['page']}">${link['page']}</a> 
+% endfor
+% endif
+<strong>${current_page}</strong> 
+% if next_links:
+% for link in next_links:
+<a href="${resource_root}?${link['link'] | x}" title="Results page ${link['page']}">${link['page']}</a> 
+% endfor
+<a href="${resource_root}?${next_links[0]['link'] | x}" title="Results page ${next_links[0]['page']}">Next</a> 
+% endif
+% if last_link:
+<a href="${resource_root}?${last_link['link'] | x}" title="Results page ${last_link['page']}">Last</a>
+% endif
+% else:
+ 
+% endif
+</p>
+</%def>
+
+%if hits == 0:
+<p>Your search did not return any results. Try <a href="${script_root}/light${query_string | x}" title="Edit the current search criteria">editing your search</a> 
+%if log:
+to correct the errors.
+%else:
+to make it less restrictive.
+%endif
+</p>
+<%return '' %>
+%endif
+
+<p>Your search returned <strong>${hits}</strong>
+% if hits != 1:
+results.
+% else:
+result.
+% endif
+% if not results:
+% if hits:
+ However, the results specified are out of range of the original search.
+ Try browsing at <a href="${resource_root}?${first_link['link'] | x}" title="The first result set">the beginning of the results</a>.
+% endif
+</p>
+<% return '' %>
+% endif
+
+ Showing <strong>\
+% if hits > count or page_count > 1:
+${start_index} - ${end_index}\
+% else:
+all results\
+% endif
+</strong>:</p>
+
+${result_links()}
+
+% for i, res in enumerate(results):
+<div class="\
+%if i % 2:
+result2
+%else:
+result1
+%endif
+">
+  <strong>${start_index+i}.</strong> <a href="${script_root}/light/catalogue/${res['id'] | x}${query_string | x}" title="${res['title'] | x}">${res['title'] | x}</a>
+  <div title="Originator">${res['originator'] | x}</div>
+  <div title="Metadata update date"><em>${res['updated'].strftime("%a %d %b %Y")}</em></div>
+</div>
+% endfor
+
+${result_links()}
+
+<form action="${resource_root}" method="get">
+<div>
+## Iterate over all query parameters except count and sort
+% for (k, v) in [i for i in query.iterall() if i[0] not in ('s', 'c')]:
+  <input type="hidden" name="${k}" value="${v | h}"/>
+% endfor
+  <select name="s">
+% for cid, name in (('updated', 'Metadata update date'), ('title', 'Title'), ('originator', 'Originator')):
+  % for i, order in enumerate(('desc', 'asc')):
+  <% value = '%s,%d' % (cid, i) %>\
+    <option value="${value}"\
+% if sort[cid][order][1]:
+ selected="selected"\
+% endif
+>${name} (${order})</option>
+  % endfor
+% endfor
+  </select>
+  <button type="submit">Change</button> the ordering of results.
+</div>
+<div>
+  <select name="c">
+% for c in (5, 10, 15, 20, 25, 30, 40, 50):
+    <option value="${c}"\
+% if c == count:
+ selected="selected"\
+% endif
+>${c}</option>
+% endfor
+  </select>
+## Iterate over all query parameters except count
+% for (k, v) in [i for i in query.iterall() if i[0] != 'c']:
+  <input type="hidden" name="${k}" value="${v | h}"/>
+% endfor
+  <button type="submit">Change</button> the number of results per page.
+</div>
+</form>
+<p>
+  Syndicate these results using <a href="${script_root}/light/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="" src="/images/feed-icon.gif" class="icon"/> RSS</a>
+  or
+  <a href="${script_root}/light/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="" src="/images/feed-icon.gif" class="icon"/> Atom</a>.
+</p>

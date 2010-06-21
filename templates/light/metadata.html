@@ -1,3 +1,492 @@
-<%inherit file="base.html"/>
+<%inherit file="base-ok.html"/>
+<%def name="nav_links()">
+  <li><a href="${script_root}/light/catalogue${query_string | x}" title="Return to your results">Back to results</a></li>
+  <li><a href="${script_root}/light${query_string | x}" title="Edit this search">Edit search</a></li>
+</%def>
+<%def name="output_element(element)">
+  % if isinstance(element, Exception):
+    <p class="error">${element.message}</p>
+  % else:
+    ${caller.body()}
+  % endif
+</%def>\
+<%def name="format_date(date)">
+${date.strftime('%A %d %B %Y')}
+</%def>\
+<%def name="format_search_date(date)">
+${date.strftime('%Y-%m-%d')}
+</%def>\
+<%def name="format_contacts(contacts, quote=False)">
+  % if quote:
+  <blockquote>
+  % endif
+    % for i, contact in enumerate(contacts):
+      <strong>
+      % if contact.organisation:
+        ${contact.organisation | x}
+      % elif contact.name:
+        ${contact.name | x}
+      % elif contact.position:
+        ${contact.position | x}
+      % else:
+        Unnamed contact
+      % endif
+      </strong><br/>
+      % if contact.name and contact.organisation:
+      Individual name: ${contact.name | x}<br/>
+      % endif
+      % if contact.position and (contact.name or contact.organisation):
+      Position: ${contact.position | x}<br/>
+      % endif
+      % if contact.address:
+      Address: <a href="http://maps.google.co.uk/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=${contact.address | u}" title="View the location">${contact.address | x}</a><br/>
+      % endif
+      % if contact.email:
+      Email: ${contact.email | x}<br/>
+      % endif
+      % if contact.tel:
+      Telephone: ${contact.tel | x}<br/>
+      % endif
+      % if contact.fax:
+      Facsimile: ${contact.fax | x}<br/>
+      % endif
+      % if contact.roles:
+      Roles:
+      <ul>
+        % for role in contact.roles:
+        <li>${role}</li>
+        % endfor
+      </ul>
+      % endif
+      % if contact.contacts:
+      ${format_contacts(contact.contacts, True)}
+      % endif
+    % endfor
+  % if quote:
+  </blockquote>
+  % endif
+</%def>\
 
-Metadata id is ${gid}.
+<!-- Element 3 -->
+<h2>Abstract</h2>
+<p>${metadata.abstract}</p>
+
+% if metadata.bbox:
+<!-- Element 12 -->
+<h2>Geographic Extent</h2>
+<img id="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" width="250" height="250"/>
+<p>
+  The metadata covers the area West - East from
+  ${metadata.bbox[0]}° to ${metadata.bbox[2]}° and North -
+  South from ${metadata.bbox[3]}° to ${metadata.bbox[1]}°.
+
+  <a
+  href="${script_root}/light/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
+  title="Area search for metadata">Search</a> for all metadata within
+  this area.
+</p>
+<p>
+  Download the extent in <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="icon"/> KML format</a>.
+</p>
+% endif
+
+% if metadata.keywords:
+<!-- Element 11 -->
+<h2>Keywords</h2>
+  % for title, defns in metadata.keywords.items():
+  <h3>${title}</h3>
+  <dl>
+    % for keyword, defn in defns.items():
+    <dt>
+      % if 'error' in defn:
+        <span class="error">${defn['error']}</span>
+    </dt>
+      % else:
+        <% if defn:
+             if defn['short']: keyword = defn['short']
+             else: keyword = defn['long']
+        %>
+        <a href="${script_root}/light/catalogue?q=p:${keyword | u}"
+           title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
+        % if defn:
+          % if defn['short'] and defn['long'] != defn['short']:
+          - ${defn['long'] | x}
+          % endif
+    </dt>
+    <dd>${defn['defn'] | x}</dd>
+        % else:
+    </dt>
+        % endif
+      % endif
+    % endfor
+  </dl>
+  % endfor
+% endif\
+
+<h2>Metadata Details</h2>
+
+% if metadata.alt_titles:
+<!-- Element 2 -->
+<h3>Alternative resource title</h3>
+<%self:output_element element="${metadata.alt_titles}">
+<ul>
+  % for i, detail in enumerate(metadata.alt_titles):
+  <li>${detail}</li>
+  % endfor
+</ul>
+</%self:output_element>
+% endif\
+
+% if metadata.unique_id:
+<!-- Element 6 -->
+<h3>Unique resource identifier</h3>
+<%self:output_element element="${metadata.alt_titles}">
+<p>${metadata.unique_id}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.online_resource:
+<!-- Element 5 -->
+<h3>Resource locator</h3>
+<%self:output_element element="${metadata.online_resource}">
+  <dl>
+  % for i, resource in enumerate(metadata.online_resource):
+    <dt><a href="${resource['link']}" title="External link">\
+    % if resource['name']:
+${resource['name']}
+    % else:
+External link\
+    % endif
+</a></dt>
+    % if resource['description']:
+    <dd>${resource['description']}</dd>
+    % endif
+  % endfor
+  </dl>
+</%self:output_element>
+% endif\
+
+% if metadata.access_limits:
+<!-- Element 20 -->
+<h3>Limitations on public access</h3>
+<%self:output_element element="${metadata.access_limits}">
+<dl>
+% for i, defn in enumerate(metadata.access_limits):
+  <dt>
+  % if 'error' in defn:
+    <span class="error">${defn['error']}</span>
+  </dt>
+  % elif 'other' in defn:
+  Other constraints</dt>
+  <dd>${defn['other'] | x}</dd>
+  % else:
+    <a href="${script_root}/light/catalogue?q=al:${defn['short'] | u}"
+       title="Search for all metadata having the access limit '${defn['short'] | x}'">${defn['short'] | x}</a>
+  </dt>
+  <dd>${defn['defn'] | x}</dd>
+  % endif
+% endfor
+</dl>
+</%self:output_element>
+% endif\
+
+% if metadata.access_conditions:
+<!-- Element 21 -->
+<h3>Conditions for access and use constraints</h3>
+<%self:output_element element="${metadata.access_conditions}">
+% for i, detail in enumerate(metadata.access_conditions):
+  <p>${detail}</p>
+% endfor
+</%self:output_element>
+% endif\
+
+% if metadata.resource_type:
+<!-- Element 4 -->
+<h3>Resource type</h3>
+<%self:output_element element="${metadata.resource_type}">
+<dl>
+  <dt>
+  <% defn = metadata.resource_type %>
+  % if 'error' in defn:
+    <span class="error">${defn['error']}</span>
+  </dt>
+  % else:   
+    <a href="${script_root}/light/catalogue?q=rt:${defn['short'] | u}"
+       title="Search for all metadata having the resource type '${defn['short'] | x}'">${defn['short'] | x}</a>
+  </dt>
+  <dd>${defn['defn'] | x}</dd>
+  % endif
+</dl>
+</%self:output_element>
+% endif\
+
+% if metadata.data_format:
+<!-- Element 23 -->
+<h3>Data format</h3>
+<%self:output_element element="${metadata.data_format}">
+<dl>
+% for i, (keyword, defn) in enumerate(metadata.data_format.items()):
+  <dt>
+  % if 'error' in defn:
+    <span class="error">${defn['error']}</span>
+  </dt>
+  % else:
+  % if defn:
+    <a href="${script_root}/light/catalogue?q=f:${defn['long'] | u}"
+       title="Search for all metadata having the data format '${defn['long'] | x}'">${defn['long'] | x}</a>
+  </dt>
+  <dd>${defn['defn'] | x}</dd>
+  % else:
+    ${keyword | x}
+  </dt>
+  % endif
+  % endif
+% endfor
+</dl>
+</%self:output_element>
+% endif\
+
+<!-- Element 7 to be implemented -->
+
+% if metadata.service_type:
+<!-- Element 10 -->
+<h3>Spatial data service type</h3>
+<%self:output_element element="${metadata.service_type}">
+<ul>
+% for i, detail in enumerate(metadata.service_type):
+  <li>${detail}</li>
+% endfor
+</ul>
+</%self:output_element>
+% endif\
+
+% if metadata.temporal_reference:
+<!-- Element 16 -->
+<h3>Temporal reference</h3>
+<%self:output_element element="${metadata.temporal_reference}">
+%if 'range' in metadata.temporal_reference:
+  <p>The data spans the period from <a href="${script_root}/light/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
+%endif
+% for i, (code, date) in enumerate(metadata.temporal_reference['single']):
+  <p>${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/light/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/light/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]</p>
+% endfor
+</%self:output_element>
+% endif\
+
+% if metadata.extents:
+<!-- Element 13 -->
+<h3>Extent</h3>
+<%self:output_element element="${metadata.extents}">
+<ul>
+% for i, details in enumerate(metadata.extents):
+  <li>
+    ${details['title']}: 
+    % if details['id']:
+    <a href="${script_root}/light/catalogue?a=${details['id'] | u}"
+       title="Search for all metadata in the area '${details['name'] | x}'">${details['name'] | x}</a>
+    % else:
+    ${details['name'] | x}
+    % endif
+  </li>
+% endfor
+</ul>
+</%self:output_element>
+% endif\
+
+% if metadata.vertical_extent:
+<!-- Element 14 -->
+<h3>Vertical extent information</h3>
+<%self:output_element element="${metadata.vertical_extent}">
+<ul>
+  % if 'min-value' in metadata.vertical_extent:
+  <li>Minimum value: ${metadata.vertical_extent['min-value']}</li>
+  % endif
+  % if 'max-value' in metadata.vertical_extent:
+  <li>Maximum value: ${metadata.vertical_extent['max-value']}</li>
+  % endif
+  % if 'crs' in metadata.vertical_extent:
+  <li><abbr title="Coordinate Reference System">CRS</abbr>: ${metadata.vertical_extent['crs']}</li>
+  % endif
+  % if 'crs-id' in metadata.vertical_extent:
+  <li><abbr title="Coordinate Reference System">CRS</abbr> identifier ${metadata.vertical_extent['crs-id'][0]}: ${metadata.vertical_extent['crs-id'][1]}</li>
+  % endif
+  % if 'crs-name' in metadata.vertical_extent:
+  <li><abbr title="Coordinate Reference System">CRS</abbr> name: ${metadata.vertical_extent['crs-name']}</li>
+  % endif
+  % if 'crs-scope' in metadata.vertical_extent:
+  <li><abbr title="Coordinate Reference System">CRS</abbr> scope: ${metadata.vertical_extent['crs-scope']}</li>
+  % endif
+  % if 'cs-id' in metadata.vertical_extent:
+  <li><abbr title="Coordinate System">CS</abbr> identifier ${metadata.vertical_extent['cs-id'][0]}: ${metadata.vertical_extent['cs-id'][1]}</li>
+  % endif
+  % if 'cs-name' in metadata.vertical_extent:
+  <li><abbr title="Coordinate System">CS</abbr> name ${metadata.vertical_extent['cs-name']}</li>
+  % endif
+  % if 'csaxis-id' in metadata.vertical_extent:
+  <li><abbr title="Coordinate System">CS</abbr> axis identifier ${metadata.vertical_extent['csaxis-id'][0]}: ${metadata.vertical_extent['csaxis-id'][1]}</li>
+  % endif
+  % if 'csaxis-info' in metadata.vertical_extent:
+  <li><abbr title="Coordinate System">CS</abbr> axis is ${metadata.vertical_extent['csaxis-info'][0]} (${metadata.vertical_extent['csaxis-info'][1]})</li>
+  % endif
+  % if 'datum-id' in metadata.vertical_extent:
+  <li>Datum identifier ${metadata.vertical_extent['datum-id'][0]}: ${metadata.vertical_extent['datum-id'][1]}</li>
+  % endif
+  % if 'datum-name' in metadata.vertical_extent:
+  <li>Datum name: ${metadata.vertical_extent['datum-name']}</li>
+  % endif
+  % if 'datum-scope' in metadata.vertical_extent:
+  <li>Datum scope: ${metadata.vertical_extent['datum-scope']}</li>
+  % endif
+  % if 'datum-info' in metadata.vertical_extent:
+  <li>Datum details: ${metadata.vertical_extent['datum-info']}</li>
+  % endif
+</ul>      
+</%self:output_element>
+% endif\
+
+% if metadata.reference_system:
+<!-- Element 15 -->
+<h3>Spatial reference system</h3>
+<%self:output_element element="${metadata.reference_system}">
+<ul>
+  <li>Identifier: ${metadata.reference_system['identifier']}</li>
+  <li>Source: <a href="${metadata.reference_system['url']}">${metadata.reference_system['source']}</a></li>
+  % if metadata.reference_system['name']:
+  <li>Name: ${metadata.reference_system['name']}</li>
+  % endif
+  % if metadata.reference_system['scope']:
+  <li>Scope: ${metadata.reference_system['scope']}</li>
+  % endif
+</ul>
+</%self:output_element>
+% endif\
+
+% if metadata.spatial_resolution:
+<!-- Element 18 -->
+<h3>Spatial resolution</h3>
+<%self:output_element element="${metadata.spatial_resolution}">
+<ul>
+% for i, detail in enumerate(metadata.spatial_resolution):
+  % if 'distance' in detail:
+  <li>Distance: ${detail['distance']} meters</li>
+  % elif 'scale' in detail:
+  <li>Scale 1:${detail['scale']}</li>
+  %endif
+% endfor
+</ul>
+</%self:output_element>
+% endif\
+
+% if metadata.topic_category:
+<!-- Element 9 -->
+<h3>Topic category</h3>
+<%self:output_element element="${metadata.topic_category}">
+<dl>
+  % for i, (keyword, defn) in enumerate(metadata.topic_category.items()):
+  <dt>
+  % if 'error' in defn:
+    <span class="error">${defn['error']}</span>
+  </dt>
+  % else:
+    % if defn:
+    <a href="${script_root}/light/catalogue?q=tc:${defn['short'] | u}"
+       title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
+      % if defn['long'] != defn['short']:
+    - ${defn['long'] | x}
+      % endif
+  </dt>
+  <dd>${defn['defn'] | x}</dd>
+    % else: 
+    ${keyword | x}
+  </dt>
+    % endif
+  % endif
+% endfor
+</dl>
+</%self:output_element>
+% endif\
+
+% if metadata.lineage:
+<!-- Element 17 -->
+<h3>Lineage</h3>
+<%self:output_element element="${metadata.lineage}">
+<p>${metadata.lineage}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.additional_info:
+<!-- Element 19 -->
+<h3>Additional information</h3>
+<%self:output_element element="${metadata.additional_info}">
+<p>${metadata.additional_info}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.responsible_party:
+<!-- Element 22 -->
+<h3>Responsible party</h3>
+<%self:output_element element="${metadata.responsible_party}">
+${format_contacts(metadata.responsible_party)}
+</%self:output_element>
+% endif\
+
+<!-- Element 25 to be implemented -->
+
+% if metadata.resource_language:
+<!-- Element 8 -->
+<h3>Resource language</h3>
+<%self:output_element element="${metadata.resource_language}">
+<p>${metadata.resource_language}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.update_frequency:
+<!-- Element 24 -->
+<h3>Frequency of update</h3>
+<%self:output_element element="${metadata.update_frequency}">
+<p>${metadata.update_frequency}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.date:
+<!-- Element 26 -->
+<h3>Date of update of metadata</h3>
+<%self:output_element element="${metadata.date}">
+<p>${format_date(metadata.date)}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.name:
+<!-- Element 27 -->
+<h3>Metadata standard name</h3>
+<%self:output_element element="${metadata.name}">
+<p>${metadata.name}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.version:
+<!-- Element 28 -->
+<h3>Metadata standard version</h3>
+<%self:output_element element="${metadata.version}">
+<p>${metadata.version}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.language:
+<!-- Element 29 -->
+<h3>Metadata language</h3>
+<%self:output_element element="${metadata.version}">
+<p>${metadata.language}</p>
+</%self:output_element>
+% endif\
+
+<h2>Download</h2>
+<p>The metadata is available for downloading in the following formats:</p>
+<ul>
+  <li><a href="${resource_root}/csv">MEDIN format</a> (<abbr title="Comma Separated Values">CSV</abbr>)</li>
+  <li><a href="${resource_root}/MEDIN_2.3">MEDIN format</a> (XML version 2.3.1)</li>
+  <li><a href="${resource_root}/DC">Dublin Core format</a> (XML)</li>
+  <li><a href="${resource_root}/DIF_9.4">GCMD DIF format</a> (XML version 9.4)</li>
+  <li><div><a href="${resource_root}/ISO19115">ISO 19115 format</a> (encoded as ISO 19139 XML)</div></li>
+</ul>
+<p>This metadata complies with <a href="http://www.inspire-geoportal.eu" title="Infrastructure for Spatial Information in the European Community">INSPIRE</a> and <a href="http://www.gigateway.org.uk/metadata/standards.html" title="Geo-spatial Metadata Interoperability Initiative">GEMINI 2</a> standards.</p>

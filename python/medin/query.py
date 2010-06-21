@@ -58,6 +58,12 @@ class Query(GETParams):
         self.fields = fields
         self.max_count = max_count
 
+        # join multiple search terms into a single term
+        try:
+            self['q'] = ' '.join([t for t in self['q'] if t])
+        except KeyError:
+            pass
+
     def verify(self):
         """
         Check the validity of the Query, logging any errors
@@ -292,17 +298,22 @@ class Query(GETParams):
         self['i'] = value
 
     def getArea(self, cast=True, default=''):
+        def check_area(area):
+            if self.raise_errors and len(self['a']) > 1:
+                raise QueryError('More than one area is specified: ignoring all areas except for %s' % area)
+            return area
+        
         try:
             area = self['a'][0]
         except KeyError:
             return default
 
         if not cast:
-            return area
+            return check_area(area)
 
         areaname = self.areas.getAreaName(area)
         if areaname:
-            return areaname
+            return check_area(areaname)
 
         if self.raise_errors:
             raise QueryError('The area id does not exist: %s' % area)

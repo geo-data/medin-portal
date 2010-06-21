@@ -1,17 +1,72 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<%def name="header()">
+</%def>\
+<%def name="nav_links()">
+</%def>\
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN"
+    "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head profile="http://a9.com/-/spec/opensearch/1.1/">
     <title>MEDIN - ${title}</title>
+    <meta name="Keywords" content="data,metadata,marine,portal,discovery,MEDIN,find,search,map,BODC,BGS,DASSH,UKHO,archive,centre" />
+    <meta name="Description" content="finding marine data using the MEDIN data discovery portal" />
+    <meta name="Robots" content="all" />
+    <meta name="Distribution" content="Global" />
+    <meta name="Rating" content="General" />
+    <meta name="Classification" content="Science" />
+    <meta name="Owner" content="Marine Environmental Data and Information Network (MEDIN)" />
+    % if author:
+    <meta name="Author" content="Application: GeoData Insitute, Content: ${author | h}" />
+    % else:
+    <meta name="Author" content="GeoData Institute on behalf of the MEDIN partnership" />
+    % endif
+    <meta name="progid" content="medin-portal-${version}" />
+    <meta name="Reply-to" content="enquiries@oceannet.org" />
+    <meta name="Copyright" content="© ${year} Marine Environmental Data and Information Network (MEDIN)" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="search"
           type="application/opensearchdescription+xml" 
           href="${script_root}/opensearch/catalogue/light.xml"
           title="MEDIN Catalogue" />
+    <link href="/css/portal-light.css" rel="stylesheet" type="text/css" />
+    ${self.header()}
   </head>
   <body>
+    <a href="http://www.oceannet.org"><img src="/images/medin-logo.png" alt="Marine Environmental Data Information Network (MEDIN)" width="200" height="67" class="icon"/></a>
+    <ul class="nav">
+      ${self.nav_links()}
+    </ul>
+    <!-- SwishCommand index -->
     <h1>${title}</h1>
 
-    ${self.body()}
+    ${next.body()}
+
+    <!-- SwishCommand noindex -->
+    <div>
+      <form id="comment-form" method="post" action="" enctype="application/x-www-form-urlencoded">
+        <fieldset id="comment" class="off">
+          <legend>Submit a comment</legend>
+          <div>Feedback is welcome! In addition to your comment below, the title and URL of the current page will be noted.</div>
+          <div><textarea name="comment" cols="20" rows="5"></textarea></div>
+          <div><label for="comment-name">Optionally add your name:</label></div>
+          <div><input type="text" id="comment-name" name="comment-name" value=""/></div>
+          <div><label for="comment-email">Add your email address if you would like a response:</label></div>
+          <div><input type="text" id="comment-email" name="comment-email" value=""/></div>
+          <div id="comment-check"><input type="text" name="comment-check" value=""/></div>
+          <div><input type="submit" value="comment"/></div>
+          <input type="hidden" name="comment-title" value="${title}"/>
+        </fieldset>
+      </form>
+    </div>
+    <ul class="nav">
+      <li><a href="${script_root}/full${query_string | x}" title="Go to the full search interface">Rich search</a></li>
+      <li><a href="http://www.oceannet.org" title="MEDIN homepage">MEDIN home</a></li>
+      <li><a href="http://www.oceannet.org/about_us/" title="About MEDIN">About us</a></li>
+      <li><a href="http://www.oceannet.org/contact_us/" title="Contact MEDIN">Contact us</a></li>
+    </ul>
+    <div class="footer">
+      <div>MEDIN Catalogue Search version ${version} ©${year}</div>
+      <div>Developed by the <a href="http://www.geodata.soton.ac.uk/">GeoData Institute</a> <img class="icon logo" src="/images/geodata-icon.png" width="16" height="16" alt=""/></div>
+    </div>
   </body>
 </html>
