@@ -249,7 +249,10 @@ class Search(MakoApp):
         r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
 
         # check the etag
-        docid = list(r)[0]
+        try:
+            docid = list(r)[0]
+        except IndexError:
+            docid = 'none'
         etag = check_etag(environ, docid)
 
         # revert the query to its previous state
