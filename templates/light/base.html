@@ -6,6 +6,7 @@
     "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head profile="http://a9.com/-/spec/opensearch/1.1/">
+    <meta http-equiv="Content-type" content="${content_type}" />
     <title>MEDIN - ${title}</title>
     <meta name="Keywords" content="data,metadata,marine,portal,discovery,MEDIN,find,search,map,BODC,BGS,DASSH,UKHO,archive,centre" />
     <meta name="Description" content="finding marine data using the MEDIN data discovery portal" />
@@ -32,7 +33,7 @@
     ${self.header()}
   </head>
   <body>
-    <a href="http://www.oceannet.org"><img src="/images/medin-logo.png" alt="Marine Environmental Data Information Network (MEDIN)" width="200" height="67" class="icon"/></a>
+    <div><a href="http://www.oceannet.org"><img src="/images/medin-logo.png" alt="Marine Environmental Data Information Network (MEDIN)" width="200" height="67" class="icon"/></a></div>
     <ul class="nav">
       ${self.nav_links()}
     </ul>

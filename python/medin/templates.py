@@ -56,7 +56,8 @@ class MakoApp(object):
     def __call__(self, environ, start_response):
         """The standard WSGI interface"""
 
-        headers = [('Content-Type', self.getContentType(environ))]
+        content_type = '%s;charset=utf-8' % self.getContentType(environ)
+        headers = [('Content-Type', content_type)]
         # check whether the etag is valid
         if self.check_etag:
             from medin.views import check_etag
@@ -69,6 +70,7 @@ class MakoApp(object):
         ctxt.headers.extend(headers)    # add the etag
         
         kwargs = self.get_template_vars(environ, ctxt.title)
+        kwargs['content_type']=content_type
         kwargs.update(ctxt.tvars)
     
         output = template.render(**kwargs)

@@ -74,7 +74,7 @@ ${date.strftime('%Y-%m-%d')}
 % if metadata.bbox:
 <!-- Element 12 -->
 <h2>Geographic Extent</h2>
-<img id="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" width="250" height="250"/>
+<div><img id="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" width="250" height="250"/></div>
 <p>
   The metadata covers the area West - East from
   ${metadata.bbox[0]}° to ${metadata.bbox[2]}° and North -
@@ -426,7 +426,9 @@ External link\
 <!-- Element 22 -->
 <h3>Responsible party</h3>
 <%self:output_element element="${metadata.responsible_party}">
+<div>
 ${format_contacts(metadata.responsible_party)}
+</div>
 </%self:output_element>
 % endif\
 

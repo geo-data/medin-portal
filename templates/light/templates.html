@@ -1,4 +1,8 @@
-<%inherit file="base.html"/> 
+<%inherit file="base-ok.html"/>
+<%def name="nav_links()">
+  <li><a href="${script_root}/full" title="Rich search interface">Rich search</a></li>
+  <li><a href="${script_root}/light" title="Light search interface">Light search</a></li>
+</%def>
 <p>The MEDIN Portal search is available in two formats:</p>
 <ul>
   <li>A <a href="${request_uri}/full" title="Rich search">rich
