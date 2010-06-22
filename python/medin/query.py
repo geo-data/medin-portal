@@ -150,29 +150,32 @@ class Query(GETParams):
             return default
 
         import datetime
+        
         try:
             dt = datetime.datetime.strptime(date, '%Y-%m-%d')
-            if cast:
-                return dt
-            return date
         except ValueError:
             try:
                 dt = datetime.datetime.strptime(date, '%Y')
-                if cast:
-                    if is_start: return dt
-                    else: return dt.replace(month=12, day=31)
-                return date
+                if not is_start:
+                    now = datetime.datetime.now()
+                    if dt.year == now.year:
+                        # it is this year so set the end date to now
+                        dt = now
+                    else:
+                        dt = dt.replace(month=12, day=31)
             except ValueError:
                 try:
                     dt = datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-                    if cast:
-                        return dt
-                    return date
                 except ValueError:
                     if self.raise_errors:
                         raise QueryError('The following date is not recognised: %s. Please specify the date in the format YYYY-MM-DD' % date)
+                    return default
 
-        return default
+        if self.raise_errors and dt > datetime.datetime.now():
+            raise QueryError('The date is in the future: %s' % date)
+
+        if cast: return dt
+        return date
 
     def getBBOX(self, cast=True, default=''):
         try:
