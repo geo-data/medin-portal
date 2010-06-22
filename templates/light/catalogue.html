@@ -46,8 +46,8 @@ ${query_string | x}\
 </%def>
 
 <%def name="result_links()">
-<p class="nav">
 % if page_count > 1:
+<p class="nav">
 % if first_link:
 <a href="${resource_root}?${first_link['link'] | x}" title="Results page ${first_link['page']}">First</a>
 % endif
@@ -67,10 +67,10 @@ ${query_string | x}\
 % if last_link:
 <a href="${resource_root}?${last_link['link'] | x}" title="Results page ${last_link['page']}">Last</a>
 % endif
+</p>
 % else:
  
 % endif
-</p>
 </%def>
 
 %if hits == 0:
@@ -155,10 +155,6 @@ ${result_links()}
 >${c}</option>
 % endfor
   </select>
-## Iterate over all query parameters except count
-% for (k, v) in [i for i in query.iterall() if i[0] != 'c']:
-  <input type="hidden" name="${k}" value="${v | h}"/>
-% endfor
   <button type="submit">Change</button> the number of results per page.
 </div>
 </form>

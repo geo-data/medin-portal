@@ -20,6 +20,7 @@ ${date.strftime('%Y-%m-%d')}
   % if quote:
   <blockquote>
   % endif
+  <div>
     % for i, contact in enumerate(contacts):
       <strong>
       % if contact.organisation:
@@ -62,6 +63,7 @@ ${date.strftime('%Y-%m-%d')}
       ${format_contacts(contact.contacts, True)}
       % endif
     % endfor
+  </div>
   % if quote:
   </blockquote>
   % endif
@@ -426,9 +428,7 @@ External link\
 <!-- Element 22 -->
 <h3>Responsible party</h3>
 <%self:output_element element="${metadata.responsible_party}">
-<div>
 ${format_contacts(metadata.responsible_party)}
-</div>
 </%self:output_element>
 % endif\
 
