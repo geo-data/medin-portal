@@ -37,7 +37,9 @@
 % for result in results:
   <entry>
     <title>${result['title'] | x}</title>
-    <author>${result['originator'] | x}</author>
+    <author>
+      <name>${result['originator'] | x}</name>
+    </author>
     <updated>${isoformat(result['updated'])}</updated>
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
     <id>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</id>
