@@ -86,7 +86,45 @@ class Vocabulary(object):
         except TypeError:
             return []
 
-class MEDINVocabulary(Vocabulary):
+class CachedVocabulary(Vocabulary):
+    """
+    Vocabulary that caches lists returned by getList()
+
+    You can specify the lifetime of a list before it is refreshed by
+    passing a value in seconds to the constructor. The cache is shared
+    across Vocabulary instances.
+    """
+
+    _cache = {}
+    
+    def __init__(self, lifetime, *args, **kwargs):
+        super(CachedVocabulary, self).__init__(*args, **kwargs)
+        self.lifetime = lifetime
+
+    def refreshCachedList(self, list_id):
+        from time import time
+        # get the list from the inherited class
+        list_ = super(CachedVocabulary, self).getList(list_id)
+        self._cache[list_id] = (time(), list_)
+        return list_
+
+    def getList(self, list_id):
+        from time import time
+
+        cache_time = 0
+        try:
+            cache_time, list_ = self._cache[list_id]
+        except KeyError:
+            # get the list from the inherited class
+            return self.refreshCachedList(list_id)
+
+        # check whether the cache needs refreshing
+        if (time() - cache_time) > self.lifetime:
+            return self.refreshCachedList(list_id)
+
+        return list_
+
+class MEDINVocabulary(CachedVocabulary):
     """
     Vocabulary object providing consistent API to all MEDIN vocabs
 
@@ -172,7 +210,8 @@ class MEDINVocabulary(Vocabulary):
          'term': "otherRestrictions"}]}
 
     def __init__(self, *args, **kwargs):
-        super(MEDINVocabulary, self).__init__(*args, **kwargs)
+        lifetime = 3600           # seconds before a list is refreshed
+        super(MEDINVocabulary, self).__init__(lifetime, *args, **kwargs)
         self.lists = {}
 
     def getStaticVocab(self, list_id):
