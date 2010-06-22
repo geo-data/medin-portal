@@ -145,7 +145,7 @@ class Query(GETParams):
 
     def asDate(self, key, cast, default, is_start):
         try:
-            date = self[key][0]
+            date = self[key][0].strip()
         except KeyError, AttributeError:
             return default
 
