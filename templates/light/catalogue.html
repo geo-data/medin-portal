@@ -125,7 +125,7 @@ result1
 
 ${result_links()}
 
-<form action="${resource_root}" method="get">
+<form id="change-results" action="${resource_root}" method="get">
 <div>
 ## Iterate over all query parameters except count and sort
 % for (k, v) in [i for i in query.iterall() if i[0] not in ('s', 'c')]:
