@@ -92,14 +92,13 @@ $(function() {
 </%def>
 
 <%def name="left_menu()">\
-<div id="menu-contents">&nbsp;
   <div class="info">
     ${search_criteria()}
     %if query_string:
     <p><a href="${resource_root}" title="Clear this search and start again">Start a new search</a>.</p>
     %endif
   </div>
-  <div class="info info-sibling">
+  <div class="info">
     <h3>Shortcut search</h3>
     <div>Click to search...</div>
     <ul>
@@ -110,7 +109,6 @@ $(function() {
       <li><a title="Search" href="${resource_root}/areas/countries/northern%20ireland">Northern Ireland</a></li>
     </ul>
   </div>
-</div>
 </%def>
 
 <%def name="area_selection(area_id)">\

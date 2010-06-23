@@ -170,8 +170,8 @@ blockquote {
     line-height:1.2em;
 }
 
-.info-sibling {
-    margin-top: 0.5em;
+#menu-contents .info {
+    margin-bottom: 0.5em;
 }
 
 .info li {
