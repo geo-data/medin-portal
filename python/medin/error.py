@@ -95,23 +95,12 @@ class ErrorHandler(errata.ErrorHandler):
             del exc_info
 
     def handleException(self, exception, environ, start_response):
-        from mako.exceptions import RichTraceback
-        from cStringIO import StringIO
-        
-        traceback = RichTraceback()
-        buf = StringIO()
-        
-        for (filename, lineno, function, line) in traceback.traceback:
-            buf.write("File %s, line %s, in %s\n" % (filename, lineno, function))
-            buf.write(str(line))
-            buf.write("\n")
-        buf.write("%s: %s\n" % (str(traceback.error.__class__.__name__), traceback.error))
-        output = buf.getvalue()
-
+        # log the exception
         environ['logging.logger'].exception('The application encountered an unhandled exception')
-        
-        start_response('500 Internal Server Error', [('Content-type', 'text/plain')])
-        return [output]
+
+        # change the exception to a HTTPError and delegate
+        exception = errata.HTTPError('500 Portal Error', 'Sorry - the portal has encountered a critical problem. The error has been logged and will be dealt with as soon as possible.')
+        return self.handleHTTPError(exception, environ, start_response)
 
 # The WSGI Applications
 

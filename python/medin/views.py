@@ -671,7 +671,7 @@ class Metadata(MakoApp):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
 
-        parser = self.request(gid, areas)
+        parser = self.request(environ['logging.logger'], gid, areas)
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
@@ -787,7 +787,7 @@ class MetadataImage(object):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
 
-        parser = self.request(gid, areas)
+        parser = self.request(environ['logging.logger'], gid, areas)
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
@@ -836,11 +836,11 @@ class MetadataXML(object):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         fmt = environ['selector.vars']['format'] # the requested format
 
-        if fmt not in self.request.getMetadataFormats():
+        if fmt not in self.request.getMetadataFormats(environ['logging.logger']):
             raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
         areas = get_areas(environ)
-        parser = self.request(gid, areas)
+        parser = self.request(environ['logging.logger'], gid, areas)
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
@@ -924,7 +924,7 @@ class MetadataCSV(object):
         
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
-        parser = self.request(gid, areas)
+        parser = self.request(environ['logging.logger'], gid, areas)
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
