@@ -27,6 +27,9 @@ class MetadataError(Exception):
         self.message = message
         self.detail = detail
 
+    def __str__(self):
+        return self.message + ":\n" + self.detail
+
 class ServiceError(MetadataError):
     pass
 
@@ -346,7 +349,7 @@ class Parser(object):
         m.data_format = self.dataFormat()               # element 23
         m.update_frequency = self.updateFrequency()     # element 24
         # element 25 to be implemented...
-        m.date = self.date()            # element 26
+        m.date = self.date(False)       # element 26
         m.name = self.name()            # element 27
         m.version = self.version()      # element 28
         m.language = self.language()    # element 29
@@ -1058,21 +1061,34 @@ class Parser(object):
     # Element 25: Inspire Conformity
     # To be implemented...
 
-    def date(self):
+    def date(self, raise_error=True):
         """Element 26: Metadata Date"""
-        
         try:
             date = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:Date')[0].content.strip()
         except IndexError:
             pass
         else:
-            return self.xsDate2pyDatetime(date)
+            try:
+                return self.xsDate2pyDatetime(date)
+            except ValueError, e:
+                exception = MetadataError('The metadata date is not valid',
+                                          'The date retrieved from the XML is not a valid date: %s' % date)
+                if raise_error:
+                    raise exception
+                return exception
 
         try:
             datetime = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:DateTime')[0].content.strip()
         except IndexError:
             return None
-        return self.xsDatetime2pyDatetime(datetime)
+        try:
+            return self.xsDatetime2pyDatetime(datetime)
+        except ValueError, e:
+            exception = MetadataError('The metadata timestamp is not valid',
+                                      'The timestamp retrieved from the XML is not a valid datetime: %s' % date)
+            if raise_error:
+                raise exception
+            return exception
 
     def name(self):
         """Element 27: Metadata Standard Name"""

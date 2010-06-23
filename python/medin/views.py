@@ -35,6 +35,7 @@ from errata import HTTPError
 # Custom modules
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
 from medin.log import msg_info, msg_warn, msg_error
+from medin.metadata import MetadataError
 
 # Utility functions
 
@@ -64,6 +65,19 @@ def check_etag(environ, etag):
             raise HTTPNotModified
 
     return server_etag
+
+def get_metadata_date(environ, parser):
+    """
+    Return the metadata date as a string
+
+    If the date cannot be retrieved the error is logged.
+    """
+    try:
+        return str(parser.date())
+    except MetadataError, e:
+        environ['logging.logger'].exception('The metadata date cannot be retrieved')
+
+    return None
 
 def set_query(query, environ):
     environ['QUERY_STRING'] = str(query)
@@ -679,9 +693,11 @@ class Metadata(MakoApp):
         headers = []
         if parser:
             # check the etag, adding any extra data to the etag
-            etag = check_etag(environ, str(parser.date())+etag_data)
-            headers.extend([('Etag', etag),
-                            ('Cache-Control', 'no-cache, must-revalidate')])
+            date = get_metadata_date(environ, parser)
+            if date:
+                etag = check_etag(environ, date+etag_data)
+                headers.extend([('Etag', etag),
+                                ('Cache-Control', 'no-cache, must-revalidate')])
 
         return parser, headers
 
@@ -792,7 +808,12 @@ class MetadataImage(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         bbox = parser.bbox()
         if not bbox:
@@ -814,9 +835,7 @@ class MetadataImage(object):
         # serialise the image
         bytes = image.tostring('png')
 
-        headers = [('Content-Type', 'image/png'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.append(('Content-Type', 'image/png'))
 
         start_response('200 OK', headers)
         return [bytes]
@@ -845,7 +864,12 @@ class MetadataXML(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         filename = parser.uniqueID()
         if not splitext(filename)[1]:
@@ -853,10 +877,8 @@ class MetadataXML(object):
 
         document = str(parser.document)
 
-        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-                   ('Content-Type', 'application/xml'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.extend([('Content-disposition', 'attachment; filename="%s"' % filename),
+                        ('Content-Type', 'application/xml')])
 
         start_response('200 OK', headers)
         return [document]
@@ -929,7 +951,12 @@ class MetadataCSV(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         metadata = parser.parse()
 
@@ -1064,10 +1091,8 @@ class MetadataCSV(object):
         else:
             filename = gid + '.csv'
 
-        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-                   ('Content-Type', 'application/vnd.ms-excel'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.extend([('Content-disposition', 'attachment; filename="%s"' % filename),
+                        ('Content-Type', 'application/vnd.ms-excel')])
 
         start_response('200 OK', headers)
         return buf
