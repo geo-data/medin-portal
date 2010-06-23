@@ -96,7 +96,7 @@ class TermBuilder(object):
                'l': "Lineage",
                'al': "PublicAccessLimits",
                'o': "DataOriginator",
-               'f': "DataFormat"}
+               'f': "AvailableDataFormats"}
 
     def __init__(self, client):
         self.client = client
