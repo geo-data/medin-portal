@@ -32,7 +32,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head profile="http://a9.com/-/spec/opensearch/1.1/">
     <meta http-equiv="Content-type" content="${content_type}" />
-    <title>MEDIN - ${title}</title>
+    <title>MEDIN - ${title | x}</title>
     <meta name="Keywords" content="data,metadata,marine,portal,discovery,MEDIN,find,search,map,BODC,BGS,DASSH,UKHO,archive,centre" />
     <meta name="Description" content="finding marine data using the MEDIN data discovery portal" />
     <meta name="Robots" content="all" />
@@ -63,7 +63,7 @@
       ${self.nav_links()}
     </ul>
     <!-- SwishCommand index -->
-    <h1>${title}</h1>
+    <h1>${title | x}</h1>
 
     ${next.body()}
 
@@ -80,7 +80,7 @@
           <div><input type="text" id="comment-email" name="comment-email" value=""/></div>
           <div id="comment-check"><input type="text" name="comment-check" value=""/></div>
           <div><input type="submit" value="comment"/></div>
-          <input type="hidden" name="comment-title" value="${title}"/>
+          <input type="hidden" name="comment-title" value="${title | x}"/>
         </fieldset>
       </form>
     </div>

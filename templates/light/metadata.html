@@ -125,7 +125,7 @@ ${date.strftime('%Y-%m-%d')}\
 <!-- Element 11 -->
 <h2>Keywords</h2>
   % for title, defns in metadata.keywords.items():
-  <h3>${title}</h3>
+  <h3>${title | x}</h3>
   <dl>
     % for keyword, defn in defns.items():
     <dt>

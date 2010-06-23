@@ -30,7 +30,7 @@
     <link rel="alternate"
           type="application/vnd.google-earth.kml+xml"
           href="${resource_root}/kml"
-          title="MEDIN - ${title}"/>
+          title="MEDIN - ${title | x}"/>
 </%def>\
 
 <%def name="left_menu()">\
@@ -164,7 +164,7 @@ ${date.strftime('%Y-%m-%d')}\
 <!-- Element 11 -->
 <p class="no-bottom"><strong>Keywords:</strong></p>
   % for title, defns in metadata.keywords.items():
-  <div><strong>${title}</strong></div>
+  <div><strong>${title | x}</strong></div>
   <div class="subitem">
     % for i, (keyword, defn) in enumerate(defns.items()):
       % if i:
