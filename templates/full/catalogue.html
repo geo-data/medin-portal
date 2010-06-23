@@ -42,7 +42,7 @@ ${query_string | x}\
   <div class="info">
     <h3>Bookmark this search</h3>
     <div>Drag the icon to your bookmark bar...</div>
-	<p><a href="${resource_root}${start_link()}" title="${title}"><img id="bookmark" class="image_no_border" alt="${title}" src="/images/bookmark.png" width="103" height="25"/></a></p>
+	<p><a href="${resource_root}${start_link()}" title="${title | x}"><img id="bookmark" class="image_no_border" alt="${title | x}" src="/images/bookmark.png" width="103" height="25"/></a></p>
 	<div id="bookmark-tip" class="tooltip"><img class="tooltip-arrow" src="/images/tooltip-arrow.png" alt=""/><span class="tooltip-text">Drag this icon</span></div>
   </div>
 </%def>
@@ -69,11 +69,11 @@ ${query_string | x}\
     <link rel="alternate"
           type="application/rss+xml"
           href="${script_root}/full/catalogue.rss${start_link()}"
-          title="MEDIN - ${title}" />
+          title="MEDIN - ${title | x}" />
     <link rel="alternate"
           type="application/atom+xml"
           href="${script_root}/full/catalogue.atom${start_link()}"
-          title="MEDIN - ${title}" />
+          title="MEDIN - ${title | x}" />
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>

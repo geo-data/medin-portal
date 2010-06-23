@@ -54,11 +54,11 @@ ${query_string | x}\
     <link rel="alternate"
           type="application/rss+xml"
           href="${script_root}/light/catalogue.rss${start_link()}"
-          title="MEDIN - ${title}" />
+          title="MEDIN - ${title | x}" />
     <link rel="alternate"
           type="application/atom+xml"
           href="${script_root}/light/catalogue.atom${start_link()}"
-          title="MEDIN - ${title}" />
+          title="MEDIN - ${title | x}" />
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
