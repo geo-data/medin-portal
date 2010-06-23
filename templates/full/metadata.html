@@ -37,12 +37,12 @@
   <div class="info">
     ${search_criteria()}
     <p>
-    % if query_string:
-<a href="${script_root}/full/catalogue${query_string | x}" title="Go back to your search results">Return to your results</a>\
+    % if referrer_query_string:
+<a href="${script_root}/full/catalogue${referrer_query_string | x}" title="Go back to your search results">Return to your results</a>\
     % else:
-<a href="${script_root}/full/catalogue" title="View the list of results">View these results</a>\
+<a href="${script_root}/full/catalogue" title="View the catalogue contents">View the catalogue</a>\
     % endif
- or <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">Edit this search</a>.</p>
+ or <a href="${script_root}/full${referrer_query_string | x}" title="Edit the current search criteria">Edit this search</a>.</p>
   </div>
   <div class="info">
     <h3>Download</h3>

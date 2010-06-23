@@ -25,8 +25,12 @@
 </%doc>\
 <%inherit file="base-ok.html"/>
 <%def name="nav_links()">
-  <li><a href="${script_root}/light/catalogue${query_string | x}" title="Return to your results">Back to results</a></li>
-  <li><a href="${script_root}/light${query_string | x}" title="Edit this search">Edit search</a></li>
+  % if referrer_query_string:
+  <li><a href="${script_root}/light/catalogue${referrer_query_string | x}" title="Return to your results">Back to results</a></li>
+  % else:
+  <li><a href="${script_root}/light/catalogue" title="View the catalogue contents">View the catalogue</a></li>
+  % endif
+  <li><a href="${script_root}/light${referrer_query_string | x}" title="Edit this search">Edit search</a></li>
 </%def>
 <%def name="output_element(element)">
   % if isinstance(element, Exception):

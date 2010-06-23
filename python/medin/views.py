@@ -68,14 +68,34 @@ def check_etag(environ, etag):
 def set_query(query, environ):
     environ['QUERY_STRING'] = str(query)
 
-def get_query(environ):
-    """Returns an object encapsulating the OpenSearch query parameters"""
+def get_query(environ, from_referrer=False):
+    """Returns an object encapsulating the OpenSearch query parameters
+
+    The query is obtained from the environ QUERY_STRING variable by
+    default or the HTTP_REFERER query string if the from_referrer
+    parameter is True.
+    """
     from medin.query import Query
 
-    try:
-        qsl = environ['QUERY_STRING']
-    except KeyError:
-        qsl = ''
+    if not from_referrer:
+        try:
+            qsl = environ['QUERY_STRING']
+        except KeyError:
+            qsl = ''
+    else:
+        try:
+            referrer = environ['HTTP_REFERER']
+        except KeyError:
+            qsl = ''
+        else:
+            # check whether the referral is from the portal
+            if referrer.startswith(environ.script_uri()):
+                from urlparse import urlparse
+        
+                url = urlparse(referrer)
+                qsl = url.query
+            else:
+                qsl = ''
 
     fields = ('updated', 'originator', 'title')
     return Query(qsl, get_areas(environ), fields)
@@ -646,7 +666,7 @@ class Metadata(MakoApp):
         self.request = MetadataRequest()
         super(Metadata, self).__init__(path, check_etag=False, content_type=content_type)
 
-    def setup(self, environ):
+    def setup(self, environ, etag_data=''):
 
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
@@ -658,7 +678,8 @@ class Metadata(MakoApp):
         # Check if the client needs a new version
         headers = []
         if parser:
-            etag = check_etag(environ, str(parser.date()))
+            # check the etag, adding any extra data to the etag
+            etag = check_etag(environ, str(parser.date())+etag_data)
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
 
@@ -676,16 +697,21 @@ class MetadataHTML(Metadata):
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
         
-        parser, headers = super(MetadataHTML, self).setup(environ)
+        q = get_query(environ, True)    # get the query from the HTTP referrer
+        referrer_query_string = str(q)
 
-        q = get_query(environ)
+        # call the base setup, using the referrer query string as etag data
+        parser, headers = super(MetadataHTML, self).setup(environ, referrer_query_string)
+
         criteria = q.asDict(False)
         r = self.search_request(q, RESULT_SIMPLE, environ['logging.logger'])
 
+        if referrer_query_string: referrer_query_string = '?'+referrer_query_string
         metadata = parser.parse()
         title = 'Metadata: %s' % metadata.title
         tvars = dict(metadata=metadata,
                      criteria=criteria,
+                     referrer_query_string=referrer_query_string,
                      hits=r.hits)
 
         return TemplateContext(title, tvars=tvars, headers=headers)

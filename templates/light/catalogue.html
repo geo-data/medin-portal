@@ -142,7 +142,7 @@ result2
 result1
 %endif
 ">
-  <strong>${start_index+i}.</strong> <a href="${script_root}/light/catalogue/${res['id'] | x}${query_string | x}" title="${res['title'] | x}">${res['title'] | x}</a>
+  <strong>${start_index+i}.</strong> <a href="${script_root}/light/catalogue/${res['id'] | x}" title="${res['title'] | x}">${res['title'] | x}</a>
   <div title="Originator">${res['originator'] | x}</div>
   <div title="Metadata update date"><em>${res['updated'].strftime("%a %d %b %Y")}</em></div>
 </div>
