@@ -744,7 +744,7 @@ class Parser(object):
         epsg_url = 'http://www.epsg-registry.org/export.htm?gml=%s' % code
 
         try:
-            res = urlopen(epsg_url)
+            res = urlopen(epsg_url, timeout=5)
         except HTTPError, e:
             return MetadataError('The spatial reference system information could not be obtained',
                                  'The URL at %s could not be opened: %s' % (epsg_url, str(e)))

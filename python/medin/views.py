@@ -1108,9 +1108,9 @@ def proxy(environ, start_response):
         raise HTTPError('403 Forbidden', 'The url cannot be proxied: %s' % url)
 
     import urllib2
-    response = urllib2.urlopen(url)
+    response = urllib2.urlopen(url, timeout=5)
     try:
-        response = urllib2.urlopen(url)
+        response = urllib2.urlopen(url, timeout=5)
     except urllib2.HTTPError, e:
         raise HTTPError('%d Error' % e.getcode(), str(e))
     except urllib2.URLError, e:
