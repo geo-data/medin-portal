@@ -90,7 +90,7 @@ class WSGILog(wsgilogging.WSGILog):
     """
 
     def getLogger(self, environ, logger, extras):
-         return LoggerAdapter(logger, extras)
+         return LoggerAdapter(environ, logger, extras)
 
     def getHandler(self, environ):
         return Handler()
