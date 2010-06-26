@@ -278,9 +278,7 @@ class Search(MakoApp):
 
         self.request = SearchRequest()
         self.vocab = MEDINVocabulary()
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(Search, self).__init__(['%s', 'search.html'], check_etag=False, content_type=content_type)
+        super(Search, self).__init__(['%s', 'search.html'], check_etag=False)
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -493,12 +491,12 @@ class Navigation(object):
 
 class Results(MakoApp):
 
-    def __init__(self, path, result_type, content_type):
+    def __init__(self, path, result_type, **kwargs):
         from medin.dws import SearchRequest
         
         self.result_type = result_type
         self.request = SearchRequest()
-        super(Results, self).__init__(path, check_etag=False, content_type=content_type)
+        super(Results, self).__init__(path, check_etag=False, **kwargs)
 
     def setup(self, environ):
         from copy import copy
@@ -553,9 +551,7 @@ class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
         
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF, content_type)
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
         
     def setup(self, environ):
         from copy import deepcopy
@@ -674,11 +670,11 @@ class ResultFormat(object):
 
 class Metadata(MakoApp):
 
-    def __init__(self, path, content_type):
+    def __init__(self, path, **kwargs):
         from medin.dws import MetadataRequest
 
         self.request = MetadataRequest()
-        super(Metadata, self).__init__(path, check_etag=False, content_type=content_type)
+        super(Metadata, self).__init__(path, check_etag=False, **kwargs)
 
     def setup(self, environ, etag_data=''):
 
@@ -706,9 +702,7 @@ class MetadataHTML(Metadata):
         from medin.dws import SearchRequest
         self.search_request = SearchRequest()
 
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(MetadataHTML, self).__init__(['%s', 'metadata.html'], content_type=content_type)
+        super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -1099,8 +1093,7 @@ class MetadataCSV(object):
 
 class TemplateChoice(MakoApp):
     def __init__(self):
-        super(TemplateChoice, self).__init__(['light', 'templates.html'], False,
-                                             content_type='application/xhtml+xml')
+        super(TemplateChoice, self).__init__(['light', 'templates.html'], False)
 
     def setup(self, environ):
         headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
