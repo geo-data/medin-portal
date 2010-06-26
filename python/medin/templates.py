@@ -58,7 +58,7 @@ class TemplateLookup(object):
 class MakoApp(object):
     """Base class creating WSGI application for rendering Mako templates"""
 
-    def __init__(self, path, expand=True, check_etag=True, content_type='text/plain'):
+    def __init__(self, path, expand=True, check_etag=True, content_type=None):
         self.path = path
         self.expand = expand
         self.check_etag = check_etag
@@ -67,26 +67,17 @@ class MakoApp(object):
     def setup(self, environ):
         return TemplateContext('')
 
-    def getContentType(self, environ):
-        if isinstance(self.content_type, str):
-            return self.content_type
-        
-        template = self.get_template_name(environ)
-        try:
-            return self.content_type[template]
-        except KeyError:
-            raise KeyError('No Content-Type specified for template: %s' % template)
-        
     def __call__(self, environ, start_response):
         """The standard WSGI interface"""
 
-        content_type = '%s;charset=utf-8' % self.getContentType(environ)
-        headers = [('Content-Type', content_type)]
+        headers = []
         # check whether the etag is valid
         if self.check_etag:
             from medin.views import check_etag
             etag = check_etag(environ, ''.join(self.path))
             headers.append(('Etag', etag))
+        if self.content_type:
+            headers.append(('Content-Type', self.content_type+';charset=utf-8'))
         
         template = self.get_template(environ, self.path, self.expand)
 
@@ -94,7 +85,6 @@ class MakoApp(object):
         ctxt.headers.extend(headers)    # add the etag
         
         kwargs = self.get_template_vars(environ, ctxt.title)
-        kwargs['content_type']=content_type
         kwargs.update(ctxt.tvars)
     
         output = template.render(**kwargs)
@@ -126,12 +116,21 @@ class MakoApp(object):
     def get_template_vars(self, environ, title, **kwargs):
         from medin import __version__ as version
         from datetime import date
+
+        if self.content_type:
+            content_type = self.content_type
+        else:
+            try:
+                content_type = environ['portal.content-type']
+            except KeyError:
+                raise RuntimeError('No content-type is specified')
         
         vars = dict(title=title,
                     request_uri=environ.request_uri(),
                     http_root=environ.http_uri(),
                     script_root=environ.script_uri(),
                     resource_root=environ.resource_uri(),
+                    content_type=content_type,
                     notices=environ['logging.handler'].notices(),
                     warnings=environ['logging.handler'].warnings(),
                     errors=environ['logging.handler'].errors(),
@@ -159,9 +158,8 @@ class TemplateContext(object):
     def __init__(self, title, headers=None, tvars=None, status='200 OK'):
         self.status = status
         if headers is None:
-            headers = [('Content-type', 'application/xhtml+xml'),
-                       # always check validation and always obey freshness information
-                       ('Cache-Control', 'no-cache, must-revalidate')] 
+            # always check validation and always obey freshness information
+            headers = [('Cache-Control', 'no-cache, must-revalidate')] 
         self.headers = headers
         self.title = title
         if tvars is None:

@@ -1,0 +1,64 @@
+INTRODUCTION
+------------
+This software has been developed to create the MEDIN Portal
+(portal.oceannet.org) by the GeoData Institute
+(www.geodata.soton.ac.uk) on behalf of the MEDIN partnership
+(www.oceannet.org). 
+
+Feedback and input (including code) is welcome. Please email
+geodata@soton.ac.uk
+
+LICENSE
+-------
+Unless otherwise indicated by packaged third party code this software
+is made available under the Reciprocal Public License (RPL) 1.5. 
+
+You can obtain a full copy of the RPL from
+http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
+
+INSTALLATION
+------------
+The server-side software is written in Python 2.6 and is designed to
+run on any WSGI or CGI compliant HTTP server. It is recommended that
+it be run under CGI for development environments and a persistent WSGI
+environment for production deployment (e.g. www.modwsgi.org).
+
+The software has the following dependencies:
+
+ * Python 2.6.4 (although any of the 2.6 series should work)
+
+ * libxml2 2.7.* (http://www.xmlsoft.org/) compiled with support for
+   Python
+
+ * GDAL 1.7.* (http://www.gdal.org) compiled with support for OGR
+
+ * TMS/WMS + Python Mapnik 0.7.0 (http://www.mapnik.org/) compiled
+   with support for GDAL + Python
+
+ * sqlite3 (http://www.sqlite.org/) compiled with threadsafe support
+
+ * pysqlite 2.5.6 (http://pypi.python.org/pypi/pysqlite)
+
+The CGI script is deploy/portal.cgi and the WSGI application is found
+in deploy/portal.wsgi. Your web server should be configured
+appropriately to invoke the required script.
+
+In addition, the 'python' directory must be added to the HTTP server's
+PYTHONPATH location so that the calling python process can locate the
+application's modules. 
+
+Likewise the contents of the html directory should be made available
+at the web server's root web location.
+
+CONFIGURATION
+-------------
+The application is configured by setting the PORTAL_ROOT environment
+variable to the absolute filesystem path of the package's root
+directory. 
+
+Genetic portal configuration is done by copying the
+etc/portal.cfg.example file to etc/portal.cfg and editing the contents
+as required.
+
+Specific configuration of the portal spatial services is done by
+editing the files in the templates/config directory.

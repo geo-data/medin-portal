@@ -97,8 +97,9 @@ class Handler(logging.Handler):
 
 class LoggerAdapter(logging.LoggerAdapter):
 
-    def __init__(self, *args, **kwargs):
-        logging.LoggerAdapter.__init__(self, *args, **kwargs)
+    def __init__(self, environ, logger, extras):
+        logging.LoggerAdapter.__init__(self, logger, extras)
+        self.environ = environ
 
         # the cache of loggers that have been created
         self._loggers = {self.logger.name: self}
@@ -129,7 +130,6 @@ class LoggerAdapter(logging.LoggerAdapter):
         self._loggers.update(logger._loggers)
         # and add the cache to the new logger
         logger._loggers = self._loggers
-        
 
 class Filter(logging.Filter):
 
@@ -173,15 +173,18 @@ class WSGILog(object):
         return Handler()
 
     def getLogger(self, environ, logger, extras):
-        return LoggerAdapter(logger, extras)
+        return LoggerAdapter(environ, logger, extras)
 
     def __call__(self, environ, start_response):
+        from wsgiref.util import request_uri
+
         environ['logging.handler'] = hdlr = self.getHandler(environ)
         hdlr.setLevel(logging.DEBUG)
 
         id_ = self.getId(environ)
         hdlr.addFilter(Filter(id_, self.logger.name))
-        environ['logging.logger'] = self.getLogger(environ, self.logger, dict(id=id_))
+        environ['logging.logger'] = self.getLogger(environ, self.logger, dict(id=id_,
+                                                                              request_uri=request_uri(environ)))
 
         self.logger.addHandler(hdlr)
         try:

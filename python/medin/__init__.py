@@ -228,6 +228,72 @@ class Config(object):
 class Selector(selector.Selector):
     status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
 
+class TemplateChooser(object):
+    """
+    WSGI Middleware associating content-types with a template
+    """
+    def __init__(self, default_template):
+        self.templates = {}
+        self.default_template = default_template
+
+    def addContentTypes(self, app, template, content_types, default=None):
+        """
+        Associate a WSGI app and a template with one or more content-types
+        """
+        try:
+            mediator = self.templates[template]
+        except KeyError:
+            from mediator import Mediator
+            mediator = self.templates[template] = Mediator()
+
+        # Add the specified content types, wrapping them in middleware
+        # that adds the content-type header.
+        for content_type in content_types:
+            wrapp = self.contentWrapper(app, content_type+';charset=utf-8')
+            mediator.add(content_type, wrapp)
+
+        # Add the default content type
+        if default:
+            wrapp = self.contentWrapper(app, default+';charset=utf-8')
+            mediator.add('*/*', wrapp)
+
+    def contentWrapper(self, app, content_type):
+        """
+        Wrap an app with middleware that outputs a specific content-type header
+
+        This appends the specified content-type to the headers of the
+        WSGI app passed in as an argument.
+        """
+        # the WSGI middleware that injects the content-type
+        def wrapper(environ, start_response):
+            # the content-type is added in the start_response
+            def wrapped_response(status, headers):
+                headers.append(('Content-Type', content_type))
+                start_response(status, headers)
+
+            # add the content type to the environment
+            environ['portal.content-type'] = content_type
+
+            return app(environ, wrapped_response)
+
+        return wrapper
+
+    def __call__(self, environ, start_response):
+        """
+        Call an app associated with a template
+        """
+        try:
+            template = environ['selector.vars']['template'] # the template
+        except KeyError:
+            template = self.default_template
+
+        try:
+            app = self.templates[template]
+        except KeyError:
+            raise HTTPError('404 Not Found', 'The requested template does not exist')
+
+        return app(environ, start_response)
+
 def wsgi_app():
     """
     Return an instance of the Portal's root WSGI application
@@ -255,14 +321,32 @@ def wsgi_app():
     # provide an API to the areas
     application.add('/spatial/areas/{id:word}/extent.json', GET=views.get_bbox)
 
-    # provide a choice of templates
-    application.add('[/]', GET=views.TemplateChoice())
+    # specify the html content types returned by the template
+    # apps. Ideally 'application/xhtml+xml' would be output by all
+    # templates. However Internet Explorer does not recognise it and
+    # Firefox complains about the document.write() javascript call
+    # when it is specified for the full template. A specific default
+    # is specified for the light template so that it validates with
+    # the W3C validator.
+    light_types = ['text/html', 'application/xhtml+xml']
+    light_default = 'application/xhtml+xml'
+    full_types = ['text/html']
+    default_template = 'light'
+    
+    # provide a choice of HTML interfaces between light and full
+    app = TemplateChooser(default_template)
+    view = views.TemplateChoice()
+    app.addContentTypes(view, 'light', light_types, light_default)
+    application.add('[/]', GET=app)
 
     # the OpenSearch Description document
     application.add('/opensearch/catalogue/{template}.xml', GET=views.OpenSearch())
 
     # the default entry point for the search
-    app = views.Search()
+    app = TemplateChooser(default_template)
+    view = views.Search()
+    app.addContentTypes(view, 'light', light_types, light_default)
+    app.addContentTypes(view, 'full', full_types)
     application.add('/{template}[/]',
                     GET=app,
                     POST=config(views.Comment(app)))
@@ -274,7 +358,10 @@ def wsgi_app():
     application.add('/{template}.json', GET=views.ResultSummary())
 
     # create the app to return the required formats
-    app = views.HTMLResults()
+    app = TemplateChooser(default_template)
+    view = views.HTMLResults()
+    app.addContentTypes(view, 'light', light_types, light_default)
+    app.addContentTypes(view, 'full', full_types)
     result_formats = views.ResultFormat(app, {'rss': views.RSSResults(),
                                               'atom': views.AtomResults()})
 
@@ -289,7 +376,10 @@ def wsgi_app():
                     POST=config(views.Comment(app)))
 
     # display the metadata
-    app = views.MetadataHTML()
+    app = TemplateChooser(default_template)
+    view = views.MetadataHTML()
+    app.addContentTypes(view, 'light', light_types, light_default)
+    app.addContentTypes(view, 'full', full_types)
     application.add('/{template}/catalogue/{gid:segment}',
                     GET=app,
                     POST=config(views.Comment(app)))
@@ -326,6 +416,8 @@ def wsgi_app():
     error_log = logging.StreamHandler()
     error_log.setLevel(logging.DEBUG)
     error_log.addFilter(ExcludeUserMessageFilter()) # we don't want user messages being logged
+    formatter = logging.Formatter("%(request_uri)s at %(asctime)s:\n%(message)s")
+    error_log.setFormatter(formatter)
     logger.addHandler(error_log)
 
     #scl = logging.getLogger('suds.client')

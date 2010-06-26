@@ -35,6 +35,7 @@ from errata import HTTPError
 # Custom modules
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
 from medin.log import msg_info, msg_warn, msg_error
+from medin.metadata import MetadataError
 
 # Utility functions
 
@@ -64,6 +65,19 @@ def check_etag(environ, etag):
             raise HTTPNotModified
 
     return server_etag
+
+def get_metadata_date(environ, parser):
+    """
+    Return the metadata date as a string
+
+    If the date cannot be retrieved the error is logged.
+    """
+    try:
+        return str(parser.date())
+    except MetadataError, e:
+        environ['logging.logger'].exception('The metadata date cannot be retrieved')
+
+    return None
 
 def set_query(query, environ):
     environ['QUERY_STRING'] = str(query)
@@ -264,9 +278,7 @@ class Search(MakoApp):
 
         self.request = SearchRequest()
         self.vocab = MEDINVocabulary()
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(Search, self).__init__(['%s', 'search.html'], check_etag=False, content_type=content_type)
+        super(Search, self).__init__(['%s', 'search.html'], check_etag=False)
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -479,12 +491,12 @@ class Navigation(object):
 
 class Results(MakoApp):
 
-    def __init__(self, path, result_type, content_type):
+    def __init__(self, path, result_type, **kwargs):
         from medin.dws import SearchRequest
         
         self.result_type = result_type
         self.request = SearchRequest()
-        super(Results, self).__init__(path, check_etag=False, content_type=content_type)
+        super(Results, self).__init__(path, check_etag=False, **kwargs)
 
     def setup(self, environ):
         from copy import copy
@@ -539,9 +551,7 @@ class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
         
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF, content_type)
+        super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
         
     def setup(self, environ):
         from copy import deepcopy
@@ -660,11 +670,11 @@ class ResultFormat(object):
 
 class Metadata(MakoApp):
 
-    def __init__(self, path, content_type):
+    def __init__(self, path, **kwargs):
         from medin.dws import MetadataRequest
 
         self.request = MetadataRequest()
-        super(Metadata, self).__init__(path, check_etag=False, content_type=content_type)
+        super(Metadata, self).__init__(path, check_etag=False, **kwargs)
 
     def setup(self, environ, etag_data=''):
 
@@ -679,9 +689,11 @@ class Metadata(MakoApp):
         headers = []
         if parser:
             # check the etag, adding any extra data to the etag
-            etag = check_etag(environ, str(parser.date())+etag_data)
-            headers.extend([('Etag', etag),
-                            ('Cache-Control', 'no-cache, must-revalidate')])
+            date = get_metadata_date(environ, parser)
+            if date:
+                etag = check_etag(environ, date+etag_data)
+                headers.extend([('Etag', etag),
+                                ('Cache-Control', 'no-cache, must-revalidate')])
 
         return parser, headers
 
@@ -690,9 +702,7 @@ class MetadataHTML(Metadata):
         from medin.dws import SearchRequest
         self.search_request = SearchRequest()
 
-        content_type = {'full': 'text/html',
-                        'light': 'application/xhtml+xml'}
-        super(MetadataHTML, self).__init__(['%s', 'metadata.html'], content_type=content_type)
+        super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -792,7 +802,12 @@ class MetadataImage(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         bbox = parser.bbox()
         if not bbox:
@@ -814,9 +829,7 @@ class MetadataImage(object):
         # serialise the image
         bytes = image.tostring('png')
 
-        headers = [('Content-Type', 'image/png'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.append(('Content-Type', 'image/png'))
 
         start_response('200 OK', headers)
         return [bytes]
@@ -845,7 +858,12 @@ class MetadataXML(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         filename = parser.uniqueID()
         if not splitext(filename)[1]:
@@ -853,10 +871,8 @@ class MetadataXML(object):
 
         document = str(parser.document)
 
-        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-                   ('Content-Type', 'application/xml'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.extend([('Content-disposition', 'attachment; filename="%s"' % filename),
+                        ('Content-Type', 'application/xml')])
 
         start_response('200 OK', headers)
         return [document]
@@ -929,7 +945,12 @@ class MetadataCSV(object):
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
-        etag = check_etag(environ, str(parser.date()))
+        headers = []
+        date = get_metadata_date(environ, parser)
+        if date:            
+            etag = check_etag(environ, date)
+            headers.extend([('Etag', etag),
+                            ('Cache-Control', 'no-cache, must-revalidate')])
 
         metadata = parser.parse()
 
@@ -1064,18 +1085,15 @@ class MetadataCSV(object):
         else:
             filename = gid + '.csv'
 
-        headers = [('Content-disposition', 'attachment; filename="%s"' % filename),
-                   ('Content-Type', 'application/vnd.ms-excel'),
-                   ('Etag', etag),
-                   ('Cache-Control', 'no-cache, must-revalidate')]
+        headers.extend([('Content-disposition', 'attachment; filename="%s"' % filename),
+                        ('Content-Type', 'application/vnd.ms-excel')])
 
         start_response('200 OK', headers)
         return buf
 
 class TemplateChoice(MakoApp):
     def __init__(self):
-        super(TemplateChoice, self).__init__(['light', 'templates.html'], False,
-                                             content_type='application/xhtml+xml')
+        super(TemplateChoice, self).__init__(['light', 'templates.html'], False)
 
     def setup(self, environ):
         headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
