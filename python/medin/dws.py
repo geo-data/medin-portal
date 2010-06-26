@@ -51,7 +51,7 @@ class Request(object):
     def __call__(query, logger):
         raise NotImplementedError('The query must be overridden in a subclass')
 
-    def _callService(self, method, *args, **kwargs):
+    def _callService(self, logger, method, *args, **kwargs):
         """
         Wrap the call to the SOAP service with some error checking
         """
@@ -64,22 +64,20 @@ class Request(object):
                 status, msg = e.reason
             except ValueError:
                 status = 500
-                msg = str(e.reason)
-                
-            raise DWSError('Connecting to the Discovery Web Service failed: %s' % msg, status)
+
+            msg = 'Connecting to the Discovery Web Service failed'
+            logger.exception(msg)
+            raise DWSError(msg, status)
         except Exception, e:
+            msg = 'Data could not be retrieved as the Discovery Web Service failed'
+            logger.exception(msg)
             try:
                 status, reason = e.args[0]
             except (ValueError, IndexError):
-                msg = str(e)
-                if not msg: msg = 'No reason provided'
-                raise DWSError('The Discovery Web Service failed: %s' % msg)
+                raise DWSError(msg)
             else:
                 if status == 503:
                     msg = 'The Discovery Web Service is temorarily unavailable'
-                else:
-                    if not reason: reason = 'No reason provided'
-                    msg = 'The Discovery Web Service failed: %s' % reason
                 raise DWSError(msg, status)
 
 
@@ -364,7 +362,8 @@ class SearchRequest(Request):
             dws_count = 1
 
         # send the query to the DWS
-        response = ResponseClass(self._callService(self.client.service.doSearch,
+        response = ResponseClass(self._callService(logger,
+                                                   self.client.service.doSearch,
                                                    search,
                                                    retrieve,
                                                    start_index,
@@ -372,18 +371,20 @@ class SearchRequest(Request):
                                  count)
 
         if not response:
-            raise DWSError('The Discovery Web Service failed: %s' % response.message)
+            msg = 'Data could not be retrieved as the Discovery Web Service failed'
+            logger.error(msg + ': %s' % response.message)
+            raise DWSError(msg)
 
         return response
 
 class MetadataRequest(Request):
 
-    def getMetadataFormats(self):
-        response = self._callService(self.client.service.getList, 'MetadataFormatList')
+    def getMetadataFormats(self, logger):
+        response = self._callService(logger, self.client.service.getList, 'MetadataFormatList')
 
         return response.listMember
         
-    def __call__(self, gid, areas):
+    def __call__(self, logger, gid, areas):
         """
         Connect to the DWS and retrieve a metadata entry by its ID
         """
@@ -398,13 +399,15 @@ class MetadataRequest(Request):
         simpledoc.DocumentId = gid
         
         # send the query to the DWS
-        response = self._callService(self.client.service.doPresent, [simpledoc], retrieve )
+        response = self._callService(logger, self.client.service.doPresent, [simpledoc], retrieve )
         
         status = response.Status
         message = response.StatusMessage
 
         if not status:
-            raise DWSError('The Discovery Web Service failed: %s' % message)
+            msg = 'Data could not be retrieved as the Discovery Web Service failed'
+            logger.error(msg + ': %s' % message)
+            raise DWSError(msg)
 
         try:
             document = response.Documents.DocumentFull[0]
@@ -418,4 +421,6 @@ class MetadataRequest(Request):
         try:
             return Parser(gid, xml, areas)
         except ValueError, e:
-            raise DWSError(e.args[0])
+            msg = 'The metadata does not appear to be valid'
+            logger.exception(msg)
+            raise DWSError(msg)

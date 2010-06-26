@@ -1066,13 +1066,19 @@ class Parser(object):
         except IndexError:
             pass
         else:
-            return self.xsDate2pyDatetime(date)
+            try:
+                return self.xsDate2pyDatetime(date)
+            except ValueError, e:
+                raise MetadataError('The metadata date is not a valid: %s' % date)
 
         try:
             datetime = self.xpath.xpathEval('/gmd:MD_Metadata/gmd:dateStamp/gco:DateTime')[0].content.strip()
         except IndexError:
             return None
-        return self.xsDatetime2pyDatetime(datetime)
+        try:
+            return self.xsDatetime2pyDatetime(datetime)
+        except ValueError, e:
+            raise MetadataError('The metadata timestamp is not a valid: %s' % date)
 
     def name(self):
         """Element 27: Metadata Standard Name"""
