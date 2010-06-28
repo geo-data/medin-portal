@@ -333,7 +333,7 @@ def wsgi_app():
     """
     from medin import views
     from medin.spatial import tilecache
-    from medin.log import WSGILog, ExcludeUserMessageFilter
+    from medin.log import WSGILog, ExcludeUserMessageFilter, MakoFormatter
 
     # create the WSGI configuration middleware
     config = WSGIWrapper(Config, 'app', name='portal.ini')
@@ -449,7 +449,7 @@ def wsgi_app():
     error_log = logging.StreamHandler()
     error_log.setLevel(logging.DEBUG)
     error_log.addFilter(ExcludeUserMessageFilter()) # we don't want user messages being logged
-    formatter = logging.Formatter("%(request_uri)s at %(asctime)s:\n%(message)s")
+    formatter = MakoFormatter("%(request_uri)s at %(asctime)s:\n%(message)s")
     error_log.setFormatter(formatter)
     logger.addHandler(error_log)
 
