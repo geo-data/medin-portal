@@ -1173,3 +1173,17 @@ def proxy(environ, start_response):
     headers = response.headers.items()
     start_response('%s OK' % response.getcode(), headers)
     return response
+
+class ErrorRenderer(MakoApp):
+    """
+    A view to render an exception to the user interface.
+    """
+    def __init__(self, exception):
+        super(ErrorRenderer, self).__init__(['%s', 'error.html'], check_etag=False)
+        self.exception = exception
+
+    def setup(self, environ):
+        title = 'Error - %s' % self.exception.args[0]
+        status = self.exception.args[0]
+        tvars = dict(message=self.exception.args[1])
+        return TemplateContext(title, status=status, tvars=tvars)

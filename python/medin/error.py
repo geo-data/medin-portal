@@ -22,7 +22,6 @@
 # You can obtain a full copy of the RPL from
 # http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 
-from medin.templates import MakoApp, TemplateContext
 import errata                           # for the error handling
 
 # Specialised exception classes
@@ -32,16 +31,20 @@ class HTTPNotModified(errata.HTTPError):
 
 # The error handler
 class ErrorHandler(errata.ErrorHandler):
-    """WSGI post-processor for handling errors using Mako templates.
+    """WSGI post-processor for handling portal errors.
 
     Exception instances of (or derived from) HTTPError are caught and
     the appropriate response is returned to the client."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, application, view, *args, **kwargs):
         from medin.dws import DWSError
-        
-        super(ErrorHandler, self).__init__(*args, **kwargs)
 
+        super(ErrorHandler, self).__init__(application, *args, **kwargs)
+
+        # set the view for rendering an exception
+        self.view = view
+
+        # add the exception handlers
         self.add(HTTPNotModified, self.handleHTTPNotModified)
         self.add(errata.HTTPError, self.handleHTTPError)
         self.add(DWSError, self.handleDWSError)
@@ -57,10 +60,17 @@ class ErrorHandler(errata.ErrorHandler):
         return []
 
     def handleHTTPError(self, exception, environ, start_response):
-        """Handler for HTTPErrors"""
+        """
+        Handler for HTTPErrors
 
-        renderer = ErrorRenderer(exception)
-        return renderer(environ, start_response)
+        Delegates the rendering of errors to the WSGI app specified as
+        a view.
+        """
+        try:
+            return self.view(exception, environ, start_response)
+        except Exception, e:
+            handler = self.getHandler(e)
+            return handler(e, environ, start_response)
 
     def handleDWSError(self, exception, environ, start_response):
         if exception.status < 500:
@@ -101,21 +111,3 @@ class ErrorHandler(errata.ErrorHandler):
         # change the exception to a HTTPError and delegate
         exception = errata.HTTPError('500 Portal Error', 'Sorry - the portal has encountered a critical problem. The error has been logged and will be dealt with as soon as possible.')
         return self.handleHTTPError(exception, environ, start_response)
-
-# The WSGI Applications
-
-class ErrorRenderer(MakoApp):
-    def __init__(self, exception):
-        self.exception = exception
-        super(ErrorRenderer, self).__init__(['%s', 'error.html'], check_etag=False)
-
-    def setup(self, environ):
-        title = 'Error - %s' % self.exception.args[0]
-        status = self.exception.args[0]
-        tvars = dict(message=self.exception.args[1])
-        return TemplateContext(title, status=status, tvars=tvars)
-
-class HTTPErrorRenderer(ErrorRenderer):
-    def __init__(self, status, message):
-        e = errata.HTTPError(status, message)
-        super(HTTPErrorRenderer, self).__init__(e)
