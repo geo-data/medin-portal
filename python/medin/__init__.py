@@ -484,9 +484,9 @@ def wsgi_app():
     error_log.setFormatter(formatter)
     logger.addHandler(error_log)
 
-    scl = logging.getLogger('suds.client')
-    scl.setLevel(logging.DEBUG)
-    scl.addHandler(logging.StreamHandler())
+    #scl = logging.getLogger('suds.client')
+    #scl.setLevel(logging.DEBUG)
+    #scl.addHandler(logging.StreamHandler())
     application = WSGILog(application, logger)
 
     # add the Environ configuration middleware
