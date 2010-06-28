@@ -228,6 +228,37 @@ class Config(object):
 class Selector(selector.Selector):
     status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
 
+class EnvironNormalise(object):
+    """
+    WSGI Middleware that normalises the environment
+
+    Currently this responds to user-agent strings and adapts the HTTP
+    ACCEPT header.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        """
+        Add text/html to the Internet Explorer ACCEPT header
+
+        This is necessary as it isn't specified explicitly and
+        therefore the application otherwise returns
+        application/xhtml+xml by default for the light template.
+        """
+        try:
+            ua = environ['HTTP_USER_AGENT']
+        except KeyError:
+            pass
+        else:
+            if 'MSIE' in ua:
+                try:
+                    environ['HTTP_ACCEPT'] = 'text/html,' + environ['HTTP_ACCEPT']
+                except KeyError:
+                    pass
+            
+        return self.app(environ, start_response)
+
 class TemplateChooser(object):
     """
     WSGI Middleware associating content-types with a template
@@ -241,10 +272,12 @@ class TemplateChooser(object):
         Associate a WSGI app and a template with one or more content-types
         """
         try:
-            mediator = self.templates[template]
+            mediator = self.templates[template].app
         except KeyError:
             from mediator import Mediator
-            mediator = self.templates[template] = Mediator()
+            # create a Mediator inside a normalised environment
+            mediator = Mediator()
+            self.templates[template] = EnvironNormalise(mediator)
 
         # Add the specified content types, wrapping them in middleware
         # that adds the content-type header.
