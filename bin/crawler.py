@@ -21,8 +21,9 @@
 # 
 # You can obtain a full copy of the RPL from
 # http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
-__version__ = 0.1
+__version__ = 0.2
 
+from sys import stderr
 import libxml2
 import urllib2
 from urlparse import urlparse
@@ -64,7 +65,7 @@ class Crawler(object):
         the libxml2 parser using self.parser.setErrorHandler().
         """
         
-        print arg, msg, severity, reserved
+        print >> stderr, arg, msg, severity, reserved
 
     def isXML(self, content_type):
         """
@@ -158,7 +159,17 @@ class Crawler(object):
         try:
             r = self.opener.open(urlstr)
         except urllib2.HTTPError, e:
-            print e
+            # print out the error
+            print >> stderr, "Error in url %s:" % urlstr
+            print >> stderr, str(e)
+            #if e.getcode() == 500:
+            #    # print out the response body on 500 status responses
+            #    print >> stderr, e.read()
+            print >> stderr, ''
+            return 1
+        except Exception, e:
+            print >> stderr, "Error in url %s:" % urlstr
+            print >> stderr, str(e)+"\n"
             return 1
 
         # deal with re-directs
@@ -238,7 +249,7 @@ def main():
         crawler = Crawler([url])
         crawler.crawl(url)
     except KeyboardInterrupt:
-        print "\nInterrupted!"
+        print >> stderr, "\nInterrupted!"
         
 if __name__ == '__main__':
     main()
