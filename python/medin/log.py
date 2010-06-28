@@ -113,3 +113,34 @@ class ExcludeUserMessageFilter(LevelExcludeFilter):
     def __init__(self, *args, **kwargs):
         levels = [USER_INFO, USER_WARNING, USER_ERROR]
         LevelExcludeFilter.__init__(self, levels, *args, **kwargs)
+
+class MakoFormatter(logging.Formatter):
+    """
+    Format tracebacks that allow debugging of Mako templates
+
+    This is an extension of the standard python logging.Formatter that
+    is aware of Mako templates. As described at
+    http://www.makotemplates.org/docs/usage.html#usage_handling this
+    class translates exceptions originating in Mako templates to their
+    original template files. Without this facility debugging of Mako
+    templates is a lot more challenging!
+    """
+
+    def formatException(self, exc_info):
+        from mako.exceptions import RichTraceback
+        from cStringIO import StringIO
+        
+        #traceback = exc_info[2]
+        #mako_trace = RichTraceback(traceback)
+        # The above should work, but doesn't, so ignore the exc_info
+        # argument as it should be the same as sys.exc_info()...
+        mako_trace = RichTraceback()
+
+        buf = StringIO()
+        for (filename, lineno, function, line) in mako_trace.traceback:
+            buf.write("File %s, line %s, in %s\n" % (filename, lineno, function))
+            buf.write(str(line))
+            buf.write("\n")
+        buf.write("%s: %s\n" % (str(mako_trace.error.__class__.__name__), mako_trace.error))
+
+        return buf.getvalue()

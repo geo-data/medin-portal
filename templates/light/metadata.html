@@ -298,9 +298,11 @@ External link\
 %if 'range' in metadata.temporal_reference:
   <p>The data spans the period from <a href="${script_root}/light/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
 %endif
-% for i, (code, date) in enumerate(metadata.temporal_reference['single']):
+%if 'single' in metadata.temporal_reference:
+  % for i, (code, date) in enumerate(metadata.temporal_reference['single']):
   <p>${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/light/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/light/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]</p>
-% endfor
+  % endfor
+%endif
 </%self:output_element>
 % endif\
 

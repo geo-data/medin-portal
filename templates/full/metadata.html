@@ -503,15 +503,17 @@ External link ${i+1}\
           The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
         </div>
         %endif
-        % for i, (code, date) in enumerate(metadata.temporal_reference['single']):
-        % if i or 'range' in metadata.temporal_reference:
+        %if 'single' in metadata.temporal_reference:
+          % for i, (code, date) in enumerate(metadata.temporal_reference['single']):
+          % if i or 'range' in metadata.temporal_reference:
         <div class="sibling">
-        % else:
+          % else:
         <div>
-        % endif
+          % endif
         ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]
         </div>
-        % endfor
+          % endfor
+        %endif
         </%self:output_element>
       </div>
     </td>

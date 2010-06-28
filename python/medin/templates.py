@@ -25,6 +25,36 @@
 # System modules
 import os
 
+def get_template_name(environ):
+    """
+    Extract the template name from the environment
+    """
+    try:
+        template = environ['selector.vars']['template'] # the template
+    except KeyError:
+        try:
+            # try and get the template as the first path entry
+            template = environ.get('PATH_INFO', '').split('/')[1]
+        except KeyError, IndexError:
+            return None
+
+    return template
+
+def set_template_name(environ, template):
+    """
+    Add the template name to the environment
+
+    Returns any previous template setting
+    """
+    try:
+        previous = environ['selector.vars']['template']
+        environ['selector.vars']['template'] = template
+    except KeyError:
+        previous = None
+        environ['selector.vars'] = {'template': template}
+
+    return previous
+
 class TemplateLookup(object):
 
     def __init__(self, environ):
@@ -92,24 +122,14 @@ class MakoApp(object):
         start_response(ctxt.status, ctxt.headers)
         return [output]
 
-    def get_template_name(self, environ):
-        try:
-            template = environ['selector.vars']['template'] # the template
-        except KeyError:
-            try:
-                # try and get the template as the first path entry
-                template = environ.get('PATH_INFO', '').split('/')[1]
-            except KeyError, IndexError:
-                raise RuntimeError('No template is specified')
-
-        return template
-
     def get_template(self, environ, path, expand=True):
         template_lookup = TemplateLookup(environ)
         lookup = template_lookup.lookup()
         path = os.path.join(os.path.sep, *path)
         if expand:
-            template = self.get_template_name(environ)
+            template = get_template_name(environ)
+            if template is None:
+                raise RuntimeError('No template is specified')
             path = path % template
         return lookup.get_template(path)
 

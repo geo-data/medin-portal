@@ -225,8 +225,36 @@ class Config(object):
         # delegate to the wrapped app
         return self.app(environ, start_response)
 
-class Selector(selector.Selector):
-    status404 = medin.error.HTTPErrorRenderer('404 Not Found', 'The resource you specified could not be found')
+class EnvironNormalise(object):
+    """
+    WSGI Middleware that normalises the environment
+
+    Currently this responds to user-agent strings and adapts the HTTP
+    ACCEPT header.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        """
+        Add text/html to the Internet Explorer ACCEPT header
+
+        This is necessary as it isn't specified explicitly and
+        therefore the application otherwise returns
+        application/xhtml+xml by default for the light template.
+        """
+        try:
+            ua = environ['HTTP_USER_AGENT']
+        except KeyError:
+            pass
+        else:
+            if 'text/html' not in ua and 'MSIE' in ua:
+                try:
+                    environ['HTTP_ACCEPT'] = 'text/html,' + environ['HTTP_ACCEPT']
+                except KeyError:
+                    pass
+            
+        return self.app(environ, start_response)
 
 class TemplateChooser(object):
     """
@@ -241,10 +269,12 @@ class TemplateChooser(object):
         Associate a WSGI app and a template with one or more content-types
         """
         try:
-            mediator = self.templates[template]
+            mediator = self.templates[template].app
         except KeyError:
             from mediator import Mediator
-            mediator = self.templates[template] = Mediator()
+            # create a Mediator inside a normalised environment
+            mediator = Mediator()
+            self.templates[template] = EnvironNormalise(mediator)
 
         # Add the specified content types, wrapping them in middleware
         # that adds the content-type header.
@@ -282,17 +312,40 @@ class TemplateChooser(object):
         """
         Call an app associated with a template
         """
-        try:
-            template = environ['selector.vars']['template'] # the template
-        except KeyError:
+        from medin.templates import get_template_name
+
+        template = get_template_name(environ)
+        if template is None:
             template = self.default_template
 
+        if not self.templates:
+            raise RuntimeError('No template applications have been added')
+        
         try:
             app = self.templates[template]
         except KeyError:
+            from medin.templates import set_template_name
+            # set the template name so this error can't become
+            # recursive which is the case if this code is used in an
+            # error handler
+            if self.default_template in self.templates:
+                # use the default template
+                set_template_name(environ, self.default_template)
+            else:
+                # use any template
+                set_template_name(environ, self.templates.keys()[0])
             raise HTTPError('404 Not Found', 'The requested template does not exist')
 
         return app(environ, start_response)
+
+def http404(environ, start_response):
+    """
+    Raises a HTTP 404 Not Found exception when called
+
+    The actual exception should be handled elsewhere.
+    """
+    msg = 'The resource you specified could not be found: %s' % environ.request_uri()
+    raise HTTPError('404 Not Found', msg)
 
 def wsgi_app():
     """
@@ -300,26 +353,10 @@ def wsgi_app():
     """
     from medin import views
     from medin.spatial import tilecache
-    from medin.log import WSGILog, ExcludeUserMessageFilter
+    from medin.log import WSGILog, ExcludeUserMessageFilter, MakoFormatter
 
     # create the WSGI configuration middleware
     config = WSGIWrapper(Config, 'app', name='portal.ini')
-
-    # Create a WSGI application for URI delegation using Selector
-    # (http://lukearno.com/projects/selector/). The order that child
-    # applications are added is important; the most specific URL matches
-    # must be before the more generic ones.
-    application = Selector(consume_path=False)
-
-    # provide the proxying service for AJAX requests
-    #application.add('/proxy', GET=proxy) Not currently used
-
-    # provide the Tile Mapping Service
-    application.parser.patterns['tms'] = r'/.*'
-    application.add('/spatial/tms[{req:tms}]', _ANY_=tilecache) # for TMS requests to tilecache
-
-    # provide an API to the areas
-    application.add('/spatial/areas/{id:word}/extent.json', GET=views.get_bbox)
 
     # specify the html content types returned by the template
     # apps. Ideally 'application/xhtml+xml' would be output by all
@@ -333,6 +370,25 @@ def wsgi_app():
     full_types = ['text/html']
     default_template = 'light'
     
+    # Create a WSGI application for URI delegation using Selector
+    # (http://lukearno.com/projects/selector/). The order that child
+    # applications are added is important; the most specific URL matches
+    # must be before the more generic ones.
+    application = selector.Selector(consume_path=False)
+
+    # replace the default 404 handler on the selector
+    application.status404 = http404
+
+    # provide the proxying service for AJAX requests
+    #application.add('/proxy', GET=proxy) Not currently used
+
+    # provide the Tile Mapping Service
+    application.parser.patterns['tms'] = r'/.*'
+    application.add('/spatial/tms[{req:tms}]', _ANY_=tilecache) # for TMS requests to tilecache
+
+    # provide an API to the areas
+    application.add('/spatial/areas/{id:word}/extent.json', GET=views.get_bbox)
+
     # provide a choice of HTML interfaces between light and full
     app = TemplateChooser(default_template)
     view = views.TemplateChoice()
@@ -396,8 +452,16 @@ def wsgi_app():
     # download the metadata as XML
     application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=views.MetadataXML())
 
-    # add our Error handler
-    application = medin.error.ErrorHandler(application)
+    # Add our Error handler
+    # create a callable to render the error
+    def error_renderer(exception, environ, start_response):
+        app = TemplateChooser(default_template)
+        view = views.ErrorRenderer(exception)
+        app.addContentTypes(view, 'light', light_types, light_default)
+        app.addContentTypes(view, 'full', full_types)
+        return app(environ, start_response)
+    
+    application = medin.error.ErrorHandler(application, error_renderer)
 
     # add the logging handlers
     import logging
@@ -416,7 +480,7 @@ def wsgi_app():
     error_log = logging.StreamHandler()
     error_log.setLevel(logging.DEBUG)
     error_log.addFilter(ExcludeUserMessageFilter()) # we don't want user messages being logged
-    formatter = logging.Formatter("%(request_uri)s at %(asctime)s:\n%(message)s")
+    formatter = MakoFormatter("%(request_uri)s at %(asctime)s:\n%(message)s")
     error_log.setFormatter(formatter)
     logger.addHandler(error_log)
 

@@ -1020,6 +1020,9 @@ class Parser(object):
             except KeyError:
                 continue
 
+            # only continue if the format is not empty
+            if not key: continue
+            
             try:
                 defn = self.vocab.lookupTerm('M010', key)
             except LookupError:
