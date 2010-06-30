@@ -937,6 +937,15 @@ class MetadataCSV(object):
                 row = [number, name, element]
 
             writer.writerow(row)
+
+        def vocab2row(vocab, default=None):
+            if vocab:
+                if 'error' in vocab:
+                    return ['ERROR', vocab['error']]
+                else:
+                    return [vocab['short'], vocab['long'], vocab['defn']]
+
+            return default
         
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
@@ -962,7 +971,11 @@ class MetadataCSV(object):
         write_element(writer, 1, 'Title', metadata.title)
         writer.writerows(iter_element_values(2, 'Alternative resource title', metadata.alt_titles))
         write_element(writer, 3, 'Abstract', metadata.abstract)
-        write_element(writer, 4, 'Resource type', metadata.resource_type)
+
+        row = metadata.resource_type
+        if row and not isinstance(row, Exception):
+            row = [vocab2row(row, [])]
+        writer.writerows(iter_element_values(4, 'Resource type', row))
 
         row = metadata.online_resource
         if row and not isinstance(row, Exception):
@@ -977,17 +990,7 @@ class MetadataCSV(object):
         if row and not isinstance(row, Exception):
             tmp = []
             for keyword, defn in row.items():
-                entry = []
-                if defn:
-                    if 'error' in defn:
-                        entry.append(defn['error'])
-                    elif defn['long'] != defn['short']:
-                        entry.extend((defn['short'], defn['long']))
-                    else:
-                        entry.append(defn['short'])
-                else:
-                    entry.append(keyword)
-
+                entry = vocab2row(defn, [keyword])
                 tmp.append(entry)
             row = tmp
         writer.writerows(iter_element_values(9, 'Topic category', row))
@@ -1000,16 +1003,7 @@ class MetadataCSV(object):
             for title, defns in row.items():
                 for keyword, defn in defns.items():
                     entry = [title]
-                    if defn:
-                        if 'error' in defn:
-                            entry.append(defn['error'])
-                        elif defn['long'] != defn['short']:
-                            entry.extend((defn['short'], defn['long']))
-                        else:
-                            entry.append(defn['short'])
-                    else:
-                        entry.append(keyword)
-
+                    entry.extend(vocab2row(defn, [keyword]))
                     tmp.append(entry)
             row = tmp
         writer.writerows(iter_element_values(11, 'Keywords', row))
@@ -1046,7 +1040,9 @@ class MetadataCSV(object):
                 tmp.append(['Data start', str(row['range'][0])])
                 tmp.append(['Data end', str(row['range'][1])])
 
-            row = tmp + [[code, str(date)] for code, date in row['single']]
+            if 'single' in row:
+                tmp.extend([[code, str(date)] for code, date in row['single']])
+            row = tmp
         writer.writerows(iter_element_values(16, 'Temporal reference', row))
 
         write_element(writer, 17, 'Lineage', metadata.lineage)
@@ -1063,10 +1059,28 @@ class MetadataCSV(object):
         writer.writerows(iter_element_values(18, 'Spatial resolution', row))
         
         write_element(writer, 19, 'Additional information', metadata.additional_info)
-        writer.writerows(iter_element_values(20, 'Limitations on public access', metadata.access_limits))
+
+        row = metadata.access_limits
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for defn in row:
+                entry = vocab2row(defn, [])
+                tmp.append(entry)
+            row = tmp
+        writer.writerows(iter_element_values(20, 'Limitations on public access', row))
+        
         writer.writerows(iter_element_values(21, 'Conditions for access and use constraints', metadata.access_conditions))
         writer.writerows(iter_element_values(22, 'Responsible party', list(iter_contacts(metadata.responsible_party))))
-        writer.writerows(iter_element_values(23, 'Data format', metadata.data_format))
+
+        row = metadata.data_format
+        if row and not isinstance(row, Exception):
+            tmp = []
+            for keyword, defn in row.items():
+                entry = vocab2row(defn, [keyword])
+                tmp.append(entry)
+            row = tmp
+        writer.writerows(iter_element_values(23, 'Data format', row))
+
         write_element(writer, 24, 'Frequency of update', metadata.update_frequency)
         write_element(writer, 25, 'INSPIRE conformity', 'NOT IMPLEMENTED IN THE PORTAL YET')
 
