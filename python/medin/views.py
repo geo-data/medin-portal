@@ -219,7 +219,7 @@ class Comment(object):
         if check:
             # try and catch any spam bots as they usually fill in hidden fields
             msg_warn(environ, 'The comment failed the spam filter and was not submitted')
-        if environ['HTTP_REFERER'] != request_uri:
+        if environ.get('HTTP_REFERER') != request_uri:
             msg_error(environ, 'The comment must be submitted from the appropriate page')
         if not comment:
             msg_warn(environ, 'You did not fill in the comment field')
