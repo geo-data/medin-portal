@@ -1117,6 +1117,202 @@ class Parser(object):
         except IndexError:
             return None
 
+
+# This could usefully be turned into an object; at the moment it's a
+# bit of a hack.
+def metadata2csv(metadata, file):
+    """
+    Write a metadata object to a file in CSV format
+    """
+
+    import csv, itertools
+    from itertools import repeat
+
+    def iter_element_values(element_no, element_title, values):
+        """Returns an iterator suitable for passing to the CSV writerows method"""
+
+        if isinstance(values, Exception):
+            values = [['ERROR', values.message, values.detail]]
+        elif not values:
+            values = ['']
+
+        for title, value in itertools.izip(itertools.chain([[element_no, element_title]], itertools.repeat(['', ''], len(values)-1)), values):
+            try:
+                # it's a row
+                yield title + value
+            except TypeError:
+                # it's a scalar value
+                yield title + [value]
+
+    def iter_contacts(contacts, depth=0):
+        if isinstance(contacts, Exception):
+            yield ['ERROR', contacts.message, contacts.detail]
+            raise StopIteration('End of error')
+
+        for contact in contacts:
+            for attr in ('organisation', 'address', 'tel', 'fax', 'email', 'name', 'position'):
+                val = getattr(contact, attr)
+                if not val:
+                    continue
+
+                row = list(repeat(None, depth))
+                row.extend((attr.capitalize(), val))
+                yield row
+
+            for role in contact.roles:
+                row = list(repeat(None, depth))
+                row.extend(('Role', role))
+                yield row
+
+            for row in iter_contacts(contact.contacts, depth+1):
+                yield row
+
+    def write_element(writer, number, name, element):
+        if isinstance(element, Exception):
+            row = [number, name, 'ERROR', element.message, element.detail]
+        else:
+            row = [number, name, element]
+
+        writer.writerow(row)
+
+    def vocab2row(vocab, default=None):
+        if vocab:
+            if 'error' in vocab:
+                return ['ERROR', vocab['error']]
+            else:
+                return [vocab['short'], vocab['long'], vocab['defn']]
+
+        return default
+
+    writer = csv.writer(file)
+
+    writer.writerow(['Element number', 'Element title', 'Element Values']) # header row
+
+    write_element(writer, 1, 'Title', metadata.title)
+    writer.writerows(iter_element_values(2, 'Alternative resource title', metadata.alt_titles))
+    write_element(writer, 3, 'Abstract', metadata.abstract)
+
+    row = metadata.resource_type
+    if row and not isinstance(row, Exception):
+        row = [vocab2row(row, [])]
+    writer.writerows(iter_element_values(4, 'Resource type', row))
+
+    row = metadata.online_resource
+    if row and not isinstance(row, Exception):
+        row = [[i['link'], i['name'], i['description']] for i in row]
+    writer.writerows(iter_element_values(5, 'Resource locator', row))
+
+    write_element(writer, 6, 'Unique resource identifier', metadata.unique_id)
+    writer.writerow([7, 'Coupled resource', 'NOT IMPLEMENTED IN THE PORTAL YET'])
+    write_element(writer, 8, 'Resource language', metadata.resource_language)
+
+    row = metadata.topic_category
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for keyword, defn in row.items():
+            entry = vocab2row(defn, [keyword])
+            tmp.append(entry)
+        row = tmp
+    writer.writerows(iter_element_values(9, 'Topic category', row))
+
+    writer.writerows(iter_element_values(10, 'Spatial data service type', metadata.service_type))
+
+    row = metadata.keywords
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for title, defns in row.items():
+            for keyword, defn in defns.items():
+                entry = [title]
+                entry.extend(vocab2row(defn, [keyword]))
+                tmp.append(entry)
+        row = tmp
+    writer.writerows(iter_element_values(11, 'Keywords', row))
+
+    row = metadata.bbox
+    if row and not isinstance(row, Exception):
+        row = [['West', metadata.bbox[0]],
+               ['South', metadata.bbox[1]],
+               ['East', metadata.bbox[2]],
+               ['North', metadata.bbox[3]]]
+    writer.writerows(iter_element_values(12, 'Geographic extent', row))
+
+    row = metadata.extents
+    if row and not isinstance(row, Exception):
+        row = [[i['title'], i['name']] for i in row]
+    writer.writerows(iter_element_values(13, 'Extent', row))
+
+    writer.writerows(iter_element_values(14, 'Vertical extent information', metadata.vertical_extent))
+
+    row = metadata.reference_system
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for key in ('identifier', 'source', 'url', 'name', 'scope'):
+            if not row[key]:
+                continue
+            tmp.append((key.capitalize(), row[key]))
+        row = tmp
+    writer.writerows(iter_element_values(15, 'Spatial reference system', row))
+
+    row = metadata.temporal_reference
+    if row and not isinstance(row, Exception):
+        tmp = []
+        if 'range' in row:
+            tmp.append(['Data start', str(row['range'][0])])
+            tmp.append(['Data end', str(row['range'][1])])
+
+        if 'single' in row:
+            tmp.extend([[code, str(date)] for code, date in row['single']])
+        row = tmp
+    writer.writerows(iter_element_values(16, 'Temporal reference', row))
+
+    write_element(writer, 17, 'Lineage', metadata.lineage)
+
+    row = metadata.spatial_resolution
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for entry in row:
+            if 'distance' in entry:
+                tmp.append(['Distance (m)', entry['distance']])
+            if 'scale' in entry:
+                tmp.append(['Scale 1:', entry['scale']])
+        row = tmp
+    writer.writerows(iter_element_values(18, 'Spatial resolution', row))
+
+    write_element(writer, 19, 'Additional information', metadata.additional_info)
+
+    row = metadata.access_limits
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for defn in row:
+            entry = vocab2row(defn, [])
+            tmp.append(entry)
+        row = tmp
+    writer.writerows(iter_element_values(20, 'Limitations on public access', row))
+
+    writer.writerows(iter_element_values(21, 'Conditions for access and use constraints', metadata.access_conditions))
+    writer.writerows(iter_element_values(22, 'Responsible party', list(iter_contacts(metadata.responsible_party))))
+
+    row = metadata.data_format
+    if row and not isinstance(row, Exception):
+        tmp = []
+        for keyword, defn in row.items():
+            entry = vocab2row(defn, [keyword])
+            tmp.append(entry)
+        row = tmp
+    writer.writerows(iter_element_values(23, 'Data format', row))
+
+    write_element(writer, 24, 'Frequency of update', metadata.update_frequency)
+    write_element(writer, 25, 'INSPIRE conformity', 'NOT IMPLEMENTED IN THE PORTAL YET')
+
+    date = metadata.date
+    if date and not isinstance(date, Exception): date = str(date)
+    write_element(writer, 26, 'Date of update of metadata', date)
+
+    write_element(writer, 27, 'Metadata standard name', metadata.name)  
+    write_element(writer, 28, 'Metadata standard version', metadata.version)
+    write_element(writer, 29, 'Metadata language', metadata.language)
+
+
 if __name__ == '__main__':
     c1 = Contact('Marine Biological Association of the UK (MBA)')
     c1.address = 'The Laboratory, Citadel Hill'
