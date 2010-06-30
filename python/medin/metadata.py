@@ -1249,7 +1249,7 @@ def metadata2csv(metadata, file):
         for key in ('identifier', 'source', 'url', 'name', 'scope'):
             if not row[key]:
                 continue
-            tmp.append((key.capitalize(), row[key]))
+            tmp.append([key.capitalize(), row[key]])
         row = tmp
     writer.writerows(iter_element_values(15, 'Spatial reference system', row))
 
@@ -1284,7 +1284,10 @@ def metadata2csv(metadata, file):
     if row and not isinstance(row, Exception):
         tmp = []
         for defn in row:
-            entry = vocab2row(defn, [])
+            if 'other' in defn:
+                entry = ['other', defn['other']]
+            else:
+                entry = vocab2row(defn, [])
             tmp.append(entry)
         row = tmp
     writer.writerows(iter_element_values(20, 'Limitations on public access', row))
