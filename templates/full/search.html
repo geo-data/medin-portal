@@ -25,6 +25,9 @@
 </%doc>\
 <%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>
+<%!
+    from medin.filters import quote as q
+%>
 
 <%def name="header()">
     <style type="text/css">
@@ -169,7 +172,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
       <div><label for="search-term">Type your search terms below, using the pop-up menus to query specific metadata fields.</label></div>
       <input id="search-term" type="text" name="q" size="30"\
       %if search_term:
- value="${search_term}"\
+ value="${search_term | x}"\
       %endif
 /> <input type="submit" value="search"/> (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">Advanced search</a>)
       <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
@@ -186,8 +189,18 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         </div>
         <div class="example"><kbd>acoustic currents sediment</kbd></div>
       </blockquote>
+
+      <p>Phrases can be specified as search terms by wrapping them in double quotes.</p>      
+      <blockquote>
+        <div>
+          <p><strong>Example</strong>: type the following to find all
+          documents containing the phrases <kbd>offshore wind</kbd>
+          <strong>and</strong> <kbd>bird survey</kbd>:</p>
+        </div>
+        <div class="example"><kbd>"offshore wind" "bird survey"</kbd></div>
+      </blockquote>
       
-      <p>Words can be excluded from result matches using the
+      <p>Search terms can be excluded from result matches using the
       <strong>minus sign</strong> (<strong>-</strong>).</p>
       <blockquote>
         <div>
@@ -521,7 +534,7 @@ ${area_selection('ices-rectangles')}
       <select class="target" name="" id="target-p">
         <option value="">Choose a parameter...</option>
         %for parameter in parameters:
-        <option title="${parameter['defn'] | x}" value="${parameter['abbr'] | x}">${parameter['term'] | x}</option>
+        <option title="${parameter['defn'] | x}" value="${parameter['term'] | q,x}">${parameter['term'] | x}</option>
         %endfor
       </select>
       %endif
@@ -529,7 +542,7 @@ ${area_selection('ices-rectangles')}
       <select class="target" name="" id="target-tc">
         <option value="">Choose a topic...</option>
         %for category in topic_categories:
-        <option title="${category['defn'] | x}" value="${category['abbr'] | x}">${category['term'] | x}</option>
+        <option title="${category['defn'] | x}" value="${category['abbr'] | q,x}">${category['term'] | x}</option>
         %endfor
       </select>
       %endif
@@ -537,7 +550,7 @@ ${area_selection('ices-rectangles')}
       <select class="target" name="" id="target-rt">
         <option value="">Choose a resource type...</option>
         %for rtype in resource_types:
-        <option title="${rtype['defn'] | x}" value="${rtype['abbr'] | x}">${rtype['term'] | x}</option>
+        <option title="${rtype['defn'] | x}" value="${rtype['abbr'] | q,x}">${rtype['term'] | x}</option>
         %endfor
       </select>
       %endif
@@ -545,7 +558,7 @@ ${area_selection('ices-rectangles')}
       <select class="target" name="" id="target-al">
         <option value="">Choose an access type...</option>
         %for atype in access_types:
-        <option title="${atype['defn'] | x}" value="${atype['term'] | x}">${atype['term'] | x}</option>
+        <option title="${atype['defn'] | x}" value="${atype['term'] | q,x}">${atype['term'] | x}</option>
         %endfor
       </select>
       %endif
@@ -553,7 +566,7 @@ ${area_selection('ices-rectangles')}
       <select class="target" name="" id="target-f">
         <option value="">Choose a data format...</option>
         %for format in data_formats:
-        <option title="${format['defn'] | x}" value="${format['term'] | x}">${format['term'] | x}</option>
+        <option title="${format['defn'] | x}" value="${format['term'] | q,x}">${format['term'] | x}</option>
         %endfor
       </select>
       %endif

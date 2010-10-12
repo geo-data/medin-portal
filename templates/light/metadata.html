@@ -24,6 +24,10 @@
  http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 </%doc>\
 <%inherit file="base-ok.html"/>
+<%!
+    from medin.filters import quote as q
+%>
+
 <%def name="nav_links()">
   % if referrer_query_string:
   <li><a href="${script_root}/light/catalogue${referrer_query_string | x}" title="Return to your results">Back to results</a></li>
@@ -137,7 +141,7 @@ ${date.strftime('%Y-%m-%d')}\
              if defn['short']: keyword = defn['short']
              else: keyword = defn['long']
         %>
-        <a href="${script_root}/light/catalogue?q=p:${keyword | u}"
+        <a href="${script_root}/light/catalogue?q=p:${keyword | q,u,x}"
            title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
         % if defn:
           % if defn['short'] and defn['long'] != defn['short']:
@@ -211,7 +215,7 @@ External link\
   Other constraints</dt>
   <dd>${defn['other'] | x}</dd>
   % else:
-    <a href="${script_root}/light/catalogue?q=al:${defn['short'] | u}"
+    <a href="${script_root}/light/catalogue?q=al:${defn['short'] | q,u,x}"
        title="Search for all metadata having the access limit '${defn['short'] | x}'">${defn['short'] | x}</a>
   </dt>
   <dd>${defn['defn'] | x}</dd>
@@ -242,7 +246,7 @@ External link\
     <span class="error">${defn['error']}</span>
   </dt>
   % else:   
-    <a href="${script_root}/light/catalogue?q=rt:${defn['short'] | u}"
+    <a href="${script_root}/light/catalogue?q=rt:${defn['short'] | q,u,x}"
        title="Search for all metadata having the resource type '${defn['short'] | x}'">${defn['short'] | x}</a>
   </dt>
   <dd>${defn['defn'] | x}</dd>
@@ -263,7 +267,7 @@ External link\
   </dt>
   % else:
   % if defn:
-    <a href="${script_root}/light/catalogue?q=f:${defn['long'] | u}"
+    <a href="${script_root}/light/catalogue?q=f:${defn['long'] | q,u,x}"
        title="Search for all metadata having the data format '${defn['long'] | x}'">${defn['long'] | x}</a>
   </dt>
   <dd>${defn['defn'] | x}</dd>
@@ -422,7 +426,7 @@ External link\
   </dt>
   % else:
     % if defn:
-    <a href="${script_root}/light/catalogue?q=tc:${defn['short'] | u}"
+    <a href="${script_root}/light/catalogue?q=tc:${defn['short'] | q,u,x}"
        title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
       % if defn['long'] != defn['short']:
     - ${defn['long'] | x}

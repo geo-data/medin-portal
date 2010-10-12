@@ -25,6 +25,9 @@
 </%doc>\
 <%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>\
+<%!
+    from medin.filters import quote as q
+%>
 
 <%def name="header()">
     <link rel="alternate"
@@ -179,7 +182,7 @@ ${date.strftime('%Y-%m-%d')}\
              if defn['short']: keyword = defn['short']
              else: keyword = defn['long']
         %>
-        <a href="${script_root}/full/catalogue?q=p:${keyword | u}"
+        <a href="${script_root}/full/catalogue?q=p:${keyword | q,u,x}"
            title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
         % if defn:
           % if defn['short'] and defn['long'] != defn['short']:
@@ -327,7 +330,7 @@ External link ${i+1}\
         % elif 'other' in defn:
           Other constraints: ${defn['other'] | x}
         % else:
-          <a href="${script_root}/full/catalogue?q=al:${defn['short'] | u}"
+          <a href="${script_root}/full/catalogue?q=al:${defn['short'] | q,u,x}"
              title="Search for all metadata having the access limit '${defn['short'] | x}'">${defn['short'] | x}</a>
           <br/>Definition: ${defn['defn'] | x}
         % endif
@@ -394,7 +397,7 @@ External link ${i+1}\
         % if 'error' in defn:
           <span class="error">${defn['error']}</span>
         % else:
-          <a href="${script_root}/full/catalogue?q=rt:${defn['short'] | u}"
+          <a href="${script_root}/full/catalogue?q=rt:${defn['short'] | q,u,x}"
              title="Search for all metadata having the resource type '${defn['short'] | x}'">${defn['short'] | x}</a>
           <br/>Definition: ${defn['defn'] | x}
         % endif
@@ -432,7 +435,7 @@ External link ${i+1}\
           <span class="error">${defn['error']}</span>
         % else:
           % if defn:
-          <a href="${script_root}/full/catalogue?q=f:${defn['long'] | u}"
+          <a href="${script_root}/full/catalogue?q=f:${defn['long'] | q,u,x}"
              title="Search for all metadata having the data format '${defn['long'] | x}'">${defn['long'] | x}</a>
           <br/>Definition: ${defn['defn'] | x}
           % else:
@@ -864,7 +867,7 @@ External link ${i+1}\
           <span class="error">${defn['error']}</span>
         % else:
           % if defn:
-          <a href="${script_root}/full/catalogue?q=tc:${defn['short'] | u}"
+          <a href="${script_root}/full/catalogue?q=tc:${defn['short'] | q,u,x}"
              title="Search for all metadata having the topic category '${defn['short'] | x}'">${defn['short'] | x}</a>
             % if defn['long'] != defn['short']:
             - ${defn['long'] | x}

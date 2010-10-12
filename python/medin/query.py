@@ -407,7 +407,7 @@ class TermParser(object):
     #
     # See http://docs.python.org/library/re.html for regular
     # expression details.
-    pattern = re.compile(r'(?P<or>OR)?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>[^\s]+)')
+    pattern = re.compile(r'(?P<or>OR)?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>(?:"[^"]+")|(?:[^\s]+))')
     
     targets = set(('', 'a', 'al', 'f', 'l', 'o', 'p', 'rt', 'tc'))
 

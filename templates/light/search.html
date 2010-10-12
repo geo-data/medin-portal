@@ -24,6 +24,10 @@
  http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 </%doc>\
 <%inherit file="base-ok.html"/> 
+<%!
+    from medin.filters import quote as q
+%>
+
 <%def name="nav_links()">
   <li><a href="${script_root}/light" title="Start a new search">New search</a></li>
   <li><a href="${script_root}/full${query_string | x}" title="Use the full search interface">Rich search</a></li>
@@ -45,7 +49,7 @@
     <div><label for="search-term">Type your search terms below:</label></div>
     <input type="text" id="search-term" name="q"\
       %if search_term:
- value="${search_term}"\
+ value="${search_term | x}"\
       %endif
 />
     <input type="submit" value="search"/>
@@ -56,7 +60,7 @@
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a parameter...</option>
         %for parameter in parameters:
-        <option title="${parameter['defn'] | x}" value="p:${parameter['abbr'] | x}">${parameter['term'] | x}</option>
+        <option title="${parameter['defn'] | x}" value="p:${parameter['term'] | q,x}">${parameter['term'] | x}</option>
         %endfor
       </select>
     </div>
@@ -66,7 +70,7 @@
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a topic...</option>
         %for category in topic_categories:
-        <option title="${category['defn'] | x}" value="tc:${category['abbr'] | x}">${category['term'] | x}</option>
+        <option title="${category['defn'] | x}" value="tc:${category['abbr'] | q,x}">${category['term'] | x}</option>
         %endfor
       </select>
     </div>
@@ -76,7 +80,7 @@
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a resource type...</option>
         %for rtype in resource_types:
-        <option title="${rtype['defn'] | x}" value="rt:${rtype['abbr'] | x}">${rtype['term'] | x}</option>
+        <option title="${rtype['defn'] | x}" value="rt:${rtype['abbr'] | q,x}">${rtype['term'] | x}</option>
         %endfor
       </select>
     </div>
@@ -86,7 +90,7 @@
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose an access type...</option>
         %for atype in access_types:
-        <option title="${atype['defn'] | x}" value="al:${atype['term'] | x}">${atype['term'] | x}</option>
+        <option title="${atype['defn'] | x}" value="al:${atype['term'] | q,x}">${atype['term'] | x}</option>
         %endfor
       </select>
     </div>
@@ -96,7 +100,7 @@
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a data format...</option>
         %for format in data_formats:
-        <option title="${format['defn'] | x}" value="f:${format['term'] | x}">${format['term'] | x}</option>
+        <option title="${format['defn'] | x}" value="f:${format['term'] | q,x}">${format['term'] | x}</option>
         %endfor
       </select>
     </div>

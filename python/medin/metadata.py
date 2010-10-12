@@ -567,6 +567,12 @@ class Parser(object):
                 else:
                     defn = {}
 
+                # the Discovery Web Service indexes PO21 parameters by
+                # long name, not short, so we get rid of the short
+                # name...
+                if code == 'P021':
+                    defn['short'] = defn['long']
+
                 # add the definition to the keyword dictionary
                 try:
                     keywords[title][word] = defn
