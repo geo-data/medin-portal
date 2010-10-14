@@ -120,6 +120,11 @@ class TermBuilder(object):
             elif op_not:
                 op = 'NOT'
 
+            # If the term is a phrase ensure it is enclosed with two
+            # pairs of quotes for the DWS
+            if word.startswith('"') and word.endswith('"'):
+                word = '""%s""' % word.strip('"')
+
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = word
             try:
