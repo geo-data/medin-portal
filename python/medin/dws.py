@@ -382,6 +382,49 @@ class SearchRequest(Request):
 
         return response
 
+class MetadataResponse(object):
+    """
+    Interface to DWS metadata response
+    
+    An class providing a more user friendly interface to a full
+    doPresent Response as returned by the DWS
+    """
+    
+    def __init__(self, reply):
+        self.reply = reply              # the raw DWS reply
+
+    @property
+    def message(self):
+        return self.reply.StatusMessage
+
+    @property
+    def xml(self):
+        try:
+            return str(self.reply.Documents.DocumentFull[0].Document)
+        except (AttributeError, IndexError):
+            return None                 # no document found
+
+    @property
+    def gid(self):
+        try:
+            return self.reply.Documents.DocumentFull[0].DocumentId
+        except (AttributeError, IndexError):
+            return None                 # no document found
+    
+    @property
+    def date(self):
+        """Last update date"""
+        try:
+            return self.reply.Documents.DocumentFull[0].AdditionalInformation.DatasetUpdateDate
+        except (AttributeError, IndexError):
+            return None                 # no document found
+    
+    def __nonzero__(self):
+        """
+        Return True if the response is valid, False otherwise
+        """
+        return self.reply.Status
+    
 class MetadataRequest(Request):
 
     def getMetadataFormats(self, logger):
@@ -389,7 +432,7 @@ class MetadataRequest(Request):
 
         return response.listMember
         
-    def __call__(self, logger, gid, areas):
+    def __call__(self, logger, gid, format):
         """
         Connect to the DWS and retrieve a metadata entry by its ID
         """
@@ -397,7 +440,7 @@ class MetadataRequest(Request):
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
         retrieve.RecordDetail = 'DocumentFull' # we want all the info
-        retrieve.MetadataFormat = 'MEDIN_2.3'
+        retrieve.MetadataFormat = format
 
         # construct the SimpleDocument
         simpledoc = self.client.factory.create('ns0:SimpleDocument')
@@ -405,21 +448,25 @@ class MetadataRequest(Request):
         
         # send the query to the DWS
         response = self._callService(logger, self.client.service.doPresent, [simpledoc], retrieve )
-        
-        status = response.Status
-        message = response.StatusMessage
+        response = MetadataResponse(response) # wrap the response in our more accessible object
 
-        if not status:
+        if not response:
             msg = 'Data could not be retrieved as the Discovery Web Service failed'
-            logger.error(msg + ': %s' % message)
+            logger.error(msg + ': %s' % response.message)
             raise DWSError(msg)
 
-        try:
-            document = response.Documents.DocumentFull[0]
-        except (AttributeError, IndexError):
-            return None                 # no document found
+        return response
+
+class MedinMetadataRequest(MetadataRequest):
         
-        xml = document.Document
+    def __call__(self, logger, gid, areas):
+        # get a document in MEDIN XML format
+        format = 'MEDIN_2.3'
+        response = super(MedinMetadataRequest, self).__call__(logger, gid, format)
+
+        xml = response.xml
+        if xml is None:
+            return None
 
         # return a Metadata parser instance
         from metadata import Parser
@@ -429,3 +476,4 @@ class MetadataRequest(Request):
             msg = 'The metadata does not appear to be valid'
             logger.exception(msg)
             raise DWSError(msg)
+

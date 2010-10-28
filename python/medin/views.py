@@ -671,9 +671,9 @@ class ResultFormat(object):
 class Metadata(MakoApp):
 
     def __init__(self, path, **kwargs):
-        from medin.dws import MetadataRequest
+        from medin.dws import MedinMetadataRequest
 
-        self.request = MetadataRequest()
+        self.request = MedinMetadataRequest()
         super(Metadata, self).__init__(path, check_etag=False, **kwargs)
 
     def setup(self, environ, etag_data=''):
@@ -787,8 +787,8 @@ class MetadataImage(object):
     """
 
     def __init__(self):
-        from medin.dws import MetadataRequest
-        self.request = MetadataRequest()
+        from medin.dws import MedinMetadataRequest
+        self.request = MedinMetadataRequest()
 
     def __call__(self, environ, start_response):
         import os.path
@@ -852,24 +852,25 @@ class MetadataXML(object):
         if fmt not in self.request.getMetadataFormats(environ['logging.logger']):
             raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-        areas = get_areas(environ)
-        parser = self.request(environ['logging.logger'], gid, areas)
-        if not parser:
+        response = self.request(environ['logging.logger'], gid, fmt)
+        if not response:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
+
+        document = response.xml
+        if not document:
+            raise HTTPError('404 Not Found', 'The metadata format does not contain any data: %s' % fmt)
 
         # Check if the client needs a new version
         headers = []
-        date = get_metadata_date(environ, parser)
+        date = response.date
         if date:            
             etag = check_etag(environ, date)
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
 
-        filename = parser.uniqueID()
-        if not splitext(filename)[1]:
+        filename = gid
+        if splitext(filename)[1] != '.xml':
             filename += '.xml'
-
-        document = str(parser.document)
 
         headers.extend([('Content-disposition', 'attachment; filename="%s"' % filename),
                         ('Content-Type', 'application/xml')])
@@ -883,8 +884,8 @@ class MetadataCSV(object):
     """
 
     def __init__(self):
-        from medin.dws import MetadataRequest
-        self.request = MetadataRequest()
+        from medin.dws import MedinMetadataRequest
+        self.request = MedinMetadataRequest()
 
     def __call__(self, environ, start_response):
         from cStringIO import StringIO
