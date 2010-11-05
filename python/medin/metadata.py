@@ -571,7 +571,10 @@ class Parser(object):
                 # long name, not short, so we get rid of the short
                 # name...
                 if code == 'P021':
-                    defn['short'] = defn['long']
+                    try:
+                        defn['short'] = defn['long']
+                    except KeyError:
+                        pass
 
                 # add the definition to the keyword dictionary
                 try:
