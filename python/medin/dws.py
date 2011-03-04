@@ -64,8 +64,8 @@ class Request(object):
                 status, msg = e.reason
             except ValueError:
                 status = 500
-
-            msg = 'Connecting to the Discovery Web Service failed'
+                msg = 'Connecting to the Discovery Web Service failed: %s' % e.reason
+                
             logger.exception(msg)
             raise DWSError(msg, status)
         except Exception, e:

@@ -66,11 +66,7 @@ class ErrorHandler(errata.ErrorHandler):
         Delegates the rendering of errors to the WSGI app specified as
         a view.
         """
-        try:
-            return self.view(exception, environ, start_response)
-        except Exception, e:
-            handler = self.getHandler(e)
-            return handler(e, environ, start_response)
+        return self.view(exception, environ, start_response)
 
     def handleDWSError(self, exception, environ, start_response):
         if exception.status < 500:
@@ -84,8 +80,8 @@ class ErrorHandler(errata.ErrorHandler):
         return self.handleHTTPError(e, environ, start_response)
 
     def handleTemplateLookupException(self, exception, environ, start_response):
-        from mako.exceptions import TopLevelLookupException
         import sys
+        from mako.exceptions import TopLevelLookupException
 
         try:
             exc_info = sys.exc_info()
@@ -96,7 +92,10 @@ class ErrorHandler(errata.ErrorHandler):
                 environ['logging.logger'].error('A template could not be found', exc_info=exc_info)
             except TopLevelLookupException:
                 # The top level template can't be found, so specify a default
-                environ['selector.vars']['template'] = 'light'
+                try:
+                    environ['selector.vars']['template'] = 'light'
+                except KeyError:
+                    environ['selector.vars'] = {'template': 'light'}
                 message = 'The template you specified does not exist.'
                 e = errata.HTTPError('404 Not Found', message)
                 return self.handleHTTPError(e, environ, start_response)
@@ -108,6 +107,17 @@ class ErrorHandler(errata.ErrorHandler):
         # log the exception
         environ['logging.logger'].exception('The application encountered an unhandled exception')
 
-        # change the exception to a HTTPError and delegate
-        exception = errata.HTTPError('500 Portal Error', 'Sorry - the portal has encountered a critical problem. The error has been logged and will be dealt with as soon as possible.')
-        return self.handleHTTPError(exception, environ, start_response)
+        try:
+            # change the exception to a HTTPError and delegate
+            new_exception = errata.HTTPError('500 Portal Error', 'Sorry - the portal has encountered a critical problem. The error has been logged and will be dealt with as soon as possible.')
+            return self.handleHTTPError(new_exception, environ, start_response)
+        except Exception, e:                
+            try:
+                if e.__class__ == exception.__class__ and e.args == exception.args:
+                    # it's a recursive call, break out of it:
+                    raise RuntimeError('Recursion in error handler: %s' % str(e))
+                handler = self.getHandler(e)
+                return handler(e, environ, start_response)
+            except Exception, f:
+                # let the base ErrorHandler deal with the original exception
+                return super(ErrorHandler, self).handleException(exception, environ, start_response)
