@@ -132,7 +132,7 @@ class ErrorHandler(object):
 
     def formatMessage(self, e):
         """Format an exception to only show it's content"""
-        return str(e)
+        return "%s\n" % str(e)
 
 class HTTPError(Exception):
     """An exception representing an HTTP error.
@@ -142,6 +142,9 @@ class HTTPError(Exception):
 
     def __init__(self, status, message, headers = [('Content-type', 'text/plain')]):
         Exception.__init__(self, status, message, headers)
+
+    def __str__(self):
+        return self.args[1]
 
 class HTTPErrorHandler(ErrorHandler):
     """WSGI post-processor aimed at handling HTTP errors.

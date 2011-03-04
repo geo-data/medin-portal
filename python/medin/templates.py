@@ -35,8 +35,9 @@ def get_template_name(environ):
         try:
             # try and get the template as the first path entry
             template = environ.get('PATH_INFO', '').split('/')[1]
-        except KeyError, IndexError:
-            return None
+        except (KeyError, IndexError):
+            from mako.exceptions import TopLevelLookupException
+            raise TopLevelLookupException('No template is specified')
 
     return template
 
@@ -128,8 +129,6 @@ class MakoApp(object):
         path = os.path.join(os.path.sep, *path)
         if expand:
             template = get_template_name(environ)
-            if template is None:
-                raise RuntimeError('No template is specified')
             path = path % template
         return lookup.get_template(path)
 
@@ -165,7 +164,7 @@ class MakoApp(object):
             try:
                 vars[kl] = environ[k]
             except KeyError:
-                vars[kl] = environ['']
+                vars[kl] = ''
 
         if vars['query_string']: vars['query_string'] = '?' +  vars['query_string']
 
