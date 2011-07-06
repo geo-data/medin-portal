@@ -23,9 +23,9 @@ import suds
 import suds.metrics as metrics
 from cookielib import CookieJar
 from suds import *
+from suds.reader import DefinitionsReader
 from suds.transport import TransportError, Request
 from suds.transport.https import HttpAuthenticated
-from suds.transport.cache import FileCache
 from suds.servicedefinition import ServiceDefinition
 from suds import sudsobject
 from sudsobject import Factory as InstFactory
@@ -33,12 +33,14 @@ from sudsobject import Object
 from suds.resolver import PathResolver
 from suds.builder import Builder
 from suds.wsdl import Definitions
+from suds.cache import ObjectCache
 from suds.sax.document import Document
 from suds.sax.parser import Parser
 from suds.options import Options
 from suds.properties import Unskin
 from urlparse import urlparse
 from copy import deepcopy
+from suds.plugin import PluginContainer
 from logging import getLogger
 
 log = getLogger(__name__)
@@ -104,9 +106,12 @@ class Client(object):
         options = Options()
         options.transport = HttpAuthenticated()
         self.options = options
-        options.cache = FileCache(days=1)
+        options.cache = ObjectCache(days=1)
         self.set_options(**kwargs)
-        self.wsdl = Definitions(url, options)
+        reader = DefinitionsReader(options, Definitions)
+        self.wsdl = reader.open(url)
+        plugins = PluginContainer(options.plugins)
+        plugins.init.initialized(wsdl=self.wsdl)
         self.factory = Factory(self.wsdl)
         self.service = ServiceSelector(self, self.wsdl.services)
         self.sd = []
@@ -587,25 +592,26 @@ class SoapClient:
         timer.start()
         result = None
         binding = self.method.binding.input
-        binding.options = self.options
-        msg = binding.get_message(self.method, args, kwargs)
+        soapenv = binding.get_message(self.method, args, kwargs)
         timer.stop()
         metrics.log.debug(
                 "message for '%s' created: %s",
-                self.method.name, timer)
+                self.method.name,
+                timer)
         timer.start()
-        result = self.send(msg)
+        result = self.send(soapenv)
         timer.stop()
         metrics.log.debug(
                 "method '%s' invoked: %s",
-                self.method.name, timer)
+                self.method.name,
+                timer)
         return result
     
-    def send(self, msg):
+    def send(self, soapenv):
         """
         Send soap message.
-        @param msg: A soap message to send.
-        @type msg: basestring
+        @param soapenv: A soap envelope to send.
+        @type soapenv: L{Document}
         @return: The reply to the sent message.
         @rtype: I{builtin} or I{subclass of} L{Object}
         """
@@ -614,12 +620,31 @@ class SoapClient:
         binding = self.method.binding.input
         transport = self.options.transport
         retxml = self.options.retxml
-        log.debug('sending to (%s)\nmessage:\n%s', location, msg)
+        nosend = self.options.nosend
+        prettyxml = self.options.prettyxml
+        timer = metrics.Timer()
+        log.debug('sending to (%s)\nmessage:\n%s', location, soapenv)
         try:
-            self.last_sent(Document(msg))
-            request = Request(location, str(msg))
+            self.last_sent(soapenv)
+            plugins = PluginContainer(self.options.plugins)
+            plugins.message.marshalled(envelope=soapenv.root())
+            if prettyxml:
+                soapenv = soapenv.str()
+            else:
+                soapenv = soapenv.plain()
+            soapenv = soapenv.encode('utf-8')
+            ctx = plugins.message.sending(envelope=soapenv)
+            soapenv = ctx.envelope
+            if nosend:
+                return RequestContext(self, binding, soapenv)
+            request = Request(location, soapenv)
             request.headers = self.headers()
+            timer.start()
             reply = transport.send(request)
+            timer.stop()
+            metrics.log.debug('waited %s on server reply', timer)
+            ctx = plugins.message.received(reply=reply.message)
+            reply.message = ctx.reply
             if retxml:
                 result = reply.message
             else:
@@ -639,7 +664,9 @@ class SoapClient:
         @rtype: dict
         """
         action = self.method.soap.action
-        stock = { 'Content-Type' : 'text/xml', 'SOAPAction': action }
+        if isinstance(action, unicode):
+            action = action.encode('utf-8')
+        stock = { 'Content-Type' : 'text/xml; charset=utf-8', 'SOAPAction': action }
         result = dict(stock, **self.options.headers)
         log.debug('headers = %s', result)
         return result
@@ -649,23 +676,25 @@ class SoapClient:
         Request succeeded, process the reply
         @param binding: The binding to be used to process the reply.
         @type binding: L{bindings.binding.Binding}
+        @param reply: The raw reply text.
+        @type reply: str
         @return: The method result.
         @rtype: I{builtin}, L{Object}
         @raise WebFault: On server.
         """
         log.debug('http succeeded:\n%s', reply)
+        plugins = PluginContainer(self.options.plugins)
         if len(reply) > 0:
-            r, p = binding.get_reply(self.method, reply)
-            self.last_received(r)
-            if self.options.faults:
-                return p
-            else:
-                return (200, p)
+            reply, result = binding.get_reply(self.method, reply)
+            self.last_received(reply)
         else:
-            if self.options.faults:
-                return None
-            else:
-                return (200, None)
+            result = None
+        ctx = plugins.message.unmarshalled(reply=result)
+        result = ctx.reply
+        if self.options.faults:
+            return result
+        else:
+            return (200, result)
         
     def failed(self, binding, error):
         """
@@ -743,26 +772,73 @@ class SimClient(SoapClient):
             if fault is not None:
                 return self.__fault(fault)
             raise Exception('(reply|fault) expected when msg=None')
-        msg = Parser().parse(string=msg)
+        sax = Parser()
+        msg = sax.parse(string=msg)
         return self.send(msg)
     
     def __reply(self, reply, args, kwargs):
         """ simulate the reply """
         binding = self.method.binding.input
-        binding.options = self.options
         msg = binding.get_message(self.method, args, kwargs)
         log.debug('inject (simulated) send message:\n%s', msg)
         binding = self.method.binding.output
-        binding.options = self.options
         return self.succeeded(binding, reply)
     
     def __fault(self, reply):
         """ simulate the (fault) reply """
         binding = self.method.binding.output
-        binding.options = self.options
         if self.options.faults:
             r, p = binding.get_fault(reply)
             self.last_received(r)
             return (500, p)
         else:
             return (500, None)
+        
+
+class RequestContext:
+    """
+    A request context.
+    Returned when the ''nosend'' options is specified.
+    @ivar client: The suds client.
+    @type client: L{Client}
+    @ivar binding: The binding for this request.
+    @type binding: I{Binding}
+    @ivar envelope: The request soap envelope.
+    @type envelope: str
+    """
+    
+    def __init__(self, client, binding, envelope):
+        """
+        @param client: The suds client.
+        @type client: L{Client}
+        @param binding: The binding for this request.
+        @type binding: I{Binding}
+        @param envelope: The request soap envelope.
+        @type envelope: str
+        """
+        self.client = client
+        self.binding = binding
+        self.envelope = envelope
+        
+    def succeeded(self, reply):
+        """
+        Re-entry for processing a successful reply.
+        @param reply: The reply soap envelope.
+        @type reply: str
+        @return: The returned value for the invoked method.
+        @rtype: object 
+        """
+        options = self.client.options
+        plugins = PluginContainer(options.plugins)
+        ctx = plugins.message.received(reply=reply)
+        reply = ctx.reply
+        return self.client.succeeded(self.binding, reply)
+    
+    def failed(self, error):
+        """
+        Re-entry for processing a failure reply.
+        @param error: The error returned by the transport.
+        @type error: A suds I{TransportError}.
+        """
+        return self.client.failed(self.binding, error)
+        

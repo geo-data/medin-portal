@@ -21,7 +21,7 @@ Provides XML I{element} classes.
 from logging import getLogger
 from suds import *
 from suds.sax import *
-from suds.sax.text import Text, Pickler
+from suds.sax.text import Text
 from suds.sax.attribute import Attribute
 import sys 
 if sys.version_info < (2, 4, 0): 
@@ -767,6 +767,29 @@ class Element:
         result.append('</%s>' % self.qname())
         result = ''.join(result)
         return result
+    
+    def plain(self):
+        """
+        Get a string representation of this XML fragment.
+        @return: A I{plain} string.
+        @rtype: basestring
+        """
+        result = []
+        result.append('<%s' % self.qname())
+        result.append(self.nsdeclarations())
+        for a in [unicode(a) for a in self.attributes]:
+            result.append(' %s' % a)
+        if self.isempty():
+            result.append('/>')
+            return ''.join(result)
+        result.append('>')
+        if self.hasText():
+            result.append(self.text.escape())
+        for c in self.children:
+            result.append(c.plain())
+        result.append('</%s>' % self.qname())
+        result = ''.join(result)
+        return result
 
     def nsdeclarations(self):
         """
@@ -820,11 +843,23 @@ class Element:
         @return: A flat list of nodes.
         @rtype: [L{Element},..]
         """
-        branch = []
+        branch = [self]
         for c in self.children:
-            branch.append(c)
             branch += c.branch()
         return branch
+    
+    def ancestors(self):
+        """
+        Get a list of ancestors.
+        @return: A list of ancestors.
+        @rtype: [L{Element},..]
+        """
+        ancestors = []
+        p = self.parent
+        while p is not None:
+            ancestors.append(p)
+            p = p.parent
+        return ancestors
     
     def walk(self, visitor):
         """
@@ -895,15 +930,6 @@ class Element:
             if index < len(self.children) and \
                 isinstance(value, Element):
                 self.children.insert(index, value)
-                
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state['text'] = Pickler.dump(self.text)
-        return state
-    
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.text = Pickler.load(self.text)
 
     def __eq__(self, rhs):
         return  rhs is not None and \
@@ -920,6 +946,41 @@ class Element:
     
     def __unicode__(self):
         return self.str()
+    
+    def __iter__(self):
+        return NodeIterator(self)
+    
+
+class NodeIterator:
+    """
+    The L{Element} child node iterator.
+    @ivar pos: The current position
+    @type pos: int
+    @ivar children: A list of a child nodes.
+    @type children: [L{Element},..] 
+    """
+    
+    def __init__(self, parent):
+        """
+        @param parent: An element to iterate.
+        @type parent: L{Element}
+        """
+        self.pos = 0
+        self.children = parent.children
+        
+    def next(self):
+        """
+        Get the next child.
+        @return: The next child.
+        @rtype: L{Element}
+        @raise StopIterator: At the end.
+        """
+        try:
+            child = self.children[self.pos]
+            self.pos += 1
+            return child
+        except:
+            raise StopIteration()
 
 
 class PrefixNormalizer:
@@ -964,7 +1025,7 @@ class PrefixNormalizer:
         @rtype: set
         """
         s = set()
-        for n in self.branch:
+        for n in self.branch + self.node.ancestors():
             if self.permit(n.expns):
                 s.add(n.expns)
             s = s.union(self.pset(n))

@@ -22,6 +22,7 @@ from logging import getLogger
 from suds import *
 from suds.sax import Namespace
 from suds.sax.parser import Parser
+from suds.sax.document import Document
 from suds.sax.element import Element
 from suds.sudsobject import Factory, Object
 from suds.mx import Content
@@ -32,6 +33,7 @@ from suds.bindings.multiref import MultiRef
 from suds.xsd.query import TypeQuery, ElementQuery
 from suds.xsd.sxbasic import Element as SchemaElement
 from suds.options import Options
+from suds.plugin import PluginContainer
 from copy import deepcopy 
 
 log = getLogger(__name__)
@@ -51,8 +53,6 @@ class Binding:
     @type schema: L{xsd.schema.Schema}
     @ivar options: A dictionary options.
     @type options: L{Options}
-    @ivar parser: A sax parser.
-    @type parser: L{suds.sax.parser.Parser}
     """
     
     replyfilter = (lambda s,r: r)
@@ -63,10 +63,13 @@ class Binding:
         @type wsdl: L{wsdl.Definitions}
         """
         self.wsdl = wsdl
-        self.schema = wsdl.schema
-        self.options = Options()
-        self.parser = Parser()
         self.multiref = MultiRef()
+        
+    def schema(self):
+        return self.wsdl.schema
+    
+    def options(self):
+        return self.wsdl.options
         
     def unmarshaller(self, typed=True):
         """
@@ -75,7 +78,7 @@ class Binding:
         @rtype: L{UmxTyped}
         """
         if typed:
-            return UmxTyped(self.schema)
+            return UmxTyped(self.schema())
         else:
             return UmxBasic()
         
@@ -85,7 +88,7 @@ class Binding:
         @return: An L{MxLiteral} marshaller.
         @rtype: L{MxLiteral}
         """
-        return MxLiteral(self.schema)
+        return MxLiteral(self.schema(), self.options().xstq)
     
     def param_defs(self, method):
         """
@@ -108,8 +111,8 @@ class Binding:
         @type args: list
         @param kwargs: Named (keyword) args for the method invoked.
         @type kwargs: dict
-        @return: The soap message.
-        @rtype: str
+        @return: The soap envelope.
+        @rtype: L{Document}
         """
 
         content = self.headercontent(method)
@@ -117,12 +120,12 @@ class Binding:
         content = self.bodycontent(method, args, kwargs)
         body = self.body(content)
         env = self.envelope(header, body)
-        if self.options.prefixes:
+        if self.options().prefixes:
             body.normalizePrefixes()
             env.promotePrefixes()
         else:
             env.refitPrefixes()
-        return env
+        return Document(env)
     
     def get_reply(self, method, reply):
         """
@@ -138,10 +141,14 @@ class Binding:
         @rtype: tuple ( L{Element}, L{Object} )
         """
         reply = self.replyfilter(reply)
-        replyroot = self.parser.parse(string=reply)
+        sax = Parser()
+        replyroot = sax.parse(string=reply)
+        plugins = PluginContainer(self.options().plugins)
+        plugins.message.parsed(reply=replyroot)
         soapenv = replyroot.getChild('Envelope')
         soapenv.promotePrefixes()
         soapbody = soapenv.getChild('Body')
+        self.detect_fault(soapbody)
         soapbody = self.multiref.process(soapbody)
         nodes = self.replycontent(method, soapbody)
         rtypes = self.returned_types(method)
@@ -158,6 +165,23 @@ class Binding:
                 result = unmarshaller.process(nodes[0], resolved)
                 return (replyroot, result)
         return (replyroot, None)
+    
+    def detect_fault(self, body):
+        """
+        Detect I{hidden} soapenv:Fault element in the soap body.
+        @param body: The soap envelope body.
+        @type body: L{Element}
+        @raise WebFault: When found.
+        """
+        fault = body.getChild('Fault', envns)
+        if fault is None:
+            return
+        unmarshaller = self.unmarshaller(False)
+        p = unmarshaller.process(fault)
+        if self.options().faults:
+            raise WebFault(p, fault)
+        return self
+        
     
     def replylist(self, rt, nodes):
         """
@@ -204,14 +228,19 @@ class Binding:
                     continue
             resolved = rt.resolve(nobuiltin=True)
             sobject = unmarshaller.process(node, resolved)
-            if rt.unbounded():
-                value = getattr(composite, tag, None)
-                if value is None:
+            value = getattr(composite, tag, None)
+            if value is None:
+                if rt.unbounded():
                     value = []
                     setattr(composite, tag, value)
-                value.append(sobject)
+                    value.append(sobject)
+                else:
+                    setattr(composite, tag, sobject)
             else:
-                setattr(composite, tag, sobject)
+                if not isinstance(value, list):
+                    value = [value,]
+                    setattr(composite, tag, value)
+                value.append(sobject)          
         return composite
     
     def get_fault(self, reply):
@@ -225,13 +254,14 @@ class Binding:
         @rtype: tuple ( L{Element}, L{Object} )
         """
         reply = self.replyfilter(reply)
-        faultroot = self.parser.parse(string=reply)
+        sax = Parser()
+        faultroot = sax.parse(string=reply)
         soapenv = faultroot.getChild('Envelope')
         soapbody = soapenv.getChild('Body')
         fault = soapbody.getChild('Fault')
         unmarshaller = self.unmarshaller(False)
         p = unmarshaller.process(fault)
-        if self.options.faults:
+        if self.options().faults:
             raise WebFault(p, faultroot)
         return (faultroot, p.detail)
     
@@ -330,10 +360,10 @@ class Binding:
         """
         n = 0
         content = []
-        wsse = self.options.wsse
+        wsse = self.options().wsse
         if wsse is not None:
             content.append(wsse.xml())
-        headers = self.options.soapheaders
+        headers = self.options().soapheaders
         if not isinstance(headers, (tuple,list,dict)):
             headers = (headers,)
         if len(headers) == 0:
@@ -406,7 +436,7 @@ class Binding:
                 query = ElementQuery(p.element)
             else:
                 query = TypeQuery(p.type)
-            pt = query.execute(self.schema)
+            pt = query.execute(self.schema())
             if pt is None:
                 raise TypeNotFound(query.ref)
             if p.type is not None:
@@ -442,7 +472,7 @@ class Binding:
                 query = ElementQuery(part.element)
             else:
                 query = TypeQuery(part.type)
-            pt = query.execute(self.schema)
+            pt = query.execute(self.schema())
             if pt is None:
                 raise TypeNotFound(query.ref)
             if part.type is not None:

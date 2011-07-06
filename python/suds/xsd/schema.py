@@ -22,7 +22,7 @@ Most of the I{value-add} provided by the model is centered around
 tranparent referenced type resolution and targeted denormalization.
 """
 
-from logging import getLogger
+
 import suds.metrics
 from suds import *
 from suds.xsd import *
@@ -33,6 +33,7 @@ from suds.xsd.sxbase import SchemaObject
 from suds.xsd.deplist import DepList
 from suds.sax.element import Element
 from suds.sax import splitPrefix, Namespace
+from logging import getLogger
 
 log = getLogger(__name__)
 
@@ -55,7 +56,6 @@ class SchemaCollection:
         @type wsdl: L{suds.wsdl.Definitions}
         """
         self.wsdl = wsdl
-        self.options = wsdl.options
         self.children = []
         self.namespaces = {}
         
@@ -63,34 +63,34 @@ class SchemaCollection:
         """
         Add a schema node to the collection.  Schema(s) within the same target
         namespace are consolidated.
-        @param schema: A <schema/> entry.
-        @type schema: (L{suds.wsdl.Definitions},L{sax.element.Element})
+        @param schema: A schema object.
+        @type schema: (L{Schema})
         """
-        root, wsdl = schema
-        child = Schema(root, wsdl.url, self.options, container=self)
-        key = child.tns[1]
+        key = schema.tns[1]
         existing = self.namespaces.get(key)
         if existing is None:
-            self.children.append(child)
-            self.namespaces[key] = child
+            self.children.append(schema)
+            self.namespaces[key] = schema
         else:
-            existing.root.children += root.children
-            existing.root.nsprefixes.update(root.nsprefixes)
+            existing.root.children += schema.root.children
+            existing.root.nsprefixes.update(schema.root.nsprefixes)
         
-    def load(self):
+    def load(self, options):
         """
         Load the schema objects for the root nodes.
             - de-references schemas
             - merge schemas
+        @param options: An options dictionary.
+        @type options: L{options.Options}
         @return: The merged schema.
         @rtype: L{Schema}
         """
-        if self.options.autoblend:
+        if options.autoblend:
             self.autoblend()
         for child in self.children:
             child.build()
         for child in self.children:
-            child.open_imports()
+            child.open_imports(options)
         for child in self.children:
             child.dereference()
         log.debug('loaded:\n%s', self)
@@ -165,20 +165,24 @@ class Schema:
     @type root: L{sax.element.Element}
     @ivar baseurl: The I{base} URL for this schema.
     @type baseurl: str
-    @ivar options: An options dictionary.
-    @type options: L{options.Options}
     @ivar container: A schema collection containing this schema.
     @type container: L{SchemaCollection}
-    @ivar types: A schema types cache.
-    @type types: {name:L{SchemaObject}}
-    @ivar groups: A schema groups cache.
-    @type groups: {name:L{SchemaObject}}
     @ivar children: A list of direct top level children.
     @type children: [L{SchemaObject},...]
     @ivar all: A list of all (includes imported) top level children.
     @type all: [L{SchemaObject},...]
+    @ivar types: A schema types cache.
+    @type types: {name:L{SchemaObject}}
     @ivar imports: A list of import objects.
     @type imports: [L{SchemaObject},...]
+    @ivar elements: A list of <element/> objects.
+    @type elements: [L{SchemaObject},...]
+    @ivar attributes: A list of <attribute/> objects.
+    @type attributes: [L{SchemaObject},...]
+    @ivar groups: A list of group objects.
+    @type groups: [L{SchemaObject},...]
+    @ivar agrps: A list of attribute group objects.
+    @type agrps: [L{SchemaObject},...]
     @ivar form_qualified: The flag indicating:
         (@elementFormDefault).
     @type form_qualified: bool
@@ -201,7 +205,6 @@ class Schema:
         self.id = objid(self)
         self.tns = self.mktns()
         self.baseurl = baseurl
-        self.options = options
         self.container = container
         self.children = []
         self.all = []
@@ -211,9 +214,8 @@ class Schema:
         self.attributes = {}
         self.groups = {}
         self.agrps = {}
-        doctor = self.options.doctor
-        if doctor is not None:
-            doctor.examine(root)
+        if options.doctor is not None:
+            options.doctor.examine(root)
         form = self.root.get('elementFormDefault')
         if form is None:
             self.form_qualified = False
@@ -221,7 +223,7 @@ class Schema:
             self.form_qualified = ( form == 'qualified' )
         if container is None:
             self.build()
-            self.open_imports()
+            self.open_imports(options)
             log.debug('built:\n%s', self)
             self.dereference()
             log.debug('dereferenced:\n%s', self)
@@ -291,17 +293,19 @@ class Schema:
         schema.merged = True
         return self
         
-    def open_imports(self):
+    def open_imports(self, options):
         """
         Instruct all contained L{sxbasic.Import} children to import
         the schema's which they reference.  The contents of the
         imported schema are I{merged} in.
+        @param options: An options dictionary.
+        @type options: L{options.Options}
         """
         for imp in self.imports:
-            imported = imp.open()
+            imported = imp.open(options)
             if imported is None:
                 continue
-            imported.open_imports()
+            imported.open_imports(options)
             log.debug('imported:\n%s', imported)
             self.merge(imported)
             
@@ -376,7 +380,7 @@ class Schema:
         except:
             return False
         
-    def instance(self, root, baseurl):
+    def instance(self, root, baseurl, options):
         """
         Create and return an new schema object using the
         specified I{root} and I{url}.
@@ -384,11 +388,13 @@ class Schema:
         @type root: L{sax.element.Element}
         @param baseurl: A base URL.
         @type baseurl: str
+        @param options: An options dictionary.
+        @type options: L{options.Options}
         @return: The newly created schema object.
         @rtype: L{Schema}
         @note: This is only used by Import children.
         """
-        return Schema(root, baseurl, self.options)
+        return Schema(root, baseurl, options)
 
     def str(self, indent=0):
         tab = '%*s'%(indent*3, '')

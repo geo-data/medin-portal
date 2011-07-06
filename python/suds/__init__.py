@@ -15,10 +15,8 @@
 # written by: Jeff Ortel ( jortel@redhat.com )
 
 """
-Suds is a lightweight SOAP python client that provides a service proxy 
-for Web Services.
-@var properties: Library properties.
-@type properties: dict
+Suds is a lightweight SOAP python client that provides a
+service proxy for Web Services.
 """
 
 import os
@@ -28,8 +26,8 @@ import sys
 # Project properties
 #
 
-__version__ = '0.3.8'
-__build__="GA R627-20091217"
+__version__ = '0.4.1'
+__build__="(beta) R705-20101207"
 
 #
 # Exceptions

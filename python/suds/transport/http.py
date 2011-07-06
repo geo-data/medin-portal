@@ -46,28 +46,20 @@ class HttpTransport(Transport):
             - B{timeout} - Set the url open timeout (seconds).
                     - type: I{float}
                     - default: 90
-            - B{cache} - The http I{transport} cache.  May be set (None) for no caching.
-                    - type: L{Cache}
-                    - default: L{NoCache}
         """
         Transport.__init__(self)
         Unskin(self.options).update(kwargs)
         self.cookiejar = CookieJar()
+        self.proxy = {}
         self.urlopener = None
         
     def open(self, request):
         try:
             url = request.url
-            cache = self.options.cache
-            fp = cache.get(url)
-            if fp is not None:
-                log.debug('opening (%s), cached', url)
-                return fp
             log.debug('opening (%s)', url)
             u2request = u2.Request(url)
-            self.setproxy(url, u2request)
-            fp = self.u2open(u2request)
-            return cache.put(url, fp)
+            self.proxy = self.options.proxy
+            return self.u2open(u2request)
         except u2.HTTPError, e:
             raise TransportError(str(e), e.code, e.fp)
 
@@ -79,7 +71,7 @@ class HttpTransport(Transport):
         try:
             u2request = u2.Request(url, msg, headers)
             self.addcookies(u2request)
-            self.setproxy(url, u2request)
+            self.proxy = self.options.proxy
             request.headers.update(u2request.headers)
             log.debug('sending:\n%s', request)
             fp = self.u2open(u2request)
@@ -118,17 +110,33 @@ class HttpTransport(Transport):
         @rtype: fp
         """
         tm = self.options.timeout
-        if self.u2ver() >= 2.6:
-            if self.urlopener is None:
-                return u2.urlopen(u2request, timeout=tm)
-            else:
-                return self.urlopener.open(u2request, timeout=tm)
-        else:
+        url = self.u2opener()
+        if self.u2ver() < 2.6:
             socket.setdefaulttimeout(tm)
-            if self.urlopener is None:
-                return u2.urlopen(u2request)
-            else:
-                return self.urlopener.open(u2request)
+            return url.open(u2request)
+        else:
+            return url.open(u2request, timeout=tm)
+            
+    def u2opener(self):
+        """
+        Create a urllib opener.
+        @return: An opener.
+        @rtype: I{OpenerDirector}
+        """
+        if self.urlopener is None:
+            return u2.build_opener(*self.u2handlers())
+        else:
+            return self.urlopener
+        
+    def u2handlers(self):
+        """
+        Get a collection of urllib handlers.
+        @return: A list of handlers to be installed in the opener.
+        @rtype: [Handler,...]
+        """
+        handlers = []
+        handlers.append(u2.ProxyHandler(self.proxy))
+        return handlers
             
     def u2ver(self):
         """
@@ -143,21 +151,6 @@ class HttpTransport(Transport):
         except Exception, e:
             log.exception(e)
             return 0
-        
-    def setproxy(self, url, u2request):
-        """
-        Setup the http/https proxy.
-        @param url: The URL to be opened.
-        @type url: str
-        @param u2request: A urllib2 request.
-        @rtype: u2request: urllib2.Requet.
-        """
-        protocol = urlparse(url)[0]
-        proxy = self.options.proxy.get(protocol, None)
-        if proxy is None:
-            return
-        protocol = u2request.type
-        u2request.set_proxy(proxy, protocol)
         
     def __deepcopy__(self, memo={}):
         clone = self.__class__()
@@ -175,13 +168,20 @@ class HttpAuthenticated(HttpTransport):
     credentials on every http request.
     """
     
+    def open(self, request):
+        self.addcredentials(request)
+        return HttpTransport.open(self, request)
+    
     def send(self, request):
+        self.addcredentials(request)
+        return HttpTransport.send(self, request)
+    
+    def addcredentials(self, request):
         credentials = self.credentials()
         if not (None in credentials):
             encoded = base64.encodestring(':'.join(credentials))
             basic = 'Basic %s' % encoded[:-1]
             request.headers['Authorization'] = basic
-        return HttpTransport.send(self, request)
                  
     def credentials(self):
         return (self.options.username, self.options.password)

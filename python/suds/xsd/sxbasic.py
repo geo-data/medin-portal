@@ -25,8 +25,8 @@ from suds.xsd import *
 from suds.xsd.sxbase import *
 from suds.xsd.query import *
 from suds.sax import splitPrefix, Namespace
-from suds.sax.parser import Parser
 from suds.transport import TransportError
+from suds.reader import DocumentReader
 from urlparse import urljoin
 
 
@@ -118,6 +118,12 @@ class Complex(SchemaObject):
             if c.extension():
                 return True
         return False
+    
+    def mixed(self):
+        for c in self.rawchildren:
+            if isinstance(c, SimpleContent) and c.mixed():
+                return True
+        return False
 
 
 class Group(SchemaObject):
@@ -188,13 +194,16 @@ class Simple(SchemaObject):
     """
 
     def childtags(self):
-        return ('restriction', 'any',)
+        return ('restriction', 'any', 'list',)
     
     def enum(self):
         for child, ancestry in self.children():
             if isinstance(child, Enumeration):
                 return True
         return False
+    
+    def mixed(self):
+        return len(self)
 
     def description(self):
         return ('name',)
@@ -210,6 +219,21 @@ class Simple(SchemaObject):
             if c.restriction():
                 return True
         return False
+    
+
+class List(SchemaObject):
+    """
+    Represents an (xsd) schema <xs:list/> node
+    """
+
+    def childtags(self):
+        return ()
+
+    def description(self):
+        return ('name',)
+    
+    def xslist(self):
+        return True
 
    
 class Restriction(SchemaObject):
@@ -325,6 +349,9 @@ class SimpleContent(SchemaObject):
             if c.restriction():
                 return True
         return False
+    
+    def mixed(self):
+        return len(self)
 
 
 class Enumeration(Content):
@@ -455,7 +482,7 @@ class Extension(SchemaObject):
 
     def description(self):
         return ('ref',)
-
+    
 
 class Import(SchemaObject):
     """
@@ -495,9 +522,11 @@ class Import(SchemaObject):
             self.location = self.locations.get(self.ns[1])
         self.opened = False
         
-    def open(self):
+    def open(self, options):
         """
         Open and import the refrenced schema.
+        @param options: An options dictionary.
+        @type options: L{options.Options}
         @return: The referenced schema.
         @rtype: L{Schema}
         """
@@ -510,7 +539,7 @@ class Import(SchemaObject):
             if self.location is None:
                 log.debug('imported schema (%s) not-found', self.ns[1])
             else:
-                result = self.download()
+                result = self.download(options)
         log.debug('imported:\n%s', result)
         return result
     
@@ -521,16 +550,17 @@ class Import(SchemaObject):
         else:
             return self.schema.locate(self.ns)
 
-    def download(self):
+    def download(self, options):
         """ download the schema """
         url = self.location
         try:
             if '://' not in url:
                 url = urljoin(self.schema.baseurl, url)
-            transport = self.schema.options.transport
-            root = Parser(transport).parse(url=url).root()
+            reader = DocumentReader(options)
+            d = reader.open(url)
+            root = d.root()
             root.set('url', url)
-            return self.schema.instance(root, url)
+            return self.schema.instance(root, url, options)
         except TransportError:
             msg = 'imported schema (%s) at (%s), failed' % (self.ns[1], url)
             log.error('%s, %s', self.id, msg, exc_info=True)
@@ -558,9 +588,11 @@ class Include(SchemaObject):
             self.location = self.locations.get(self.ns[1])
         self.opened = False
         
-    def open(self):
+    def open(self, options):
         """
         Open and include the refrenced schema.
+        @param options: An options dictionary.
+        @type options: L{options.Options}
         @return: The referenced schema.
         @rtype: L{Schema}
         """
@@ -568,21 +600,22 @@ class Include(SchemaObject):
             return
         self.opened = True
         log.debug('%s, including location="%s"', self.id, self.location)
-        result = self.download()
+        result = self.download(options)
         log.debug('included:\n%s', result)
         return result
 
-    def download(self):
+    def download(self, options):
         """ download the schema """
         url = self.location
         try:
             if '://' not in url:
                 url = urljoin(self.schema.baseurl, url)
-            transport = self.schema.options.transport
-            root = Parser(transport).parse(url=url).root()
+            reader = DocumentReader(options)
+            d = reader.open(url)
+            root = d.root()
             root.set('url', url)
             self.__applytns(root)
-            return self.schema.instance(root, url)
+            return self.schema.instance(root, url, options)
         except TransportError:
             msg = 'include schema at (%s), failed' % url
             log.error('%s, %s', self.id, msg, exc_info=True)
@@ -681,7 +714,8 @@ class Factory:
         'complexType' : Complex,
         'group' : Group,
         'attributeGroup' : AttributeGroup, 
-        'simpleType' : Simple, 
+        'simpleType' : Simple,
+        'list' : List,
         'element' : Element,
         'attribute' : Attribute,
         'sequence' : Sequence,
@@ -780,6 +814,12 @@ class Factory:
 #######################################################
 # Static Import Bindings :-(
 #######################################################
-Import.bind('http://schemas.xmlsoap.org/soap/encoding/')
-Import.bind('http://www.w3.org/XML/1998/namespace', 'http://www.w3.org/2001/xml.xsd')
-Import.bind('http://www.w3.org/2001/XMLSchema', 'http://www.w3.org/2001/XMLSchema.xsd')
+Import.bind(
+    'http://schemas.xmlsoap.org/soap/encoding/',
+    'suds://schemas.xmlsoap.org/soap/encoding/')
+Import.bind(
+    'http://www.w3.org/XML/1998/namespace',
+    'http://www.w3.org/2001/xml.xsd')
+Import.bind(
+    'http://www.w3.org/2001/XMLSchema',
+    'http://www.w3.org/2001/XMLSchema.xsd')

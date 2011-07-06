@@ -23,15 +23,14 @@ found in the document.
 from logging import getLogger
 from suds import *
 from suds.sax import splitPrefix
-from suds.sax.parser import Parser
 from suds.sax.element import Element
 from suds.bindings.document import Document
 from suds.bindings.rpc import RPC, Encoded
 from suds.xsd import qualify, Namespace
 from suds.xsd.schema import Schema, SchemaCollection
 from suds.xsd.query import ElementQuery
-from suds.sudsobject import Object
-from suds.sudsobject import Factory as SFactory
+from suds.sudsobject import Object, Facade, Metadata
+from suds.reader import DocumentReader, DefinitionsReader
 from urlparse import urljoin
 import re, soaparray
 
@@ -40,41 +39,6 @@ log = getLogger(__name__)
 wsdlns = (None, "http://schemas.xmlsoap.org/wsdl/")
 soapns = (None, 'http://schemas.xmlsoap.org/wsdl/soap/')
 soap12ns = (None, 'http://schemas.xmlsoap.org/wsdl/soap12/')
-
-
-class Factory:
-    """
-    Simple WSDL object factory.
-    @cvar tags: Dictionary of tag->constructor mappings.
-    @type tags: dict
-    """
-
-    tags =\
-    {
-        'import' : lambda x,y: Import(x,y), 
-        'types' : lambda x,y: Types(x,y), 
-        'message' : lambda x,y: Message(x,y), 
-        'portType' : lambda x,y: PortType(x,y),
-        'binding' : lambda x,y: Binding(x,y),
-        'service' : lambda x,y: Service(x,y),
-    }
-    
-    @classmethod
-    def create(cls, root, definitions):
-        """
-        Create an object based on the root tag name.
-        @param root: An XML root element.
-        @type root: L{Element}
-        @param definitions: A definitions object.
-        @type definitions: L{Definitions}
-        @return: The created object.
-        @rtype: L{WObject} 
-        """
-        fn = cls.tags.get(root.name)
-        if fn is not None:
-            return fn(root, definitions)
-        else:
-            return None
 
 
 class WObject(Object):
@@ -93,9 +57,9 @@ class WObject(Object):
         """
         Object.__init__(self)
         self.root = root
-        pmd = SFactory.metadata()
+        pmd = Metadata()
         pmd.excludes = ['root']
-        pmd.wrappers = dict(qname=lambda x: repr(x))
+        pmd.wrappers = dict(qname=repr)
         self.__metadata__.__print__ = pmd
         
     def resolve(self, definitions):
@@ -127,7 +91,7 @@ class NamedObject(WObject):
         self.name = root.get('name')
         self.qname = (self.name, definitions.tns[1])
         pmd = self.__metadata__.__print__
-        pmd.wrappers['qname'] = lambda x: repr(x)
+        pmd.wrappers['qname'] = repr
 
 
 class Definitions(WObject):
@@ -168,8 +132,9 @@ class Definitions(WObject):
         @type options: L{options.Options}
         """
         log.debug('reading wsdl at: %s ...', url)
-        p = Parser(options.transport)
-        root = p.parse(url=url).root()
+        reader = DocumentReader(options)
+        d = reader.open(url)
+        root = d.root()
         WObject.__init__(self, root)
         self.id = objid(self)
         self.options = options
@@ -188,7 +153,7 @@ class Definitions(WObject):
         pmd = self.__metadata__.__print__
         pmd.excludes.append('children')
         pmd.excludes.append('wsdl')
-        pmd.wrappers['schema'] = lambda x: repr(x)
+        pmd.wrappers['schema'] = repr
         self.open_imports()
         self.resolve()
         self.build_schema()
@@ -245,14 +210,14 @@ class Definitions(WObject):
         """ Process L{Types} objects and create the schema collection """
         container = SchemaCollection(self)
         for t in [t for t in self.types if t.local()]:
-            for r in t.contents():
-                entry = (r, self)
-                container.add(entry)
+            for root in t.contents():
+                schema = Schema(root, self.url, self.options, container)
+                container.add(schema)
         if not len(container): # empty
-            r = Element.buildPath(self.root, 'types/schema')
-            entry = (r, self)
-            container.add(entry)
-        self.schema = container.load()
+            root = Element.buildPath(self.root, 'types/schema')
+            schema = Schema(root, self.url, self.options, container)
+            container.add(schema)
+        self.schema = container.load(self.options)
         for s in [t.schema() for t in self.types if t.imported()]:
             self.schema.merge(s)
         return self.schema
@@ -269,10 +234,10 @@ class Definitions(WObject):
             ptype = p.binding.type
             operations = p.binding.type.operations.values()
             for name in [op.name for op in operations]:
-                m = SFactory.object('Method')
+                m = Facade('Method')
                 m.name = name
                 m.location = p.location
-                m.binding = SFactory.object('binding')
+                m.binding = Facade('binding')
                 op = binding.operation(name)
                 m.soap = op.soap
                 key = '/'.join((op.soap.style, op.soap.input.body.use))
@@ -301,7 +266,17 @@ class Definitions(WObject):
                         if resolved.builtin():
                             continue
                         body.wrapped = True
-            
+                        
+    def __getstate__(self):
+        nopickle = ('options',)
+        state = self.__dict__.copy()
+        for k in nopickle:
+            if k in state:
+                del state[k]
+        return state
+    
+    def __repr__(self):
+        return 'Definitions (id=%s)' % self.id
 
 
 class Import(WObject):
@@ -327,7 +302,7 @@ class Import(WObject):
         self.ns = root.get('namespace')
         self.imported = None
         pmd = self.__metadata__.__print__
-        pmd.wrappers['imported'] = ( lambda x: x.id )
+        pmd.wrappers['imported'] = repr
         
     def load(self, definitions):
         """ Load the object by opening the URL """
@@ -335,7 +310,8 @@ class Import(WObject):
         log.debug('importing (%s)', url)
         if '://' not in url:
             url = urljoin(definitions.url, url)
-        d = Definitions(url, definitions.options)
+        options = definitions.options
+        d = Definitions(url, options)
         if d.root.match(Definitions.Tag, wsdlns):
             self.import_definitions(definitions, d)
             return
@@ -423,9 +399,8 @@ class Part(NamedObject):
         @type definitions: L{Definitions}
         """
         NamedObject.__init__(self, root, definitions)
-        pmd = SFactory.metadata()
-        pmd.wrappers = \
-            dict(element=lambda x: repr(x), type=lambda x: repr(x))
+        pmd = Metadata()
+        pmd.wrappers = dict(element=repr, type=repr)
         self.__metadata__.__print__ = pmd
         tns = definitions.tns
         self.element = self.__getref('element', tns)
@@ -481,7 +456,7 @@ class PortType(NamedObject):
         NamedObject.__init__(self, root, definitions)
         self.operations = {}
         for c in root.getChildren('operation'):
-            op = SFactory.object('Operation')
+            op = Facade('Operation')
             op.name = c.get('name')
             op.tns = definitions.tns
             input = c.getChild('input')
@@ -496,7 +471,7 @@ class PortType(NamedObject):
                 op.output = output.get('message')
             faults = []
             for fault in c.getChildren('fault'):
-                f = SFactory.object('Fault')
+                f = Facade('Fault')
                 f.name = fault.get('name')
                 f.message = fault.get('message')
                 faults.append(f)
@@ -575,7 +550,7 @@ class Binding(NamedObject):
             self.soap = None
             log.debug('binding: "%s" not a soap binding', self.name)
             return
-        soap = SFactory.object('soap')
+        soap = Facade('soap')
         self.soap = soap
         self.soap.style = sr.get('style', default='document')
         self.add_operations(self.root, definitions)
@@ -592,17 +567,17 @@ class Binding(NamedObject):
         """ Add <operation/> children """
         dsop = Element('operation', ns=soapns)
         for c in root.getChildren('operation'):
-            op = SFactory.object('Operation')
+            op = Facade('Operation')
             op.name = c.get('name')
             sop = c.getChild('operation', default=dsop)
-            soap = SFactory.object('soap')
+            soap = Facade('soap')
             soap.action = '"%s"' % sop.get('soapAction', default='')
             soap.style = sop.get('style', default=self.soap.style)
-            soap.input = SFactory.object('Input')
-            soap.input.body = SFactory.object('Body')
+            soap.input = Facade('Input')
+            soap.input.body = Facade('Body')
             soap.input.headers = []
-            soap.output = SFactory.object('Output')
-            soap.output.body = SFactory.object('Body')
+            soap.output = Facade('Output')
+            soap.output.body = Facade('Body')
             soap.output.headers = []
             op.soap = soap
             input = c.getChild('input')
@@ -625,7 +600,7 @@ class Binding(NamedObject):
                 if sf is None:
                     continue
                 fn = fault.get('name')
-                f = SFactory.object('Fault')
+                f = Facade('Fault')
                 f.name = sf.get('name', default=fn)
                 f.use = sf.get('use', default='literal')
                 faults.append(f)
@@ -656,7 +631,7 @@ class Binding(NamedObject):
         """ add the input/output header properties """
         if root is None:
             return
-        header = SFactory.object('Header')
+        header = Facade('Header')
         parent.headers.append(header)
         header.use = root.get('use', default='literal')
         ns = root.get('namespace')
@@ -910,3 +885,38 @@ class Service(NamedObject):
         
     def __gt__(self, other):
         return True
+
+
+class Factory:
+    """
+    Simple WSDL object factory.
+    @cvar tags: Dictionary of tag->constructor mappings.
+    @type tags: dict
+    """
+
+    tags =\
+    {
+        'import' : Import, 
+        'types' : Types, 
+        'message' : Message, 
+        'portType' : PortType,
+        'binding' : Binding,
+        'service' : Service,
+    }
+    
+    @classmethod
+    def create(cls, root, definitions):
+        """
+        Create an object based on the root tag name.
+        @param root: An XML root element.
+        @type root: L{Element}
+        @param definitions: A definitions object.
+        @type definitions: L{Definitions}
+        @return: The created object.
+        @rtype: L{WObject} 
+        """
+        fn = cls.tags.get(root.name)
+        if fn is not None:
+            return fn(root, definitions)
+        else:
+            return None
