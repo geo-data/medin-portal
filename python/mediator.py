@@ -28,10 +28,11 @@ class Mediator:
     header.
     """
 
-    def __init__(self, media_handlers = {}):
+    def __init__(self, media_handlers = {}, check_response=True):
         self.media_handlers = {}
         for media_type, handler in media_handlers.items():
-            self.add(media_type, handler)       
+            self.add(media_type, handler)
+        self.check_response = check_response
 
     def __call__(self, environ, start_response):
         """The standard WSGI interface"""
@@ -51,28 +52,31 @@ class Mediator:
         if media_handler is not None:
             media_type, handler = media_handler
 
-            # wrap start_response() to perform a sanity check on the response content-type
-            def check_response(status, headers):
-                content_count = 0
-                for (header, value) in headers:
-                    if header.lower() != 'content-type':
-                        continue
-                    
-                    content_count += 1
-                    value = value.split(';')[0] # we only need the content-type
-                    if value != media_type and media_type != '*/*':
-                        (returned_type, returned_subtype) = value.split('/')
-                        if returned_subtype == '*':
-                            expected_type = media_type.split('/')[0]
-                            if expected_type == returned_type:
-                                continue
+            if self.check_response:
+                # wrap start_response() to perform a sanity check on the response content-type
+                def check_response(status, headers):
+                    content_count = 0
+                    for (header, value) in headers:
+                        if header.lower() != 'content-type':
+                            continue
 
-                        raise RuntimeError('Response Content-type (%s) does not match expected content type (%s)' % (value, media_type))
-                            
-                if content_count == 0:
-                    raise RuntimeError('No Content-type has been set: expected Content-type %s' % media_type)
-                            
-                start_response(status, headers)
+                        content_count += 1
+                        value = value.split(';')[0] # we only need the content-type
+                        if value != media_type and media_type != '*/*':
+                            (returned_type, returned_subtype) = value.split('/')
+                            if returned_subtype == '*':
+                                expected_type = media_type.split('/')[0]
+                                if expected_type == returned_type:
+                                    continue
+
+                            raise RuntimeError('Response Content-type (%s) does not match expected content type (%s)' % (value, media_type))
+
+                    if content_count == 0:
+                        raise RuntimeError('No Content-type has been set: expected Content-type %s' % media_type)
+
+                    start_response(status, headers)
+            else:
+                check_response = start_response
             
             return handler(environ, check_response)
         else:

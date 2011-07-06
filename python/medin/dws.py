@@ -18,7 +18,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT, OR
 # NON-INFRINGEMENT. See the RPL for specific language governing rights
 # and limitations under the RPL.
-# 
+#
 # You can obtain a full copy of the RPL from
 # http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 
@@ -43,42 +43,19 @@ class DWSError(Exception):
 class Request(object):
 
     def __init__(self, wsdl=None):
-        if wsdl is None:     
+        if wsdl is None:
             wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
         self.client = suds.client.Client(wsdl, timeout=10)
 
-    def __call__(query, logger):
-        raise NotImplementedError('The query must be overridden in a subclass')
-
-    def _callService(self, logger, method, *args, **kwargs):
-        """
-        Wrap the call to the SOAP service with some error checking
-        """
-        from urllib2 import URLError
-        
+    def __call__(self):
         try:
-            return method(*args, **kwargs)
-        except URLError, e:
-            try:
-                status, msg = e.reason
-            except ValueError:
-                status = 500
-                msg = 'Connecting to the Discovery Web Service failed: %s' % e.reason
-                
-            logger.exception(msg)
-            raise DWSError(msg, status)
-        except Exception, e:
-            msg = 'Data could not be retrieved as the Discovery Web Service failed'
-            logger.exception(msg)
-            try:
-                status, reason = e.args[0]
-            except (ValueError, IndexError):
-                raise DWSError(msg)
-            else:
-                if status == 503:
-                    msg = 'The Discovery Web Service is temorarily unavailable'
-                raise DWSError(msg, status)
+            return self.caller()
+        except AttributeError:
+            raise RuntimeError('The request has been called before it has been prepared')
+
+    def prepareCaller(self, *args, **kwargs):
+        raise NotImplementedError('prepareCaller must be overridden in a subclass')
 
 
 class TermBuilder(object):
@@ -133,7 +110,7 @@ class TermBuilder(object):
                 if not skip_errors:
                     raise ValueError('The following target is not recognised: %s' % target)
                 term.TermTarget = self.targets['']
-                
+
             term._id = i+1
             term._operator = op
             terms.append(term)
@@ -143,13 +120,13 @@ class TermBuilder(object):
 class SearchResponse(object):
     """
     Interface to DWS search responses
-    
+
     An Abstract class providing an interface to a Response as returned
     by the DWS
     """
 
     doc_type = None                     # the DWS document request type
-    
+
     def __init__(self, reply, count):
         self.reply = reply              # the raw DWS reply
         self.count = count
@@ -213,7 +190,7 @@ class BriefResponse(SearchResponse):
     # to return the correct fields
     def _processDocument(self, doc):
         from datetime import datetime
-        
+
         def to_list(field):
             if hasattr(field, 'split'):
                 return [e.strip() for e in field.split(';')]
@@ -271,13 +248,82 @@ class OrderAnalyser(object):
         else:
             self.direction = 'descending'
 
+class SOAPCaller(object):
+    """
+    An object that handles a calls to the SOAP service
+
+    Each caller handles a specific request to a SOAP service method
+    using a client and calling arguments.
+    """
+
+    def __init__(self, client, soap_method, logger, *args, **kwargs):
+        self.client = client
+        self.method = getattr(client.service, soap_method)
+        self.args = args
+        self.kwargs = kwargs
+
+    def requestXML(self):
+        """
+        Return the SOAP Envelope for the request
+        """
+
+        self.client.set_options(nosend=True)
+        try:
+            req = self()
+        finally:
+            self.client.set_options(nosend=False)
+
+        return req.envelope
+
+    def responseXML(self):
+        """
+        Return the SOAP Envelope for the response
+        """
+
+        self.client.set_options(retxml=True)
+        try:
+            xml = self()
+        finally:
+            self.client.set_options(retxml=False)
+
+        return xml
+
+    def __call__(self):
+        """
+        Wrap the call to the SOAP service with some error checking
+        """
+        from urllib2 import URLError
+
+        try:
+            return self.method(*(self.args), **(self.kwargs))
+        except URLError, e:
+            try:
+                status, msg = e.reason
+            except ValueError:
+                status = 500
+                msg = 'Connecting to the Discovery Web Service failed: %s' % e.reason
+
+            self.logger.exception(msg)
+            raise DWSError(msg, status)
+        except Exception, e:
+            msg = 'Data could not be retrieved as the Discovery Web Service failed'
+            self.logger.exception(msg)
+            try:
+                status, reason = e.args[0]
+            except (ValueError, IndexError):
+                raise DWSError(msg)
+            else:
+                if status == 503:
+                    msg = 'The Discovery Web Service is temorarily unavailable'
+                raise DWSError(msg, status)
+
 class SearchRequest(Request):
 
     _result_map = {RESULT_SIMPLE: SimpleResponse,
                    RESULT_BRIEF: BriefResponse,
                    RESULT_SUMMARY: SummaryResponse}
 
-    def __call__(self, query, result_type, logger):
+    def prepareCaller(self, query, result_type, logger):
         try:
             ResponseClass = self._result_map[result_type]
         except KeyError:
@@ -366,14 +412,23 @@ class SearchRequest(Request):
             # the count is zero so needs to be set to one
             dws_count = 1
 
+        self.caller = SOAPCaller(self.client,
+                                 'doSearch',
+                                 logger,
+                                 search,
+                                 retrieve,
+                                 start_index,
+                                 dws_count)
+        self.count = count
+        self.ResponseClass = ResponseClass
+
+        return self.caller
+
+    def __call__(self):
+        result = super(SearchRequest, self).__call__()
+
         # send the query to the DWS
-        response = ResponseClass(self._callService(logger,
-                                                   self.client.service.doSearch,
-                                                   search,
-                                                   retrieve,
-                                                   start_index,
-                                                   dws_count),
-                                 count)
+        response = self.ResponseClass(result, self.count)
 
         if not response:
             msg = 'Data could not be retrieved as the Discovery Web Service failed'
@@ -385,11 +440,11 @@ class SearchRequest(Request):
 class MetadataResponse(object):
     """
     Interface to DWS metadata response
-    
+
     An class providing a more user friendly interface to a full
     doPresent Response as returned by the DWS
     """
-    
+
     def __init__(self, reply):
         self.reply = reply              # the raw DWS reply
 
@@ -410,7 +465,7 @@ class MetadataResponse(object):
             return self.reply.Documents.DocumentFull[0].DocumentId
         except (AttributeError, IndexError):
             return None                 # no document found
-    
+
     @property
     def date(self):
         """Last update date"""
@@ -418,25 +473,22 @@ class MetadataResponse(object):
             return self.reply.Documents.DocumentFull[0].AdditionalInformation.DatasetUpdateDate
         except (AttributeError, IndexError):
             return None                 # no document found
-    
+
     def __nonzero__(self):
         """
         Return True if the response is valid, False otherwise
         """
         return self.reply.Status
-    
+
 class MetadataRequest(Request):
 
     def getMetadataFormats(self, logger):
-        response = self._callService(logger, self.client.service.getList, 'MetadataFormatList')
+        caller = SOAPCaller(self.client, 'getList', logger, 'MetadataFormatList')
+        response = caller()
 
         return response.listMember
-        
-    def __call__(self, logger, gid, format):
-        """
-        Connect to the DWS and retrieve a metadata entry by its ID
-        """
 
+    def prepareCaller(self, logger, gid, format):
         # construct the RetrieveCriteria
         retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
         retrieve.RecordDetail = 'DocumentFull' # we want all the info
@@ -445,9 +497,22 @@ class MetadataRequest(Request):
         # construct the SimpleDocument
         simpledoc = self.client.factory.create('ns0:SimpleDocument')
         simpledoc.DocumentId = gid
-        
+
         # send the query to the DWS
-        response = self._callService(logger, self.client.service.doPresent, [simpledoc], retrieve )
+        self.caller = SOAPCaller(self.client,
+                                 'doPresent',
+                                 logger,
+                                 [simpledoc],
+                                 retrieve)
+        self.gid = gid
+        return self.caller
+
+    def __call__(self):
+        """
+        Connect to the DWS and retrieve a metadata entry by its ID
+        """
+
+        response = super(MetadataRequest, self).__call__()
         response = MetadataResponse(response) # wrap the response in our more accessible object
 
         if not response:
@@ -458,11 +523,16 @@ class MetadataRequest(Request):
         return response
 
 class MedinMetadataRequest(MetadataRequest):
-        
-    def __call__(self, logger, gid, areas):
+
+    def prepareCaller(self, logger, gid, areas):
         # get a document in MEDIN XML format
         format = 'MEDIN_2.3'
-        response = super(MedinMetadataRequest, self).__call__(logger, gid, format)
+
+        self.areas = areas
+        return super(MedinMetadataRequest, self).prepareCaller(logger, gid, format)
+
+    def __call__(self):
+        response = super(MedinMetadataRequest, self).__call__()
 
         xml = response.xml
         if xml is None:
@@ -471,9 +541,8 @@ class MedinMetadataRequest(MetadataRequest):
         # return a Metadata parser instance
         from metadata import Parser
         try:
-            return Parser(gid, xml, areas)
+            return Parser(self.gid, xml, self.areas)
         except ValueError, e:
             msg = 'The metadata does not appear to be valid'
             logger.exception(msg)
             raise DWSError(msg)
-

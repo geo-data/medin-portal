@@ -25,7 +25,7 @@
 # The medin version string. When changes are made to the application
 # this version number should be incremented. It is used in caching to
 # ensure the client gets the latest version of a resource.
-__version__ = 1.9
+__version__ = 1.10
 
 from errata import HTTPError           # for HTTP exceptions
 import medin.error
@@ -52,7 +52,7 @@ class Proxy:
         """
         Delegate unhandled attributes to the wrapped object
         """
-        
+
         return getattr(self.__obj, name)
 
 # WSGI Middleware Applications
@@ -87,7 +87,7 @@ class EnvironProxy(Proxy):
 
     def __init__(self, environ):
         Proxy.__init__(self, environ)
-        
+
         try:
             root = environ['PORTAL_ROOT']
         except KeyError:
@@ -99,7 +99,7 @@ class EnvironProxy(Proxy):
             raise EnvironmentError('The PORTAL_ROOT is not a directory')
 
         self.root = root.rstrip(os.path.sep)
-        
+
     def script_path(self):
         """
         Returns path info after the script name
@@ -197,14 +197,14 @@ class Config(object):
         self.app = app
         self.name = name
         self.config = None
-    
+
     def getConfig(self, environ):
         if self.config:
             return self.config
 
         import os.path
         from ConfigParser import SafeConfigParser
-        
+
         ini_file = os.path.join(environ.root, 'etc', self.name)
         try:
             fp = open(ini_file, 'r')
@@ -221,7 +221,7 @@ class Config(object):
 
     def __call__(self, environ, start_response):
         environ['config'] = self.getConfig(environ)
-        
+
         # delegate to the wrapped app
         return self.app(environ, start_response)
 
@@ -253,7 +253,7 @@ class EnvironNormalise(object):
                     environ['HTTP_ACCEPT'] = 'text/html,' + environ['HTTP_ACCEPT']
                 except KeyError:
                     pass
-            
+
         return self.app(environ, start_response)
 
 class TemplateChooser(object):
@@ -273,7 +273,7 @@ class TemplateChooser(object):
         except KeyError:
             from mediator import Mediator
             # create a Mediator inside a normalised environment
-            mediator = Mediator()
+            mediator = Mediator(check_response=False)
             self.templates[template] = EnvironNormalise(mediator)
 
         # Add the specified content types, wrapping them in middleware
@@ -298,7 +298,9 @@ class TemplateChooser(object):
         def wrapper(environ, start_response):
             # the content-type is added in the start_response
             def wrapped_response(status, headers):
-                headers.append(('Content-Type', content_type))
+                # only add a content type if one does not exist
+                if 'content-type' not in [header[0].lower() for header in headers]:
+                    headers.append(('Content-Type', content_type))
                 start_response(status, headers)
 
             # add the content type to the environment
@@ -320,7 +322,7 @@ class TemplateChooser(object):
 
         if not self.templates:
             raise RuntimeError('No template applications have been added')
-        
+
         try:
             app = self.templates[template]
         except KeyError:
@@ -365,11 +367,11 @@ def wsgi_app():
     # when it is specified for the full template. A specific default
     # is specified for the light template so that it validates with
     # the W3C validator.
-    light_types = ['text/html', 'application/xhtml+xml']
+    light_types = ['text/html', 'application/xhtml+xml', 'application/soap+xml']
     light_default = 'application/xhtml+xml'
-    full_types = ['text/html']
+    full_types = ['text/html', 'application/soap+xml']
     default_template = 'light'
-    
+
     # Create a WSGI application for URI delegation using Selector
     # (http://lukearno.com/projects/selector/). The order that child
     # applications are added is important; the most specific URL matches
@@ -400,7 +402,7 @@ def wsgi_app():
 
     # the default entry point for the search
     app = TemplateChooser(default_template)
-    view = views.Search()
+    view = views.SOAPRequest(views.Search())
     app.addContentTypes(view, 'light', light_types, light_default)
     app.addContentTypes(view, 'full', full_types)
     application.add('/{template}[/]',
@@ -411,15 +413,18 @@ def wsgi_app():
     application.add('/{template}/query.json', GET=views.query_criteria)
 
     # retrieve the result summary for a query
-    application.add('/{template}.json', GET=views.ResultSummary())
+    view = views.ResultSummary()
+    application.add('/{template}.json', GET=views.SOAPRequest(view))
 
     # create the app to return the required formats
     app = TemplateChooser(default_template)
-    view = views.HTMLResults()
+    view = views.SOAPRequest(views.HTMLResults())
     app.addContentTypes(view, 'light', light_types, light_default)
     app.addContentTypes(view, 'full', full_types)
-    result_formats = views.ResultFormat(app, {'rss': views.RSSResults(),
-                                              'atom': views.AtomResults()})
+    rss = views.SOAPRequest(views.RSSResults())
+    atom = views.SOAPRequest(views.AtomResults())
+    result_formats = views.ResultFormat(app, {'rss': rss,
+                                              'atom': atom})
 
     # search by country
     application.add('/{template}/areas/{area:segment}/{name:segment}',
@@ -433,7 +438,7 @@ def wsgi_app():
 
     # display the metadata
     app = TemplateChooser(default_template)
-    view = views.MetadataHTML()
+    view = views.SOAPRequest(views.MetadataHTML())
     app.addContentTypes(view, 'light', light_types, light_default)
     app.addContentTypes(view, 'full', full_types)
     application.add('/{template}/catalogue/{gid:segment}',
@@ -441,16 +446,20 @@ def wsgi_app():
                     POST=config(views.Comment(app)))
 
     # get the metadata as in KML format
-    application.add('/{template}/catalogue/{gid:segment}/kml', GET=views.MetadataKML())
+    view = views.SOAPRequest(views.MetadataKML())
+    application.add('/{template}/catalogue/{gid:segment}/kml', GET=view)
 
     # get an image representing the metadata bounds.
-    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=views.MetadataImage())
+    view = views.SOAPRequest(views.MetadataImage())
+    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=view)
 
     # download the metadata as CSV
-    application.add('/{template}/catalogue/{gid:segment}/csv', GET=views.MetadataCSV())
+    view = views.SOAPRequest(views.MetadataCSV())
+    application.add('/{template}/catalogue/{gid:segment}/csv', GET=view)
 
     # download the metadata as XML
-    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=views.MetadataXML())
+    view = views.SOAPRequest(views.MetadataXML())
+    application.add('/{template}/catalogue/{gid:segment}/{format:segment}', GET=view)
 
     # Add our Error handler
     # create a callable to render the error
@@ -460,7 +469,7 @@ def wsgi_app():
         app.addContentTypes(view, 'light', light_types, light_default)
         app.addContentTypes(view, 'full', full_types)
         return app(environ, start_response)
-    
+
     application = medin.error.ErrorHandler(application, error_renderer)
 
     # add the logging handlers

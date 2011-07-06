@@ -105,7 +105,7 @@ def get_query(environ, from_referrer=False):
             # check whether the referral is from the portal
             if referrer.startswith(environ.script_uri()):
                 from urlparse import urlparse
-        
+
                 url = urlparse(referrer)
                 qsl = url.query
             else:
@@ -125,7 +125,7 @@ def get_areas(environ):
     from thread import get_ident
 
     thread_id = get_ident()
-    
+
     global _areas
     try:
         return _areas[thread_id]
@@ -136,7 +136,7 @@ def get_areas(environ):
         pass
 
     from medin.spatial import Areas
-    
+
     areas = _areas[thread_id] = Areas(get_db(environ))
     return areas
 
@@ -161,7 +161,7 @@ def get_db(environ):
 
     import os.path, sqlite3
     filepath = os.path.join(environ.root, 'data', 'portal.sqlite')
-    
+
     db = _dbs[thread_id] = sqlite3.connect(filepath)
     return db
 
@@ -170,7 +170,7 @@ def get_post(environ):
     Return the contents of a POST as a cgi.FieldStorage instance
     """
     from cgi import FieldStorage
-    
+
     fp = environ['wsgi.input']
     return FieldStorage(fp, environ=environ)
 
@@ -225,13 +225,13 @@ class Comment(object):
             msg_warn(environ, 'You did not fill in the comment field')
         else:
             from ConfigParser import NoOptionError
-            
+
             email = form.getfirst('comment-email')
             title = form.getfirst('comment-title', 'Unknown page')
             name = form.getfirst('comment-name', 'an anonymous user')
             ip = environ['REMOTE_ADDR']
             subject = 'Comment on ' + title
-            
+
             msg = "The following comment was sent by %s (IP address %s) using the page at %s\n" % (name, ip, request_uri)
             if email:
                 msg += "This user's email address is <%s> (you can contact them by replying to this message).\n\n" % email
@@ -257,7 +257,7 @@ class Comment(object):
             # email the comment
             self.sendComment(from_addr, to_addr, subject, msg, server, port)
             msg_info(environ, 'Thank you for your comment')
-        
+
         # delegate to the wrapped app
         return self.app(environ, start_response)
 
@@ -280,29 +280,34 @@ class Search(MakoApp):
         self.vocab = MEDINVocabulary()
         super(Search, self).__init__(['%s', 'search.html'], check_etag=False)
 
-    def setup(self, environ):
+    def prepareSOAP(self, environ):
+        """
+        The interface for generating a SOAPCaller
+        """
         from medin.dws import RESULT_SIMPLE
-        from medin.terms import VocabError
-        
-        areas = get_areas(environ)
+
         q = get_query(environ)
         errors = q.verify()
         if errors:
             for error in errors:
                 msg_error(environ, error)
 
-        # We need to get the number of hits for the query.
-        # firstly save the current count setting:
-        count = q.getCount(default=None)
         q.setCount(0)                   # we only need one result
 
-        # secondly get the results in descending order so the result
-        # can be used in an etag (as it is the latest).
+        # Get the results in descending order so the result can be
+        # used in an etag (as it is the latest).
         sort = q.getSort(cast=False)
         q.setSort('updated,0')
 
+        # generate the soap caller
+        return self.request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
+
+    def setup(self, environ):
+        from medin.terms import VocabError
+
         # run the query
-        r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
+        self.prepareSOAP(environ)
+        r = self.request()
 
         # check the etag
         try:
@@ -311,16 +316,10 @@ class Search(MakoApp):
             docid = 'none'
         etag = check_etag(environ, docid)
 
-        # revert the query to its previous state
-        if count is not None:
-            q.setCount(count) # reset the count to it's previous value
-        else:
-            q.delCount() # delete the count as it wasn't there originally
-        if sort is not None:
-            q.setSort(sort)
-        else:
-            q.delSort()
-        
+        areas = get_areas(environ)
+        q = get_query(environ)
+
+        count = q.getCount(default=None) # We need to get the number of hits for the query.
         search_term = q.getSearchTerm(cast=False)
         sort = q.getSort(cast=False)
         bbox = q.getBBOX()
@@ -416,7 +415,7 @@ class Navigation(object):
             return self._current_page
         except AttributeError:
             pass
-        
+
         from math import ceil
 
         pages_before = self._start_index / float(self.count)
@@ -430,9 +429,9 @@ class Navigation(object):
             return self._page_count
         except AttributeError:
             pass
-        
+
         from math import ceil
-        
+
         pages_before = self._start_index / float(self.count)
         pages_after = (self.hits - self._start_index) / float(self.count)
         self._page_count = int(ceil(pages_before) + ceil(pages_after))
@@ -493,26 +492,32 @@ class Results(MakoApp):
 
     def __init__(self, path, result_type, **kwargs):
         from medin.dws import SearchRequest
-        
+
         self.result_type = result_type
         self.request = SearchRequest()
         super(Results, self).__init__(path, check_etag=False, **kwargs)
 
-    def setup(self, environ):
-        from copy import copy
-
+    def prepareSOAP(self, environ):
+        """
+        The interface for generating a SOAPCaller
+        """
         q = get_query(environ)
         errors = q.verify()
         if errors:
             for error in errors:
                 msg_error(environ, error)
 
-        r = self.request(q, self.result_type, environ['logging.logger'])
+        return self.request.prepareCaller(q, self.result_type, environ['logging.logger'])
+
+    def setup(self, environ):
+        self.prepareSOAP(environ)
+        r = self.request()
 
         updated = r.lastModified()
         timestamp = updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
 
+        q = get_query(environ)
         nav = Navigation(r.hits, q)
         search_term = q.getSearchTerm(cast=False)
         tvars=dict(hits=r.hits,
@@ -550,9 +555,9 @@ class Results(MakoApp):
 class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
-        
+
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
-        
+
     def setup(self, environ):
         from copy import deepcopy
 
@@ -603,17 +608,17 @@ class AreaResults(object):
 
         area = environ['selector.vars']['area']
         name = environ['selector.vars']['name']
-        
+
         try:
             area_type = areas[area]
         except KeyError:
             raise HTTPError('404 Not Found', 'The area is not recognised: %s' % area)
-        
+
         areas = get_areas(environ)
         aid = areas.getAreaId(name, area_type)
         if not aid:
             raise HTTPError('404 Not Found', 'The area name is not recognised: %s' % name)
-    
+
         q = get_query(environ)
         q.setArea(aid)
         set_query(q, environ)
@@ -625,27 +630,35 @@ class ResultSummary(object):
 
     def __init__(self):
         from medin.dws import SearchRequest
-        
+
         self.request = SearchRequest()
 
-    def __call__(self, environ, start_response):
+    def prepareSOAP(self, environ):
+        """
+        The interface for generating a SOAPCaller
+        """
         from medin.dws import RESULT_SIMPLE
-        from json import dumps as tojson
 
         q = get_query(environ)
         q.setCount(0)                   # we don't need any results
-        
-        r = self.request(q, RESULT_SIMPLE, environ['logging.logger'])
+
+        return self.request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
+
+    def __call__(self, environ, start_response):
+        from json import dumps as tojson
+
+        self.prepareSOAP(environ)
+        r = self.request()
 
         json = tojson({'status': bool(r),
                        'hits': r.hits,
                        'time': environ['portal.timer'].runtime()})
-        
+
         headers = [('Content-Type', 'application/json')]
 
         start_response('200 OK', headers)
         return [json]
-    
+
 class ResultFormat(object):
 
     def __init__(self, default, formats):
@@ -676,12 +689,19 @@ class Metadata(MakoApp):
         self.request = MedinMetadataRequest()
         super(Metadata, self).__init__(path, check_etag=False, **kwargs)
 
-    def setup(self, environ, etag_data=''):
-
+    def prepareSOAP(self, environ):
+        """
+        The interface for generating a SOAPCaller
+        """
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
 
-        parser = self.request(environ['logging.logger'], gid, areas)
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+
+    def setup(self, environ, etag_data=''):
+
+        self.prepareSOAP(environ)
+        parser = self.request()
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
@@ -706,7 +726,7 @@ class MetadataHTML(Metadata):
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
-        
+
         q = get_query(environ, True)    # get the query from the HTTP referrer
         referrer_query_string = str(q)
 
@@ -714,7 +734,8 @@ class MetadataHTML(Metadata):
         parser, headers = super(MetadataHTML, self).setup(environ, referrer_query_string)
 
         criteria = q.asDict(False)
-        r = self.search_request(q, RESULT_SIMPLE, environ['logging.logger'])
+        self.search_request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
+        r = self.search_request()
 
         if referrer_query_string: referrer_query_string = '?'+referrer_query_string
         metadata = parser.parse()
@@ -747,7 +768,7 @@ class MetadataKML(Metadata):
         filename = parser.uniqueID()
         if not filename: filename = 'metadata.kml'
         else: filename += '.kml'
-        
+
         headers.append(('Content-disposition', 'attachment; filename="%s"' % filename))
 
         return TemplateContext(title, tvars=tvars, headers=headers)
@@ -790,21 +811,25 @@ class MetadataImage(object):
         from medin.dws import MedinMetadataRequest
         self.request = MedinMetadataRequest()
 
+    def prepareSOAP(self, environ):
+        gid = environ['selector.vars']['gid'] # the global metadata identifier
+        areas = get_areas(environ)
+
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+
     def __call__(self, environ, start_response):
         import os.path
         import medin.spatial
 
-        gid = environ['selector.vars']['gid'] # the global metadata identifier
-        areas = get_areas(environ)
-
-        parser = self.request(environ['logging.logger'], gid, areas)
+        self.prepareSOAP(environ)
+        parser = self.request()
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         headers = []
         date = get_metadata_date(environ, parser)
-        if date:            
+        if date:
             etag = check_etag(environ, date)
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
@@ -843,16 +868,23 @@ class MetadataXML(object):
         from medin.dws import MetadataRequest
         self.request = MetadataRequest()
 
-    def __call__(self, environ, start_response):
-        from os.path import splitext
-
+    def prepareSOAP(self, environ):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         fmt = environ['selector.vars']['format'] # the requested format
 
         if fmt not in self.request.getMetadataFormats(environ['logging.logger']):
             raise HTTPError('404 Not Found', 'The metadata format is not supported: %s' % fmt)
 
-        response = self.request(environ['logging.logger'], gid, fmt)
+        self.gid = gid
+        self.fmt = fmt
+        return self.request.prepareCaller(environ['logging.logger'], gid, fmt)
+
+    def __call__(self, environ, start_response):
+        from os.path import splitext
+
+        self.prepareSOAP(environ)
+        gid, fmt = self.gid, self.fmt
+        response = self.request()
         if not response:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
@@ -863,7 +895,7 @@ class MetadataXML(object):
         # Check if the client needs a new version
         headers = []
         date = response.date
-        if date:            
+        if date:
             etag = check_etag(environ, date)
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
@@ -887,20 +919,27 @@ class MetadataCSV(object):
         from medin.dws import MedinMetadataRequest
         self.request = MedinMetadataRequest()
 
+    def prepareSOAP(self, environ):
+        gid = environ['selector.vars']['gid'] # the global metadata identifier
+        areas = get_areas(environ)
+
+        self.gid = gid
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+
     def __call__(self, environ, start_response):
         from cStringIO import StringIO
         from medin.metadata import metadata2csv
-        
-        gid = environ['selector.vars']['gid'] # the global metadata identifier
-        areas = get_areas(environ)
-        parser = self.request(environ['logging.logger'], gid, areas)
+
+        self.prepareSOAP(environ)
+        gid = self.gid
+        parser = self.request()
         if not parser:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
         # Check if the client needs a new version
         headers = []
         date = get_metadata_date(environ, parser)
-        if date:            
+        if date:
             etag = check_etag(environ, date)
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
@@ -932,27 +971,79 @@ class TemplateChoice(MakoApp):
 
 def query_criteria(environ, start_response):
     from json import dumps as tojson
-    
+
     q = get_query(environ)
-    
+
     # Check if the client needs a new version
     etag = check_etag(environ, str(q))
 
     json = tojson(q.asDict())
-    
+
     headers = [('Content-Type', 'application/json'),
                ('Etag', etag),
                ('Cache-Control', 'max-age=3600, must-revalidate')]
-    
+
     start_response('200 OK', headers)
     return [json]
+
+class SOAPRequest(object):
+    """
+    WSGI Middleware to output SOAP requests for SOAP apps
+
+    A SOAPapp must provide the prepareSOAP() method which must return
+    a SOAPCaller object.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    def callerToXML(self, caller):
+        return caller.requestXML()
+
+    def isSoapRequest(self, environ):
+        try:
+            qsl = environ['QUERY_STRING']
+        except KeyError:
+            return None
+
+        from cgi import parse_qsl
+
+        try:
+            soap = dict(parse_qsl(qsl))['soap']
+        except KeyError:
+            return None
+
+        if soap in ('request', 'response'):
+            return soap
+
+        return None
+
+    def __call__(self, environ, start_response):
+        soap_type = self.isSoapRequest(environ)
+        if not soap_type:
+            # delegate to the wrapped app
+            return self.app(environ, start_response)
+
+        try:
+            caller = self.app.prepareSOAP(environ)
+        except AttributeError:
+            raise RuntimeError('The wrapped class (%s) does not have the prepareSOAP() method' % self.app.__class__.__name__)
+
+        if soap_type == 'request':
+            xml = caller.requestXML()
+        else:
+            xml = caller.responseXML()
+
+        headers = [('Content-Type', 'application/soap+xml')]
+
+        start_response('200 OK', headers)
+        return [xml]
 
 def get_bbox(environ, start_response):
     from json import dumps as tojson
     from medin.spatial import Areas
 
     aid = environ['selector.vars']['id'] # the area ID
-    
+
     # Check if the client needs a new version
     etag = check_etag(environ, aid)
 
@@ -961,11 +1052,11 @@ def get_bbox(environ, start_response):
         raise HTTPError('404 Not Found', 'The area id does not exist: %s' % aid)
 
     json = tojson(bbox)
-    
+
     headers = [('Content-Type', 'application/json'),
                ('Etag', etag),
                ('Cache-Control', 'max-age=3600, must-revalidate')]
-    
+
     start_response('200 OK', headers)
     return [json]
 
@@ -994,13 +1085,13 @@ def proxy(environ, start_response):
         except ValueError:
             msg = str(e.reason)
             status = 500
-    
+
         raise HTTPError('%d Error' % status, msg)
 
     # remove hop-by-hop headers (as defined at http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html)
     for header in ('Keep-Alive', 'Proxy-Authenticate', 'Proxy-Authorization', 'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Connection', 'Server'):
         del response.headers[header]
-        
+
     headers = response.headers.items()
     start_response('%s OK' % response.getcode(), headers)
     return response
