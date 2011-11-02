@@ -50,9 +50,11 @@ class Request(object):
 
     def __call__(self):
         try:
-            return self.caller()
+            caller = self.caller
         except AttributeError:
             raise RuntimeError('The request has been called before it has been prepared')
+
+        return caller()
 
     def prepareCaller(self, *args, **kwargs):
         raise NotImplementedError('prepareCaller must be overridden in a subclass')
@@ -259,6 +261,7 @@ class SOAPCaller(object):
     def __init__(self, client, soap_method, logger, *args, **kwargs):
         self.client = client
         self.method = getattr(client.service, soap_method)
+        self.logger = logger
         self.args = args
         self.kwargs = kwargs
 
