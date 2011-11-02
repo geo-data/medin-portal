@@ -424,6 +424,7 @@ class SearchRequest(Request):
                                  dws_count)
         self.count = count
         self.ResponseClass = ResponseClass
+        self.logger = logger
 
         return self.caller
 
@@ -435,7 +436,7 @@ class SearchRequest(Request):
 
         if not response:
             msg = 'Data could not be retrieved as the Discovery Web Service failed'
-            logger.error(msg + ': %s' % response.message)
+            self.logger.error(msg + ': %s' % response.message)
             raise DWSError(msg)
 
         return response
