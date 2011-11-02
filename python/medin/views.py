@@ -703,7 +703,7 @@ class Metadata(MakoApp):
         self.prepareSOAP(environ)
         parser = self.request()
         if not parser:
-            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
+            raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % environ['selector.vars']['gid'])
 
         # Check if the client needs a new version
         headers = []
