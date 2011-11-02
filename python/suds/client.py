@@ -42,6 +42,7 @@ from urlparse import urlparse
 from copy import deepcopy
 from suds.plugin import PluginContainer
 from logging import getLogger
+from xml.sax import SAXParseException
 
 log = getLogger(__name__)
 
@@ -709,9 +710,13 @@ class SoapClient:
         log.debug('http failed:\n%s', reply)
         if status == 500:
             if len(reply) > 0:
-                r, p = binding.get_fault(reply)
-                self.last_received(r)
-                return (status, p)
+                try:
+                    r, p = binding.get_fault(reply)
+                except SAXParseException:
+                    return (status, None)
+                else:
+                    self.last_received(r)
+                    return (status, p)
             else:
                 return (status, None)
         if self.options.faults:
@@ -841,4 +846,4 @@ class RequestContext:
         @type error: A suds I{TransportError}.
         """
         return self.client.failed(self.binding, error)
-        
+
