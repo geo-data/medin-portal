@@ -383,14 +383,14 @@ class SearchRequest(Request):
         start = query.getStartDate()
         if start:
             start_date = self.client.factory.create('ns0:DateValueType')
-            start_date.DateValue = start.strftime('%Y-%m-%d')
+            start_date.DateValue = start.date().isoformat()
             start_date.TemporalOperator = "OnOrAfter"
             search.TemporalSearch.DateRange.Date.append(start_date)
 
         end = query.getEndDate()
         if end:
             end_date = self.client.factory.create('ns0:DateValueType')
-            end_date.DateValue = end.strftime('%Y-%m-%d')
+            end_date.DateValue = end.date().isoformat()
             end_date.TemporalOperator = "OnOrBefore"
             search.TemporalSearch.DateRange.Date.append(end_date)
 

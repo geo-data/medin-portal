@@ -62,11 +62,15 @@
 </%def>\
 
 <%def name="format_date(date)">\
-${date.strftime('%A %d %B %Y')}\
+% if date.year >= 1900:
+  ${date.strftime('%A %d %B %Y')}\
+% else:
+  ${date.date().isoformat()}\
+% endif
 </%def>\
 
 <%def name="format_search_date(date)">\
-${date.strftime('%Y-%m-%d')}\
+${date.date().isoformat()}\
 </%def>\
 
 <%def name="output_element(element, number)">
