@@ -306,7 +306,7 @@ class SOAPCaller(object):
                 status = 500
                 msg = 'Connecting to the Discovery Web Service failed: %s' % e.reason
 
-            self.logger.exception(msg)
+            self.logger.error(msg)
             raise DWSError(msg, status)
         except Exception, e:
             msg = 'Data could not be retrieved as the Discovery Web Service failed'
