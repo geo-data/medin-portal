@@ -410,6 +410,7 @@ class TermParser(object):
     pattern = re.compile(r'(?P<or>OR)?(?(or)\s*?)(?P<not>-)?(?(not)\s*?)(?:(?P<targ>[a-zA-Z]+):)?(?P<word>(?:"[^"]+")|(?:[^\s]+))')
     
     targets = set(('', 'a', 'al', 'f', 'l', 'o', 'p', 'rt', 'tc'))
+    reserved_words = set(('and', 'or', 'not')) # search terms reserved by the discovery web service
 
     def __call__(self, querystr, skip_errors=False):
         matches = self.pattern.findall(querystr)
@@ -419,6 +420,8 @@ class TermParser(object):
         tokens = []
         bad_targets = []
         for op_or, op_not, target, word in matches:
+            if word.lower() in self.reserved_words:
+                continue        # skip reserved words
             if target not in self.targets:
                 bad_targets.append(target)
             tokens.append((op_or, op_not, target, word))
