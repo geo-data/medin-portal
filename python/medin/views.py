@@ -212,18 +212,27 @@ class Comment(object):
 
     def __call__(self, environ, start_response):
         form = get_post(environ)
-        comment = form.getfirst('comment')
+        comment = form.getfirst('comment').strip()
         check = form.getfirst('comment-check')
+        question = form.getfirst('comment-question').strip()
         request_uri = environ.request_uri()
+        submit = True
 
         if check:
             # try and catch any spam bots as they usually fill in hidden fields
             msg_warn(environ, 'The comment failed the spam filter and was not submitted')
+            submit = False
+        if question.lower() != 'environmental':
+            msg_warn(environ, 'Please answer the question correctly in order to submit your comment')
+            submit = False
         if environ.get('HTTP_REFERER') != request_uri:
             msg_error(environ, 'The comment must be submitted from the appropriate page')
+            submit = False
         if not comment:
             msg_warn(environ, 'You did not fill in the comment field')
-        else:
+            submit = False
+
+        if submit:
             from ConfigParser import NoOptionError
 
             email = form.getfirst('comment-email')
