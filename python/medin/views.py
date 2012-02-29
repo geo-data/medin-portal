@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Created by Homme Zwaagstra
 # 
 # Copyright (c) 2010 GeoData Institute
@@ -728,10 +729,14 @@ class Metadata(MakoApp):
 
 class MetadataHTML(Metadata):
     def __init__(self):
+        import re
         from medin.dws import SearchRequest
         self.search_request = SearchRequest()
 
         super(MetadataHTML, self).__init__(['%s', 'metadata.html'])
+
+        # see http://daringfireball.net/2010/07/improved_regex_for_matching_urls
+        self.url_pattern = re.compile(r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))""")
 
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
@@ -749,12 +754,25 @@ class MetadataHTML(Metadata):
         if referrer_query_string: referrer_query_string = '?'+referrer_query_string
         metadata = parser.parse()
         title = 'Metadata: %s' % metadata.title
+
+        # urlify strings
+        if metadata.additional_info:
+            metadata.additional_info = self.urlify(metadata.additional_info)
+
         tvars = dict(metadata=metadata,
                      criteria=criteria,
                      referrer_query_string=referrer_query_string,
                      hits=r.hits)
 
         return TemplateContext(title, tvars=tvars, headers=headers)
+
+    def urlify(self, text):
+        """
+        Create active HTML links out of plain text URLs
+        """
+
+        # see http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python
+        return self.url_pattern.sub(lambda x: '<a href="%(url)s">%(url)s</a>' % dict(url=str(x.group())), text);
 
 class MetadataKML(Metadata):
     def __init__(self):
