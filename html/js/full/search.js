@@ -337,36 +337,6 @@ function init_spatial_search() {
     map.updateSize();
 }
 
-var tip_handler = null;         // handler for the search start tooltip
-/* Initialise the spatial search, replacing the lightweight search
-holder with the search proper. */
-function show_spatial_search() {
-    $('#spatial-search-holder').hide('fast', function() {
-        if (tip_handler)
-            $('#bodycontent_wide').unbind('resize', tip_handler); // remove the tooltip handler
-        $(this).empty().remove()  // remove the holder
-        $('#spatial-search-content').show('fast', function() {
-            init_spatial_search(); // initialise the spatial search controls
-        }).addClass('content'); // activate the search
-    });
-}
-
-// Initialise the tool tips
-function init_tool_tips() {
-    // function to align the tool tip
-    function align() {
-        $('#spatial-start-tip').alignWith('#spatial-start', 'clcr', {x:-10})
-    }
-
-    // assign the resize handler to a global variable
-    tip_handler = function() {
-        align();                // perform the alignment
-    };
-
-    align();                    // initial alignment
-    $('#bodycontent_wide').resize(tip_handler); // align whenever body size changes
-}
-
 /* Initialise the search term controls.
  *
  * This provides the popup with the dropdowns and text boxes used to
