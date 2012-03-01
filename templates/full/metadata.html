@@ -92,6 +92,9 @@ ${date.date().isoformat()}\
         <div>
         % endif
     <strong>
+    % if contact.url:
+    <a href="${contact.url['link']}">
+    % endif
     % if contact.organisation:
       ${contact.organisation | x}
     % elif contact.name:
@@ -100,6 +103,9 @@ ${date.date().isoformat()}\
       ${contact.position | x}
     % else:
       Unnamed contact
+    % endif
+    % if contact.url:
+    </a>
     % endif
     </strong><br/>
     % if contact.name and contact.organisation:

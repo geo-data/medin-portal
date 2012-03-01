@@ -107,7 +107,7 @@ class Contacts(object):
                             matches.update(result)
             return matches
 
-        attributes = ('organisation', 'address', 'name', 'position', 'tel', 'fax', 'email')
+        attributes = ('organisation', 'address', 'name', 'position', 'tel', 'fax', 'email', 'url')
         return tuple(match(contact, attribute, attributes, set()))
 
     def groupByOrganisation(self):
@@ -171,7 +171,7 @@ class Contacts(object):
                     empty = False
                 else:
                     empty = True
-                    attrs = ('organisation', 'address', 'tel', 'fax', 'email', 'name', 'position')
+                    attrs = ('organisation', 'address', 'tel', 'fax', 'email', 'name', 'position', 'url')
                 for attr in attrs:
                     baseval, curval = getattr(base, attr), getattr(contact, attr)
                     if curval:
@@ -207,6 +207,7 @@ class Contact(object):
     fax = None
     contacts = None
     roles = None
+    url = None
     
     def __init__(self, organisation):
         self.organisation = organisation
@@ -225,11 +226,12 @@ class Contact(object):
         elif self.email != other.email: return False
         elif self.tel != other.tel: return False
         elif self.fax != other.fax: return False
+        elif self.url != other.url: return False
         else:
             return True
 
     def __hash__(self):        
-        h = hash(''.join((str(getattr(self, attr)) for attr in ('address', 'name', 'position', 'tel', 'fax', 'email', 'organisation'))))
+        h = hash(''.join((str(getattr(self, attr)) for attr in ('address', 'name', 'position', 'tel', 'fax', 'email', 'organisation', 'url'))))
         return h | hash(self.contacts) | hash(self.roles)
 
     def isPerson(self):
@@ -269,6 +271,9 @@ class Contact(object):
                 for i in xrange(len(roles)-1):
                     roles[i+1] = '       '+roles[i+1]
                 s.extend(roles)
+
+            if contact.url:
+                s.append('URL: %s' % contact.url['link'])
 
             space = '  ' * depth
             sep = "\n" + space
@@ -328,7 +333,7 @@ class Parser(object):
         m.alt_titles = self.altTitles() # element 2
         m.abstract = self.abstract()    # element 3
         m.resource_type = self.resourceType() # element 4
-        m.online_resource = self.onlineResource() # element 5
+        m.online_resource = self.resourceLocators() # element 5
         m.unique_id = self.uniqueID()             # element 6
         # element 7 to be implemented...
         m.resource_language = self.resourceLanguage() # element 8
@@ -416,36 +421,43 @@ class Parser(object):
 
         return defn
 
+    def onlineResource(self, node):
+        """Extract OnlineResource information"""
+
+        resource = {}
+        self.xpath.setContextNode(node)
+
+        try:
+            resource['link'] = self.xpath.xpathEval('./gmd:linkage/gmd:URL/text()')[0].content.strip()
+        except IndexError:
+            return None
+
+        try:
+            resource['name'] = self.xpath.xpathEval('./gmd:name/gco:CharacterString/text()')[0].content.strip()
+        except IndexError:
+            resource['name'] = None
+
+        try:
+            resource['description'] = self.xpath.xpathEval('./gmd:description/gco:CharacterString/text()')[0].content.strip()
+        except IndexError:
+            resource['description'] = None
+
+        return resource
+
     @_assignContext
-    def onlineResource(self):
+    def resourceLocators(self):
         """Element 5: Resource Locator"""
         
         resources = []
-        for node in self.xpath.xpathEval('//gmd:CI_OnlineResource'):
-            resource = {}
-            self.xpath.setContextNode(node)
-
-            try:
-                resource['link'] = self.xpath.xpathEval('./gmd:linkage/gmd:URL/text()')[0].content.strip()
-            except IndexError:
-                continue
-
-            try:
-                resource['name'] = self.xpath.xpathEval('./gmd:name/gmd:CharacterString/text()')[0].content.strip()
-            except IndexError:
-                resource['name'] = None
-
-            try:
-                resource['description'] = self.xpath.xpathEval('./gmd:description/gmd:CharacterString/text()')[0].content.strip()
-            except IndexError:
-                resource['description'] = None
-            
-            resources.append(resource)
+        for node in self.xpath.xpathEval('//gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource'):
+            resource = self.onlineResource(node)
+            if resource:
+                resources.append(resource)
 
         return resources
 
     def uniqueID(self):
-        """Element 6: Unique Resourde Identifier"""
+        """Element 6: Unique Resource Identifier"""
         
         for tag in ('MD_Identifier', 'RS_Identifier'):
             for node in self.xpath.xpathEval('//gmd:MD_DataIdentification//gmd:identifier/gmd:%s/gmd:code/gco:CharacterString/text()' % tag):
@@ -1001,6 +1013,14 @@ class Parser(object):
             contact.email = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress')[0].content.strip()
         except IndexError:
             pass
+
+        try:
+            OnlineResource = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:onlineResource/gmd:CI_OnlineResource')[0]
+        except IndexError:
+            pass
+        else:
+            contact.url = self.onlineResource(OnlineResource)
+            self.xpath.setContextNode(node)
 
         try:
             role = self.xpath.xpathEval('./gmd:role/gmd:CI_RoleCode')[0].content.strip()
