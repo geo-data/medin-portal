@@ -57,7 +57,7 @@ ${date.strftime('%Y-%m-%d')}\
     % for i, contact in enumerate(contacts):
       <strong>
       % if contact.url:
-      <a href="${contact.url['link']}">
+      <a href="${contact.url}">
       % endif
       % if contact.organisation:
         ${contact.organisation | x}

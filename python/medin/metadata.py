@@ -167,7 +167,7 @@ class Contacts(object):
 
             for contact in groups.contacts:
                 if num_people > 2 and contact.isPerson():
-                    attrs = ('organisation', 'address')
+                    attrs = ('organisation', 'address', 'url')
                     empty = False
                 else:
                     empty = True
@@ -196,19 +196,98 @@ class Contacts(object):
 
         return count
 
+def checkContactValue(f):
+    """
+    Validates the value of a contact attribute
+
+    This is designed as a property decorator
+    """
+
+    def newf(self, value):
+        if isinstance(value, str) and value.lower() in ('unknown', 'inapplicable'):
+            value = None
+        res = f(self, value)
+        return res
+
+    return newf
+
 class Contact(object):
 
-    organisation = None
-    position = None
-    name = None
-    address = None
-    email = None
-    tel = None
-    fax = None
+    _organisation = None
+    @property
+    def organisation(self):
+        return self._organisation
+    @organisation.setter
+    @checkContactValue
+    def organisation(self, value):
+        self._organisation = value
+
+    _name = None
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    @checkContactValue
+    def name(self, value):
+        self._name = value
+
+    _position = None
+    @property
+    def position(self):
+        return self._position
+    @position.setter
+    @checkContactValue
+    def position(self, value):
+        self._position = value
+
+    _address = None
+    @property
+    def address(self):
+        return self._address
+    @address.setter
+    @checkContactValue
+    def address(self, value):
+        self._address = value
+
+    _email = None
+    @property
+    def email(self):
+        return self._email
+    @email.setter
+    @checkContactValue
+    def email(self, value):
+        self._email = value
+
+    _tel = None
+    @property
+    def tel(self):
+        return self._tel
+    @tel.setter
+    @checkContactValue
+    def tel(self, value):
+        self._tel = value
+
+    _fax = None
+    @property
+    def fax(self):
+        return self._fax
+    @fax.setter
+    @checkContactValue
+    def fax(self, value):
+        self._fax = value
+
+    _url = None
+    @property
+    def url(self):
+        return self._url
+    @url.setter
+    @checkContactValue
+    def url(self, value):
+        self._url = value
+
     contacts = None
     roles = None
-    url = None
-    
+
     def __init__(self, organisation):
         self.organisation = organisation
         self.contacts = HashSet()
@@ -245,6 +324,7 @@ class Contact(object):
         elif self.email != other.email and self.email and other.email: return False
         elif self.tel != other.tel and self.tel and other.tel: return False
         elif self.fax != other.fax and self.fax and other.fax: return False
+        elif self.url != other.url and self.url and other.url: return False
         else:
             return True
 
@@ -260,7 +340,7 @@ class Contact(object):
     def __str__(self):
         def serialise(contact, depth):
             s = []
-            for attr in ('organisation', 'name', 'position', 'address', 'tel', 'fax', 'email'):
+            for attr in ('organisation', 'name', 'position', 'address', 'tel', 'fax', 'email', 'url'):
                 val = getattr(contact, attr)
                 if val:
                     s.append('%s: %s' % (attr.capitalize(), val))
@@ -271,9 +351,6 @@ class Contact(object):
                 for i in xrange(len(roles)-1):
                     roles[i+1] = '       '+roles[i+1]
                 s.extend(roles)
-
-            if contact.url:
-                s.append('URL: %s' % contact.url['link'])
 
             space = '  ' * depth
             sep = "\n" + space
@@ -1015,14 +1092,6 @@ class Parser(object):
             pass
 
         try:
-            OnlineResource = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:onlineResource/gmd:CI_OnlineResource')[0]
-        except IndexError:
-            pass
-        else:
-            contact.url = self.onlineResource(OnlineResource)
-            self.xpath.setContextNode(node)
-
-        try:
             role = self.xpath.xpathEval('./gmd:role/gmd:CI_RoleCode')[0].content.strip()
         except IndexError:
             pass
@@ -1031,6 +1100,17 @@ class Parser(object):
                 contact.roles.add(roles[role])
             except KeyError:
                 contact.roles.add(role)
+
+        try:
+            OnlineResource = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:onlineResource/gmd:CI_OnlineResource')[0]
+        except IndexError:
+            pass
+        else:
+            try:
+                contact.url = self.onlineResource(OnlineResource)['link']
+            except TypeError:
+                pass
+            self.xpath.setContextNode(node)
 
         return contact
 
@@ -1347,6 +1427,7 @@ if __name__ == '__main__':
     c1 = Contact('Marine Biological Association of the UK (MBA)')
     c1.address = 'The Laboratory, Citadel Hill'
     c1.email = 'sec@mba.ac.uk'
+    c1.url = 'http://mba.org.uk'
     c1.roles.add('pointOfContact')
 
     c2 = Contact(None)
