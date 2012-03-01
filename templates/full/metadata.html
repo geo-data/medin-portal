@@ -950,17 +950,22 @@ External link ${i+1}\
     </td>
     <td class="content">
       <div id="element-22" class="cell element-info">
-        <p>Provides a description of an organization or person who has
-        a role for the dataset or resource. A full list of roles is
-        available in 6. MEDIN mandates that the roles of ‘Originator’
-        and ‘Custodian’ (data holder) and the role of ‘Distributor’
-        should be entered if different to the Custodian. The ‘Metadata
-        point of contact’ is also mandatory. Other types of
-        responsible party may be specified from the controlled
-        vocabulary (see 6 for codelist) if desired.</p>
+        <p>Provides a description of an organisation or person who has
+        a role for the dataset or resource. 'Originator' (a mandatory
+        field) is the person or organisation who created the
+        resource. 'Custodian' (a mandatory field) is the person or
+        organisation that accepts responsibility for the data and
+        ensures appropriate care and maintenance.</p>
         <p>If the data has been lodged with a MEDIN approved Data
         Archive Centre then the DAC should be specified as the
-        Custodian.</p>
+        Custodian. 'Distributor' (a conditional field) is the person
+        or organisation that distributes the
+        resource. 'pointOfContact' is the party who can be contacted
+        for acquiring knowledge about or acquisition of the
+        resource. There are further designations listed at 'Annex
+        H. ISO Responsible party codelist' in 'Guidance notes for the
+        production of discovery metadata for the Marine Environmental
+        Data and Information Network (MEDIN)'.</p>
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.responsible_party}" number="${22}">
