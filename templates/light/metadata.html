@@ -76,7 +76,7 @@ ${date.strftime('%Y-%m-%d')}\
       Address: <a href="http://maps.google.co.uk/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=${contact.address | u}" title="View the location">${contact.address | x}</a><br/>
       % endif
       % if contact.email:
-      Email: ${contact.email | x}<br/>
+      Email: <a href="mailto:${contact.email}">${contact.email}</a><br/>
       % endif
       % if contact.tel:
       Telephone: ${contact.tel | x}<br/>

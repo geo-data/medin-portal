@@ -998,11 +998,9 @@ class Parser(object):
             pass
 
         try:
-            email = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress')[0].content.strip()
+            contact.email = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress')[0].content.strip()
         except IndexError:
             pass
-        else:
-            contact.email = email.replace('@', '(at)').replace('.', '(dot)') # obfuscate the address
 
         try:
             role = self.xpath.xpathEval('./gmd:role/gmd:CI_RoleCode')[0].content.strip()

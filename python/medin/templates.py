@@ -94,6 +94,7 @@ class MakoApp(object):
         self.expand = expand
         self.check_etag = check_etag
         self.content_type = content_type
+        self.filters = []       # filters for processing rendered template
 
     def setup(self, environ):
         return TemplateContext('')
@@ -120,6 +121,11 @@ class MakoApp(object):
     
         output = template.render(**kwargs)
 
+        # run the rendered template through any filters
+        for filt in self.filters:
+            output = filt(output)
+
+        # send the output to the client
         start_response(ctxt.status, ctxt.headers)
         return [output]
 

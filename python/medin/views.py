@@ -175,6 +175,19 @@ def get_post(environ):
     fp = environ['wsgi.input']
     return FieldStorage(fp, environ=environ)
 
+# Output filters that can be added to `templates.MakoApp.filters`
+import re
+class ObfuscateEmails(object):
+    """
+    Obfuscate email addresses by encoding them as XML entities
+    """
+
+    # A regular expression to match email addresses (adapted from http://www.noah.org/wiki/RegEx_Python#email_regex_pattern)
+    _email_pattern = re.compile(r"""((mailto:)?[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*\.[a-zA-Z]+)""")
+
+    def __call__(self, text):
+        return self._email_pattern.sub(lambda x: ''.join(['&#' + hex(ord(i))[1:] + ';' for i in x.group()]), text);
+
 # The WSGI Applications
 
 class Comment(object):
@@ -276,6 +289,8 @@ class OpenSearch(MakoApp):
         super(OpenSearch, self).__init__(['opensearch', 'catalogue', '%s.xml'],
                                          content_type='application/opensearchdescription+xml')
 
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
+
     def setup(self, environ):
         title = 'MEDIN Catalogue'
         headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
@@ -289,6 +304,8 @@ class Search(MakoApp):
         self.request = SearchRequest()
         self.vocab = MEDINVocabulary()
         super(Search, self).__init__(['%s', 'search.html'], check_etag=False)
+
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
 
     def prepareSOAP(self, environ):
         """
@@ -506,6 +523,8 @@ class Results(MakoApp):
         self.result_type = result_type
         self.request = SearchRequest()
         super(Results, self).__init__(path, check_etag=False, **kwargs)
+
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
 
     def prepareSOAP(self, environ):
         """
@@ -738,6 +757,8 @@ class MetadataHTML(Metadata):
         # see http://daringfireball.net/2010/07/improved_regex_for_matching_urls
         self.url_pattern = re.compile(r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))""")
 
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
+
     def setup(self, environ):
         from medin.dws import RESULT_SIMPLE
 
@@ -895,6 +916,8 @@ class MetadataXML(object):
         from medin.dws import MetadataRequest
         self.request = MetadataRequest()
 
+        self.obfuscate_emails = ObfuscateEmails() # ensure emails are obfuscated when rendered
+
     def prepareSOAP(self, environ):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         fmt = environ['selector.vars']['format'] # the requested format
@@ -915,7 +938,7 @@ class MetadataXML(object):
         if not response:
             raise HTTPError('404 Not Found', 'The metadata record does not exist: %s' % gid)
 
-        document = response.xml
+        document = self.obfuscate_emails(response.xml)
         if not document:
             raise HTTPError('404 Not Found', 'The metadata format does not contain any data: %s' % fmt)
 
@@ -991,6 +1014,8 @@ class MetadataCSV(object):
 class TemplateChoice(MakoApp):
     def __init__(self):
         super(TemplateChoice, self).__init__(['light', 'templates.html'], False)
+
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
 
     def setup(self, environ):
         headers = [('Cache-Control', 'max-age=3600, must-revalidate')]
@@ -1130,6 +1155,8 @@ class ErrorRenderer(MakoApp):
     def __init__(self, exception):
         super(ErrorRenderer, self).__init__(['%s', 'error.html'], check_etag=False)
         self.exception = exception
+
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
 
     def setup(self, environ):
         title = 'Error - %s' % self.exception.args[0]
