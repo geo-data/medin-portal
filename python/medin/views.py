@@ -780,9 +780,12 @@ class MetadataHTML(Metadata):
         if metadata.additional_info:
             metadata.additional_info = self.urlify(metadata.additional_info)
 
+        custodians = [contact.organisation for contact in metadata.responsible_party.getContactsForRole('custodian')]
+
         tvars = dict(metadata=metadata,
                      criteria=criteria,
                      referrer_query_string=referrer_query_string,
+                     custodians=custodians,
                      hits=r.hits)
 
         return TemplateContext(title, tvars=tvars, headers=headers)

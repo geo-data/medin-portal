@@ -169,8 +169,25 @@ ${date.date().isoformat()}\
 
 <h2>Overview</h2>
 
-<!-- Element 3 -->
 <p><strong>Abstract:</strong> ${metadata.abstract}</p>
+
+<p><strong>Data holder:</strong> ${', '.join(custodians)}</p>
+
+<p><strong>Online resource present:</strong>
+% if metadata.online_resource:
+<img class="online-resource" src="/images/green-light" alt="[Yes]" title="Yes" width="23" height="23"/>
+% else:
+<img class="online-resource" src="/images/red-light" alt="[No]" title="No" width="23" height="23"/>
+% endif\
+</p>
+
+% if metadata.access_conditions:
+<p><strong>Use constraints:</strong> <ul><li>${'</li><li>'.join(metadata.access_conditions)}</li></ul></p>
+% endif\
+
+% if metadata.parent_id:
+<p><strong>Parent ID:</strong> ${metadata.parent_id}</p>
+% endif\
 
 % if metadata.keywords:
 <!-- Element 11 -->
@@ -262,8 +279,70 @@ ${date.date().isoformat()}\
         duplicated in a portal.</p>
       </div>
       <div class="cell">
-        <%self:output_element element="${metadata.alt_titles}" number="${6}">
+        <%self:output_element element="${metadata.unique_id}" number="${6}">
       ${metadata.unique_id}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
+  % if metadata.parent_id:
+  <!-- Element 30 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Parent identifier</strong> (<a href="javascript:toggle('element-30', 'info', 'hide info')" id="element-30-link" title="Show or hide the element information">info</a>)
+      </div>
+    </td>
+    <td class="content">
+      <div id="element-30" class="cell element-info">
+        <p>This field holds the file identifier code of the series
+        metadata record for which the dataset which is being described
+        is part of. Therefore, this element allows links to be made
+        between a dataset and a series (see <a
+        href="http://www.oceannet.org/marine_data_standards/other_marine_data_standards/consider_data_set.html">here</a>
+        for MEDINs definition of these terms). This will then allow
+        the MEDIN portal to be able to find related metadata
+        records. For example, a large multidisciplinary project may be
+        described as a ‘series’ and each of the themes of work will be
+        described as ‘datasets’.  Using this field allows the user
+        when viewing the series metadata to ask for the metadata
+        records of all the datasets of each theme. Alternatively, a
+        user may ask for all related records when veiwing a
+        dataset.</p>
+      </div>
+      <div class="cell">
+        <%self:output_element element="${metadata.parent_id}"
+        number="${30}"> ${metadata.parent_id} </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+  
+  % if metadata.abstract:
+  <!-- Element 3 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Abstract</strong> (<a href="javascript:toggle('element-3', 'info', 'hide info')" id="element-3-link" title="Show or hide the element information">info</a>)
+      </div>
+    </td>
+    <td class="content">
+      <div id="element-3" class="cell element-info">
+        <p>The abstract should provide a clear and brief statement of
+        the content of the resource (e.g.  dataset). Include what has
+        been recorded, what form the data takes, what purpose it was
+        collected for, and any limiting information, i.e. limits or
+        caveats on the use and interpretation of the data. Background
+        methodology and quality information should be entered into the
+        Lineage element (element 10). It is recommended that acronyms
+        and abbreviations are reproduced in full. e.g. Centre for
+        Environment, Fisheries and Aquaculture Science (Cefas).</p>
+      </div>
+      <div class="cell">
+        <%self:output_element element="${metadata.abstract}" number="${3}">
+      ${metadata.abstract}
         </%self:output_element>
       </div>
     </td>
@@ -308,6 +387,45 @@ External link ${i+1}\
   </tr>
   % endif\
 
+  % if metadata.bbox:
+  <!-- Element 12 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Geographic bounding box</strong> (<a href="javascript:toggle('element-12', 'info', 'hide info')" id="element-12-link" title="Show or hide the element information">info</a>)
+      </div>
+    </td>
+    <td class="content">
+      <div id="element-12" class="cell element-info">
+        <p>These four sub-elements represent the geographical bounding
+        box(s) of the resource's extent. Multiple bounding boxes are
+        allowed to describe datasets or series which have a disparate
+        geographic coverage; each bounding box must have only one
+        occurrence of each of east, west, north and south sub element
+        described. The co-ordinates of these bounding box(s) should be
+        expressed as decimal degrees longitude and latitude. A minimum
+        of two and a maximum of four decimal places should be
+        provided.</p>
+      <p>Latitudes between 0 and 90N, and longitudes between 0 and
+      180E should be expressed as positive numbers, and latitudes
+      between 0 and 90S, and longitudes between 0 and 180W should be
+      expressed as negative numbers. In the event that a single point
+      is being described we recommend using the en-coding shown in the
+      last example.</p>
+      </div>
+      <div class="cell">
+        <%self:output_element element="${metadata.online_resource}" number="${12}">
+        <a
+        href="${script_root}/full/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
+        title="Search for all metadata within this area"> ${metadata.bbox[0]}&deg;W,
+        ${metadata.bbox[2]}&deg;E, ${metadata.bbox[3]}&deg;N,
+        ${metadata.bbox[1]}&deg;S</a>
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+  
   % if metadata.access_limits:
   <!-- Element 20 -->
   <tr>

@@ -112,6 +112,24 @@ ${date.strftime('%Y-%m-%d')}\
 <h2>Abstract</h2>
 <p>${metadata.abstract}</p>
 
+<p><strong>Data holder:</strong> ${', '.join(custodians)}</p>
+
+<p><strong>Online resource present:</strong>
+% if metadata.online_resource:
+<img class="online-resource" src="/images/green-light" alt="[Yes]" title="Yes" width="23" height="23"/>
+% else:
+<img class="online-resource" src="/images/red-light" alt="[No]" title="No" width="23" height="23"/>
+% endif
+</p>
+
+% if metadata.access_conditions:
+<p><strong>Use constraints:</strong> <ul><li>${'</li><li>'.join(metadata.access_conditions)}</li></ul></p>
+% endif\
+
+% if metadata.parent_id:
+<p><strong>Parent ID:</strong> ${metadata.parent_id}</p>
+% endif\
+
 % if metadata.bbox:
 <!-- Element 12 -->
 <h2>Geographic Extent</h2>
@@ -181,8 +199,24 @@ ${date.strftime('%Y-%m-%d')}\
 % if metadata.unique_id:
 <!-- Element 6 -->
 <h3>Unique resource identifier</h3>
-<%self:output_element element="${metadata.alt_titles}">
+<%self:output_element element="${metadata.unique_id}">
 <p>${metadata.unique_id}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.parent_id:
+<!-- Element 30 -->
+<h3>Parent identifier</h3>
+<%self:output_element element="${metadata.parent_id}">
+<p>${metadata.parent_id}</p>
+</%self:output_element>
+% endif\
+
+% if metadata.abstract:
+<!-- Element 3 -->
+<h3>Abstract</h3>
+<%self:output_element element="${metadata.abstract}">
+<p>${metadata.abstract}</p>
 </%self:output_element>
 % endif\
 
@@ -204,6 +238,18 @@ External link\
     % endif
   % endfor
   </dl>
+</%self:output_element>
+% endif\
+
+% if metadata.bbox:
+<!-- Element 12 -->
+<h3>Geographic bounding box</h3>
+<%self:output_element element="${metadata.bbox}">
+<p><a
+href="${script_root}/light/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
+title="Search for all metadata within this area">
+${metadata.bbox[0]}°W, ${metadata.bbox[2]}°E,
+${metadata.bbox[3]}°N, ${metadata.bbox[1]}°S</a></p>
 </%self:output_element>
 % endif\
 

@@ -198,6 +198,10 @@ img.extent {
 img.loading {
     vertical-align:middle;
 }
+img.online-resource {
+    margin-left: 0.5em;
+    vertical-align: middle;
+}
 
 /* Box resizing icons
  *

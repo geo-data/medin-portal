@@ -73,6 +73,7 @@ class Metadata(object):
     name = None                         # element 27
     version = None                      # element 28
     language = None                     # element 29
+    parent_id = None                    # element 30
 
     def __init__(self, uid):
         self.uid = uid
@@ -81,6 +82,21 @@ class HashSet(set):
 
     def __hash__(self):
         return reduce(lambda a, b: a | b, (hash(i) for i in self), 0)
+
+class Role(object):
+    """
+    An object representing a Responsible Party role
+    """
+
+    def __init__(self, abbrv, description=''):
+        self.abbrv = abbrv
+        self.description = description
+    
+    def __hash__(self):
+        return hash(self.abbrv) | hash(self.description)
+
+    def __str__(self):
+        return self.description or self.abbrv
 
 class Contacts(object):
 
@@ -188,6 +204,14 @@ class Contacts(object):
             contacts.append(base)
             
         return Contacts(contacts)
+
+    def getContactsForRole(self, role):
+        contacts = []
+        for contact in self:
+            if contact.hasRole(role):
+                contacts.append(contact)
+
+        return contacts
 
     def numberOfPeople(self):
         count = 0
@@ -336,6 +360,17 @@ class Contact(object):
                 return
 
         self.contacts.add(contact)
+
+    def hasRole(self, role):
+        for roleObj in self.roles:
+            if roleObj.abbrv == role:
+                return True
+
+        for child in self.contacts:
+            if child.hasRole(role):
+                return True
+
+        return False
         
     def __str__(self):
         def serialise(contact, depth):
@@ -435,6 +470,7 @@ class Parser(object):
         m.name = self.name()            # element 27
         m.version = self.version()      # element 28
         m.language = self.language()    # element 29
+        m.parent_id = self.parentID()   # element 30
         
         return m
 
@@ -1096,10 +1132,7 @@ class Parser(object):
         except IndexError:
             pass
         else:
-            try:
-                contact.roles.add(roles[role])
-            except KeyError:
-                contact.roles.add(role)
+            contact.roles.add(Role(role, roles.get(role, '')))
 
         try:
             OnlineResource = self.xpath.xpathEval('./gmd:contactInfo/gmd:CI_Contact/gmd:onlineResource/gmd:CI_OnlineResource')[0]
@@ -1221,6 +1254,14 @@ class Parser(object):
         
         try:
             return self.xpath.xpathEval('//gmd:MD_Metadata/gmd:language/gmd:LanguageCode')[0].content.strip()
+        except IndexError:
+            return None
+
+    def parentID(self):
+        """Element 30: Parent ID"""
+
+        try:
+            return self.xpath.xpathEval('//gmd:MD_Metadata/gmd:parentIdentifier/gco:CharacterString')[0].content.strip()
         except IndexError:
             return None
 
@@ -1421,6 +1462,7 @@ def metadata2csv(metadata, file):
     write_element(writer, 27, 'Metadata standard name', metadata.name)  
     write_element(writer, 28, 'Metadata standard version', metadata.version)
     write_element(writer, 29, 'Metadata language', metadata.language)
+    write_element(writer, 30, 'Parent ID', metadata.parent_id)
 
 
 if __name__ == '__main__':
@@ -1428,27 +1470,27 @@ if __name__ == '__main__':
     c1.address = 'The Laboratory, Citadel Hill'
     c1.email = 'sec@mba.ac.uk'
     c1.url = 'http://mba.org.uk'
-    c1.roles.add('pointOfContact')
+    c1.roles.add(Role('pointOfContact'))
 
     c2 = Contact(None)
     c2.name = 'N. A. Anwar'
     c2.tel = '01752 633207'
     c2.email = 'sec@mba.ac.uk'
-    c2.roles.add('originator')
+    c2.roles.add(Role('originator'))
 
     c3 = Contact('Marine Biological Association of the UK (MBA)')
     c3.position = 'Biological Record Officer'
     c3.tel = '+44 1752 633291'
     c3.address = 'The Laboratory, Citadel Hill'
     c3.email = 'sec@mba.ac.uk'
-    c3.roles.add('custodian')
+    c3.roles.add(Role('custodian'))
 
     c4 = Contact('Marine Biological Association of the UK (MBA)')
     c4.position = 'Biological Record Officer'
     c4.tel = '+44 1752 633291'
     c4.address = 'The Laboratory, Citadel Hill'
     c4.email = 'sec@mba.ac.uk'
-    c4.roles.add('distributor')
+    c4.roles.add(Role('distributor'))
 
     contacts = Contacts([c1, c2, c3, c4])
 
