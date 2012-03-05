@@ -442,11 +442,9 @@ class TermParser(object):
 
 class TermAnalyser(object):
 
-    mapping = {'a': 'author',
-               'p': 'parameter',
+    mapping = {'p': 'parameter',
                'rt': 'resource type',
                'tc': 'topic category',
-               'l': 'lineage',
                'al': 'public access limits',
                'o': 'data originator',
                'f': 'data format'}

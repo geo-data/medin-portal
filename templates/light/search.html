@@ -65,16 +65,6 @@
       </select>
     </div>
     %endif
-    %if topic_categories:
-    <div>
-      <select name="q" multiple="multiple" size="5">
-        <option value="">Choose a topic...</option>
-        %for category in topic_categories:
-        <option title="${category['defn'] | x}" value="tc:${category['abbr'] | q,x}">${category['term'] | x}</option>
-        %endfor
-      </select>
-    </div>
-    %endif
     %if resource_types:
     <div>
       <select name="q" multiple="multiple" size="5">

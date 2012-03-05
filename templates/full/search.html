@@ -225,19 +225,10 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
       <table class="help" summary="Available target identifiers" style="margin-left:1.5em">
           <tbody>
             <tr>
-              <td>a</td><td>= Author</td>
-            </tr>
-            <tr>
               <td>p</td><td>= Parameter</td>
             </tr>
             <tr>
               <td>rt</td><td>= Resource type</td>
-            </tr>
-            <tr>
-              <td>tc</td><td>= Topic category</td>
-            </tr>
-            <tr>
-              <td>l</td><td>= Lineage</td>
             </tr>
             <tr>
               <td>al</td><td>= Public access limits</td>
@@ -255,13 +246,13 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
       <strong>colon</strong> (<strong>:</strong>)</p>
       <blockquote>
         <div>
-          <p><strong>Example</strong>: type the following to find
-          all documents that contain <kbd>acoustic</kbd> that also
-          have a <strong>topic category</strong> containing
-          <kbd>oceans</kbd> and a <strong>parameter</strong>
+          <p><strong>Example</strong>: type the following to find all
+          documents that contain <kbd>acoustic</kbd> that also have
+          a <strong>data format</strong> suitable for Geographic
+          Information Systems and a <strong>parameter</strong>
           containing <kbd>sediment</kbd>:</p>
         </div>
-        <div class="example"><kbd>acoustic <strong>tc:</strong>oceans<strong> p:</strong>sediment</kbd></div>
+        <div class="example"><kbd>acoustic <strong>f:</strong>"Geographic Information System"<strong> p:</strong>sediment</kbd></div>
       </blockquote>
       </div>
 
@@ -271,24 +262,12 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
 		<table class="help" summary="Target field definitions">
           <tbody>
 		  <tr>
-			<td>Author</td>
-			<td>a free text field to search for the author of the metadata.</td>
-		  </tr>
-		  <tr>
 			<td>Parameter</td>
 			<td>parameters are those in the <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP021%2Fcurrent&amp;earliestRecord=&amp;submit=submit">BODC Parameter Discovery Vocabulary (P021) list</a> and are terms describing fine-grained related groups of measurements. <a href="http://seadatanet.maris2.nl/v_bodc_vocab/vocabrelations.aspx">This</a> is a user friendly interface showing the relationship between list P021 and other parameter lists P081 and P031.</td>
           </tr>
           <tr>
             <td>Resource type</td>
             <td>describes the nature of the information, for example, dataset, service, series, model, feature or software. All terms can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
-          </tr>
-          <tr>
-            <td>Topic category</td>
-            <td>describes the main theme(s) of the data resource selected from the <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP051%2Fcurrent&amp;earliestRecord=&amp;submit=submit">ISO 19115/TC 211 Topic Category list</a>. This list can also be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>. Examples of topic category related to the marine environment include ‘biota’, ‘oceans’, ‘geoscientific information’ and ‘transportation’. Any term that is made up of more than one word must be combined e.g. ‘geoscientificinformation’.</td>
-          </tr>
-          <tr>
-            <td>Lineage</td>
-            <td>a free text field that can include background information, source material, data collection methods, data processing methods and quality control procedures.</td>
           </tr>
           <tr>
             <td>Public access limits</td>
@@ -478,16 +457,11 @@ ${area_selection('ices-rectangles')}
     Search
     <select name="" id="target-type">
       <option value="">Choose a metadata field...</option>
-      <option value="a">Author</option>
       %if parameters:
       <option value="p">Parameter</option>
       %endif
-      %if topic_categories:
-      <option value="tc">Topic category</option>
-      %endif
       <option value="rt">Resource type</option>
       <option value="al">Public access limits</option>
-      <option value="l">Lineage</option>
       <option value="o">Data originator</option>
       %if data_formats:
       <option value="f">Data format</option>
@@ -495,22 +469,12 @@ ${area_selection('ices-rectangles')}
     </select>
     <span id="target-controls" style="display:none">
       for
-      <input type="text" class="target" name="" id="target-a" value=""/>
-      <input type="text" class="target" name="" id="target-l" value=""/>
       <input type="text" class="target" name="" id="target-o" value=""/>
       %if parameters:
       <select class="target" name="" id="target-p">
         <option value="">Choose a parameter...</option>
         %for parameter in parameters:
         <option title="${parameter['defn'] | x}" value="${parameter['term'] | q,x}">${parameter['term'] | x}</option>
-        %endfor
-      </select>
-      %endif
-      %if topic_categories:
-      <select class="target" name="" id="target-tc">
-        <option value="">Choose a topic...</option>
-        %for category in topic_categories:
-        <option title="${category['defn'] | x}" value="${category['abbr'] | q,x}">${category['term'] | x}</option>
         %endfor
       </select>
       %endif
