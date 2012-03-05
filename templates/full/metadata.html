@@ -144,6 +144,9 @@ ${date.date().isoformat()}\
     % endif
 </%def>\
 
+<%def name="format_url_content(x)" buffered="True">${x | q,u,x}</%def>\
+<%def name="format_xml_content(x)" buffered="True">${x | x}</%def>\
+
 % if metadata.bbox:
 <!-- Element 12 -->
 <div class="extent right">
@@ -187,40 +190,6 @@ ${date.date().isoformat()}\
 
 % if metadata.parent_id:
 <p><strong>Parent ID:</strong> ${metadata.parent_id}</p>
-% endif\
-
-% if metadata.keywords:
-<!-- Element 11 -->
-<p class="no-bottom"><strong>Keywords:</strong></p>
-  % for title, defns in metadata.keywords.items():
-  <div><strong>${title | x}</strong></div>
-  <div class="subitem">
-    % for i, (keyword, defn) in enumerate(defns.items()):
-      % if i:
-      <div class="sibling">
-      % else:
-      <div>
-      % endif
-      % if 'error' in defn:
-        <span class="error">${defn['error']}</span>
-      % else:
-        <% if defn:
-             if defn['short']: keyword = defn['short']
-             else: keyword = defn['long']
-        %>
-        <a href="${script_root}/full/catalogue?q=p:${keyword | q,u,x}"
-           title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
-        % if defn:
-          % if defn['short'] and defn['long'] != defn['short']:
-          - ${defn['long'] | x}
-          % endif
-        <br/>Definition: ${defn['defn'] | x}
-        % endif
-      % endif
-      </div>
-    % endfor
-  </div>
-  % endfor
 % endif\
 
 <h2>Details</h2>
@@ -387,6 +356,33 @@ ${resource['link']}\
   </tr>
   % endif\
 
+  % if metadata.keywords:
+  <!-- Element 11 -->
+  <tr>
+    <td class="heading">
+      <div class="cell">
+        <strong>Keywords</strong> (<a href="javascript:toggle('element-11', 'info', 'hide info')" id="element-11-link" title="Show or hide the element information">info</a>)
+      </div>
+    </td>
+    <td class="content">
+      <div id="element-11" class="cell element-info">
+        <p>Keywords belonging to various MEDIN approved thesauri.</p>
+      </div>
+      <div class="cell">
+        <%self:output_element element="${metadata.keywords}" number="${11}">
+  <% 
+     keywords = []
+     for keyword in metadata.keywords:
+       xml_keyword = format_xml_content(keyword)
+       keywords.append('<a href="' + script_root + '/full/catalogue?q=p:' + format_url_content(keyword) + '" title="Search for all metadata having the parameter `' + xml_keyword + '`">' + xml_keyword + '</a>')
+  %>
+  ${', '.join(keywords)}
+        </%self:output_element>
+      </div>
+    </td>
+  </tr>
+  % endif\
+
   % if metadata.bbox:
   <!-- Element 12 -->
   <tr>
@@ -425,7 +421,7 @@ ${resource['link']}\
     </td>
   </tr>
   % endif\
-  
+
   % if metadata.access_limits:
   <!-- Element 20 -->
   <tr>

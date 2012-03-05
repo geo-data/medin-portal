@@ -434,6 +434,7 @@ class Parser(object):
         xpath.xpathRegisterNs('gmd', 'http://www.isotc211.org/2005/gmd')
         xpath.xpathRegisterNs('gco', 'http://www.isotc211.org/2005/gco')
         xpath.xpathRegisterNs('srv', 'http://www.isotc211.org/2005/srv')
+        xpath.xpathRegisterNs('gmx', 'http://www.isotc211.org/2005/gmx')
         xpath.xpathRegisterNs('xlink', 'http://www.w3.org/1999/xlink')
         xpath.xpathRegisterNs('gml', 'http://www.opengis.net/gml/3.2')
 
@@ -634,79 +635,14 @@ class Parser(object):
     def keywords(self):
         """Element 11: Keywords"""
         
-        def keywordListFromTitle(title):
-            """
-            Parse a keyword title and return the list key if present
-
-            e.g. the title "SeaDataNet BODC Vocabulary (P011)" returns
-            P011. A case insensitive match is also done on the title for
-            the string 'inspire', in which case the code P220 is
-            returned.
-            """
-
-            if 'inspire' in title.lower():
-                return 'P220'
-
-            match = self._keyword_pattern.search(title)
-            if not match:
-                return None
-
-            return match.groups()[0]
-
-        from terms import VocabError
-        
-        keywords = {}
+        keywords = []
         for node in self.xpath.xpathEval('//gmd:descriptiveKeywords/gmd:MD_Keywords'):
             self.xpath.setContextNode(node)
             # try and retrieve the keywords
             try:
-                words = [word.content.strip() for word in self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text()')]
+                keywords.extend([word.content.strip() for word in self.xpath.xpathEval('./gmd:keyword/gco:CharacterString/text() | ./gmd:keyword/gmx:Anchor/text()')])
             except IndexError:
                 continue
-
-            # try and get a code and a title for the list to which the
-            # keywords belong
-            try:
-                code = self.xpath.xpathEval('.//gmd:MD_KeywordTypeCode/@codeListValue')[0].content.strip()
-                title = code
-            except IndexError:
-                try:
-                    title = self.xpath.xpathEval('.//gmd:title/gco:CharacterString/text()')[0].content.strip()
-                except IndexError:
-                    code = 'unknown'
-                    title = code
-                else:
-                    code = keywordListFromTitle(title)
-
-            for word in words:
-                # try and get a definition for the term from the list code
-                if code:
-                    try:
-                        defn = self.vocab.lookupTerm(code, word)
-                    except LookupError:
-                        defn = {'short':word,
-                                'long':word,
-                                'defn':'Unknown term'}
-                    except VocabError, e:
-                        defn = {'error': e.message}
-                else:
-                    defn = {}
-
-                # the Discovery Web Service indexes PO21 parameters by
-                # long name, not short, so we get rid of the short
-                # name...
-                if code == 'P021':
-                    try:
-                        defn['short'] = defn['long']
-                    except KeyError:
-                        pass
-
-                # add the definition to the keyword dictionary
-                try:
-                    keywords[title][word] = defn
-                except KeyError:
-                    defns = {word: defn}
-                keywords[title] = defns
 
         return keywords
 

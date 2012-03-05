@@ -108,6 +108,9 @@ ${date.strftime('%Y-%m-%d')}\
   % endif
 </%def>\
 
+<%def name="format_url_content(x)" buffered="True">${x | q,u,x}</%def>\
+<%def name="format_xml_content(x)" buffered="True">${x | x}</%def>\
+
 <!-- Element 3 -->
 <h2>Abstract</h2>
 <p>${metadata.abstract}</p>
@@ -148,39 +151,6 @@ ${date.strftime('%Y-%m-%d')}\
   Download the extent in <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="icon"/> KML format</a>.
 </p>
 % endif
-
-% if metadata.keywords:
-<!-- Element 11 -->
-<h2>Keywords</h2>
-  % for title, defns in metadata.keywords.items():
-  <h3>${title | x}</h3>
-  <dl>
-    % for keyword, defn in defns.items():
-    <dt>
-      % if 'error' in defn:
-        <span class="error">${defn['error']}</span>
-    </dt>
-      % else:
-        <% if defn:
-             if defn['short']: keyword = defn['short']
-             else: keyword = defn['long']
-        %>
-        <a href="${script_root}/light/catalogue?q=p:${keyword | q,u,x}"
-           title="Search for all metadata having the parameter '${keyword | x}'">${keyword | x}</a>
-        % if defn:
-          % if defn['short'] and defn['long'] != defn['short']:
-          - ${defn['long'] | x}
-          % endif
-    </dt>
-    <dd>${defn['defn'] | x}</dd>
-        % else:
-    </dt>
-        % endif
-      % endif
-    % endfor
-  </dl>
-  % endfor
-% endif\
 
 <h2>Metadata Details</h2>
 
@@ -238,6 +208,20 @@ ${resource['link']}\
     % endif
   % endfor
   </dl>
+</%self:output_element>
+% endif\
+
+% if metadata.keywords:
+<!-- Element 11 -->
+<h3>Keywords</h3>
+<%self:output_element element="${metadata.keywords}">
+<% 
+   keywords = []
+   for keyword in metadata.keywords:
+     xml_keyword = format_xml_content(keyword)
+     keywords.append('<a href="' + script_root + '/full/catalogue?q=p:' + format_url_content(keyword) + '" title="Search for all metadata having the parameter `' + xml_keyword + '`">' + xml_keyword + '</a>')
+%>
+<p>${', '.join(keywords)}</p>
 </%self:output_element>
 % endif\
 
