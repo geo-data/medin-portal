@@ -352,7 +352,7 @@ ${metadata.bbox[3]}°N, ${metadata.bbox[1]}°S</a></p>
 <h3>Temporal reference</h3>
 <%self:output_element element="${metadata.temporal_reference}">
 %if 'range' in metadata.temporal_reference:
-  <p>The data spans the period from <a href="${script_root}/light/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
+  <p>The data span the period from <a href="${script_root}/light/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
 %endif
 %if 'single' in metadata.temporal_reference:
   % for i, (code, date) in enumerate(metadata.temporal_reference['single']):

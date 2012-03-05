@@ -630,7 +630,7 @@ ${resource['link']}\
         <%self:output_element element="${metadata.temporal_reference}" number="${16}">
         %if 'range' in metadata.temporal_reference:
         <div>
-          The data spans the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
+          The data span the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
         </div>
         %endif
         %if 'single' in metadata.temporal_reference:
