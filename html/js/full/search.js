@@ -543,17 +543,10 @@ function init_search_term() {
 
 function init_date(id) {
     var input = $('#'+id);
-    var text = $('#'+id+'-text');
 
     // a function to initialise the date picker
     var init_datepicker = function() {
         input.datepicker({
-            onClose: function(new_date, picker) {
-                if (!new_date) {
-                    input.hide();
-                    text.show();
-                }
-            },
             onSelect: function(date, picker) {
                 // trigger the change event, which is used by the
                 // query checking code.
@@ -566,36 +559,7 @@ function init_date(id) {
         });
     }
 
-    var has_date = input.val();
-    // initialise the date picker if a date is present
-    if (has_date) {
-        init_datepicker();
-        text.hide();
-        input.show();
-    }
-
-    text.one('click', function(event) {
-        $(this).hide();
-        input.show();
-
-        // initialise the date picker if there was no initial date
-        if (!has_date) {
-            init_datepicker();
-        }
-
-        input.datepicker('show');
-
-        // for subsequent clicks
-        text.click(function(event) {
-            $(this).hide();
-            input.show();
-            input.datepicker('show');
-
-            return false;       // prevent the default action
-        });
-
-        return false;           // prevent the default action
-    });
+    init_datepicker();
 }
 
 var query_check = 0;
