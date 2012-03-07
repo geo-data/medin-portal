@@ -59,6 +59,10 @@ ${query_string | x}\
           type="application/atom+xml"
           href="${script_root}/light/catalogue.atom${start_link()}"
           title="MEDIN - ${title | x}" />
+    <link rel="alternate"
+          type="application/vnd.google-earth.kml+xml"
+          href="${script_root}/light/catalogue.kml${start_link()}"
+          title="MEDIN - ${title | x}" />
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
@@ -186,5 +190,7 @@ ${result_links()}
 <p>
   Syndicate these results using <a href="${script_root}/light/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="" src="/images/feed-icon.gif" width="16" height="16" class="icon"/> RSS</a>
   or
-  <a href="${script_root}/light/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="" src="/images/feed-icon.gif" width="16" height="16" class="icon"/> Atom</a>.
+  <a href="${script_root}/light/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="" src="/images/feed-icon.gif" width="16" height="16" class="icon"/> Atom</a>
+  or
+  <a href="${script_root}/light/catalogue.kml${start_link()}" title="View these results in Google Earth"><img alt="" src="/images/kml.png" width="16" height="16" class="icon"/> view them in Google Earth</a>.
 </p>

@@ -74,6 +74,10 @@ ${query_string | x}\
           type="application/atom+xml"
           href="${script_root}/full/catalogue.atom${start_link()}"
           title="MEDIN - ${title | x}" />
+    <link rel="alternate"
+          type="application/vnd.google-earth.kml+xml"
+          href="${script_root}/full/catalogue.kml${start_link()}"
+          title="MEDIN - ${title | x}" />
 
     <meta name="totalResults" content="${hits}"/>
     <meta name="startIndex" content="${start_index}"/>
