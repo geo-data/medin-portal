@@ -41,6 +41,33 @@
         }
         #map-holder {
             margin-top: 0.5em;
+            position: relative;
+        }
+        #layer-control-container {
+            position: absolute;
+            right: 0;
+            z-index: 1000;
+        }
+        #layer-control {
+            background-color: rgba(0,0,139,0.75);
+            border: 2px solid #00008B;
+            border-radius: 10px 10px 10px 10px;
+            box-shadow: 5px 5px 10px #888888;
+            color: white;
+            margin: 0.5em;
+            padding: 1em;
+        }
+        #layer-control .dataLbl {
+            display: none;
+        }
+        #layer-control .labelSpan {
+            margin-left: 0.5em;
+        }
+        #toggle-layer-control {
+            margin: 1em;
+        }
+        div.text-right {
+            text-align: right;
         }
     </style>
     <script type="text/javascript" src="/js/jquery.iclick.js"></script>
@@ -48,6 +75,7 @@
     <script type="text/javascript" src="/js/jquery.ba-resize.js"></script>
     <script type="text/javascript" src="/js/jquery.caret-range.js"></script>
     <script type="text/javascript" src="/js/openlayers/OpenLayers.js"></script>
+    <script type="text/javascript" src="/js/jquery-ollayercontrol-plugin/jquery.olLayerControl.js"></script>
     <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
         <!--
@@ -437,7 +465,12 @@ ${area_selection('ices-rectangles')}
       area</strong>.</p>
       </div>
       <div id="map-holder">
-        <div id="map"></div>
+        <div id="layer-control-container">
+          <div class="text-right"><button id="toggle-layer-control" type="button">Change layers</button></div>
+          <div id="layer-control"></div>
+        </div>
+        <div id="map">
+        </div>
       </div>
       <h3>Edit the search box coordinates</h3>
       <input size="38" name="bbox" id="bbox" type="text" value="\

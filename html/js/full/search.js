@@ -129,7 +129,6 @@ function init_map() {
     map.addControl(new OpenLayers.Control.PanZoom());
     map.addControl(new OpenLayers.Control.ArgParser());
     map.addControl(new OpenLayers.Control.Attribution());
-    map.addControl(new OpenLayers.Control.LayerSwitcher());
 
     // the graticule layer
     map.addControl(new OpenLayers.Control.Graticule({
@@ -335,6 +334,18 @@ function init_spatial_search() {
     // make the map full width
     $('#map').css('width', '100%');
     map.updateSize();
+
+    // create the layer switcher control
+    $('#layer-control').olLayerControl(map);
+
+    // set up the button for toggling the layer control visibility
+    $('#toggle-layer-control').click(function onClick() {
+        if ($('#layer-control').is(":visible")) {
+            $('#layer-control').fadeOut('fast');
+        } else {
+            $('#layer-control').fadeIn('fast');
+        }
+    });
 }
 
 /* Initialise the search term controls.
