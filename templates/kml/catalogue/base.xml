@@ -1,0 +1,106 @@
+<%doc>
+ Created by Homme Zwaagstra
+ 
+ Copyright (c) 2010 GeoData Institute
+ http://www.geodata.soton.ac.uk
+ geodata@soton.ac.uk
+ 
+ Unless explicitly acquired and licensed from Licensor under another
+ license, the contents of this file are subject to the Reciprocal
+ Public License ("RPL") Version 1.5, or subsequent versions as
+ allowed by the RPL, and You may not copy or use this file in either
+ source code or executable form, except in compliance with the terms
+ and conditions of the RPL.
+ 
+ All software distributed under the RPL is provided strictly on an
+ "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR
+ IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT, OR
+ NON-INFRINGEMENT. See the RPL for specific language governing rights
+ and limitations under the RPL.
+ 
+ You can obtain a full copy of the RPL from
+ http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
+</%doc>\
+<%namespace import="isoformat, content, description" file="/common/feeds.xml"/><%!
+    template_ = ""
+%><?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.2"
+     xmlns:gx="http://www.google.com/kml/ext/2.2"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+     xmlns:opensearchgeo="http://a9.com/-/opensearch/extensions/geo/1.0/">
+  <Folder>
+    <name>MEDIN - ${title | x}</name>
+    <description>${description()}</description>
+    <opensearch:totalResults>${hits}</opensearch:totalResults>
+    <opensearch:startIndex>${start_index}</opensearch:startIndex>
+    <opensearch:itemsPerPage>${count}</opensearch:itemsPerPage>
+    <atom:updated>${isoformat(updated)}</atom:updated>
+    <atom:link rel="search" type="application/opensearchdescription+xml" href="${script_root}/opensearch/catalogue/${self.attr.template}.xml"/>
+    <atom:link rel="self" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+    <atom:link rel="alternate" href="${script_root}/${self.attr.template}/catalogue${query_string | x}" type="text/html"/>
+    <atom:link rel="alternate" href="${script_root}/${self.attr.template}/catalogue.atom${query_string | x}" type="application/atom+xml"/>
+    <atom:link rel="self" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+% if first_link:
+    <atom:link rel="first" href="${resource_root}?${first_link['link'] | x}" type="application/rss+xml"/>
+% else:
+    <atom:link rel="first" href="${resource_root}${query_string | x}" type="application/rss+xml"/>
+% endif
+% if prev_links:
+    <atom:link rel="previous" href="${resource_root}?${prev_links[-1]['link'] | x}" type="application/rss+xml"/>
+% endif
+% if next_links:
+    <atom:link rel="next" href="${resource_root}?${next_links[0]['link'] | x}" type="application/rss+xml"/>
+% endif
+% if last_link:
+    <atom:link rel="last" href="${resource_root}?${last_link['link'] | x}" type="application/rss+xml"/>
+% endif
+    <opensearch:Query role="request" searchTerms="${search_term | x}" startIndex="${start_index}" count="${count}" />
+    <Style id="extentStyle">
+      <LineStyle>
+        <color>#ca0000ff</color>
+        <width>2.5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>#ca0000af</color>
+        <colorMode>normal</colorMode>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+% for result in results:
+    <Placemark>
+      <name>${result['title'] | x}</name>
+      <styleUrl>#extentStyle</styleUrl>
+      <atom:updated>${isoformat(result['updated'])}</atom:updated>
+      <atom:link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</atom:link>
+      <description>&lt;strong&gt;Catalogue entry:&lt;/strong&gt;&lt;a href=&quot;${script_root}/${self.attr.template}/catalogue/${result['id'] | x}&quot;&gt;${result['id'] | x}&lt;/a&gt;&lt;br/&gt;${content(result)}</description>
+      %if result['bbox']:
+       <Polygon>
+         <outerBoundaryIs>
+           <LinearRing>
+             <gx:altitudeMode>clampToSeaFloor</gx:altitudeMode>
+             <coordinates>${result['bbox'][0]},${result['bbox'][1]} ${result['bbox'][2]},${result['bbox'][1]} ${result['bbox'][2]},${result['bbox'][3]} ${result['bbox'][0]},${result['bbox'][3]} ${result['bbox'][0]},${result['bbox'][1]}</coordinates>
+           </LinearRing>
+         </outerBoundaryIs>
+       </Polygon>
+      %endif
+    </Placemark>
+% endfor
+% if not results:
+% if not hits:
+    <Placemark>
+      <name>No Results Found</name>
+      <description>The following search produced no results: ${search_term | x}</description>
+    </Placemark>
+% else:
+    <Placemark>
+      <name>Results Out Of Range</name>
+      <description>The results specified are out of range of the original search. Try the beginning of the result set at ${resource_root}?${first_link['link'] | x}</description>
+    </Placemark>
+% endif
+% endif
+  </Folder>
+</kml>

@@ -423,7 +423,9 @@ def wsgi_app():
     app.addContentTypes(view, 'full', full_types)
     rss = views.SOAPRequest(views.RSSResults())
     atom = views.SOAPRequest(views.AtomResults())
+    kml = views.SOAPRequest(views.KMLResults())
     result_formats = views.ResultFormat(app, {'rss': rss,
+                                              'kml': kml,
                                               'atom': atom})
 
     # search by country

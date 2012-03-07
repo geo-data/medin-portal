@@ -32,6 +32,8 @@
   <Description>Search the MEDIN metadata catalogue using the ${self.attr.template} interface</Description>
   <Tags>medin portal metadata marine</Tags>
   <Contact>enquiries@oceannet.org</Contact>
+  <Url type="application/vnd.google-earth.kml+xml"
+       template="${script_root}/${self.attr.template}/catalogue.kml?q={searchTerms}&amp;c={count}&amp;i={startIndex}"/>
   <Url type="application/atom+xml"
        template="${script_root}/${self.attr.template}/catalogue.atom?q={searchTerms}&amp;c={count}&amp;i={startIndex}"/>
   <Url type="application/rss+xml"

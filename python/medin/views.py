@@ -621,6 +621,13 @@ class AtomResults(Results):
         super(AtomResults, self).__init__(['atom', 'catalogue', '%s.xml'], RESULT_SUMMARY,
                                           content_type='application/atom+xml')
 
+class KMLResults(Results):
+    def __init__(self):
+        from medin.dws import RESULT_SUMMARY
+
+        super(KMLResults, self).__init__(['kml', 'catalogue', '%s.xml'], RESULT_SUMMARY,
+                                         content_type='application/vnd.google-earth.kml+xml')
+
 class AreaResults(object):
 
     def __init__(self, app):
