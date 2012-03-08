@@ -424,9 +424,11 @@ def wsgi_app():
     rss = views.SOAPRequest(views.RSSResults())
     atom = views.SOAPRequest(views.AtomResults())
     kml = views.SOAPRequest(views.KMLResults())
+    csv = views.SOAPRequest(views.CSVResults())
     result_formats = views.ResultFormat(app, {'rss': rss,
                                               'kml': kml,
-                                              'atom': atom})
+                                              'atom': atom,
+                                              'csv': csv})
 
     # search by country
     application.add('/{template}/areas/{area:segment}/{name:segment}',

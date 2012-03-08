@@ -515,16 +515,20 @@ class Navigation(object):
 
         return None
 
-class Results(MakoApp):
+class ResultsRequest(object):
+    """
+    Perform a request to obtain results from the DWS for a search
 
-    def __init__(self, path, result_type, **kwargs):
+    This class is needed as it encapsulates the request. The result of
+    the request can then be formatted as required, e.g. either by
+    MakoAppResults or CSVResults.
+    """
+
+    def __init__(self, result_type):
         from medin.dws import SearchRequest
 
         self.result_type = result_type
         self.request = SearchRequest()
-        super(Results, self).__init__(path, check_etag=False, **kwargs)
-
-        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
 
     def prepareSOAP(self, environ):
         """
@@ -538,7 +542,7 @@ class Results(MakoApp):
 
         return self.request.prepareCaller(q, self.result_type, environ['logging.logger'])
 
-    def setup(self, environ):
+    def __call__(self, environ):
         self.prepareSOAP(environ)
         r = self.request()
 
@@ -546,13 +550,31 @@ class Results(MakoApp):
         timestamp = updated.strftime("%a, %d %b %Y %H:%M:%S GMT")
         etag = check_etag(environ, timestamp)
 
+        return r, etag
+
+class Results(MakoApp):
+
+    def __init__(self, path, result_type, **kwargs):
+        from medin.dws import SearchRequest
+
+        self.request = ResultsRequest(result_type)
+        super(Results, self).__init__(path, check_etag=False, **kwargs)
+
+        self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
+
+    def prepareSOAP(self, environ):
+        return self.request.prepareSOAP(environ)
+
+    def setup(self, environ):
+        r, etag = self.request(environ);
+
         q = get_query(environ)
         nav = Navigation(r.hits, q)
         search_term = q.getSearchTerm(cast=False)
         tvars=dict(hits=r.hits,
                    query=q,
                    count = q.getCount(),
-                   updated = updated,
+                   updated = r.lastModified(),
                    search_term = search_term,
                    start_index = nav.start_index,
                    end_index = nav.end_index,
@@ -627,6 +649,87 @@ class KMLResults(Results):
 
         super(KMLResults, self).__init__(['kml', 'catalogue', '%s.xml'], RESULT_SUMMARY,
                                          content_type='application/vnd.google-earth.kml+xml')
+
+class CSVResults(Results):
+    """
+    Display the results in CSV format
+
+    This is not an XML based format like the other result formats, so
+    must be implemented differently.
+    """
+
+    def __init__(self):
+        from medin.dws import RESULT_SUMMARY
+
+        self.request = ResultsRequest(RESULT_SUMMARY)
+
+    def prepareSOAP(self, environ):
+        return self.request.prepareSOAP(environ)
+
+    def __call__(self, environ, start_response):
+        from cStringIO import StringIO
+        import csv
+
+        results, etag = self.request(environ)
+
+        buf = StringIO()
+        writer = csv.writer(buf)
+
+        writer.writerow([
+                'ID',
+                'Title',
+                'Updated',
+                'Authors',
+                'URL',
+                'Abstract',
+                'Originator',
+                'Resource type',
+                'Topic category',
+                'Lineage',
+                'Public access',
+                'Format',
+                'Parameters',
+                'West',
+                'East',
+                'South',
+                'North'])
+        for result in results:
+            url = "%s/full/catalogue/%s" % (environ.script_uri(), result['id'])
+            row = [
+                result['id'],
+                result['title'],
+                result['updated'],
+                '; '.join(result['authors']),
+                url,
+                result['abstract'],
+                result['originator'],
+                result['resource-type'],
+                result['topic-category'],
+                result['lineage'],
+                result['public-access'],
+                result['format'],
+                '; '.join(result['parameters'])
+                ]
+
+            if result['bbox']:
+                row.extend([
+                        result['bbox'][0],
+                        result['bbox'][2],
+                        result['bbox'][1],
+                        result['bbox'][3]])
+            else:
+                row.extend(['', '', '', ''])
+
+            writer.writerow(row)
+        buf.seek(0)
+
+        headers = [('Etag', etag), # propagate the result update time to the HTTP layer
+                   ('Cache-Control', 'no-cache, must-revalidate'), # add the cache controls
+                   ('Content-Type', 'application/vnd.ms-excel'),
+                   ('Content-disposition', 'attachment; filename="results.csv"')]
+
+        start_response('200 OK', headers)
+        return buf
 
 class AreaResults(object):
 
