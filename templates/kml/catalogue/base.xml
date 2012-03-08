@@ -76,7 +76,7 @@
       <styleUrl>#extentStyle</styleUrl>
       <atom:updated>${isoformat(result['updated'])}</atom:updated>
       <atom:link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</atom:link>
-      <description>&lt;strong&gt;Catalogue entry:&lt;/strong&gt;&lt;a href=&quot;${script_root}/${self.attr.template}/catalogue/${result['id'] | x}&quot;&gt;${result['id'] | x}&lt;/a&gt;&lt;br/&gt;${content(result)}</description>
+      <description>&lt;strong&gt;Catalogue entry:&lt;/strong&gt; &lt;a href=&quot;${script_root}/${self.attr.template}/catalogue/${result['id'] | x}&quot;&gt;${result['id'] | x}&lt;/a&gt;&lt;br/&gt;${content(result)}</description>
       %if result['bbox']:
        <Polygon>
          <outerBoundaryIs>
