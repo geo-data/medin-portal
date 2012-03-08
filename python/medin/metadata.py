@@ -1301,16 +1301,7 @@ def metadata2csv(metadata, file):
 
     writer.writerows(iter_element_values(10, 'Spatial data service type', metadata.service_type))
 
-    row = metadata.keywords
-    if row and not isinstance(row, Exception):
-        tmp = []
-        for title, defns in row.items():
-            for keyword, defn in defns.items():
-                entry = [title]
-                entry.extend(vocab2row(defn, [keyword]))
-                tmp.append(entry)
-        row = tmp
-    writer.writerows(iter_element_values(11, 'Keywords', row))
+    writer.writerows(iter_element_values(11, 'Keywords', metadata.keywords))
 
     row = metadata.bbox
     if row and not isinstance(row, Exception):
