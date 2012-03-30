@@ -111,6 +111,158 @@ ${date.strftime('%Y-%m-%d')}\
 <%def name="format_url_content(x)" buffered="True">${x | q,u,x}</%def>\
 <%def name="format_xml_content(x)" buffered="True">${x | x}</%def>\
 
+<%def name="format_areaofuse(epsg)">\
+<h4>Area of Use</h4>
+${format_epsg(epsg)}
+<div>
+  Extent: <a href="${script_root}/light/catalogue?bbox=${epsg.westBoundLongitude},${epsg.southBoundLatitude},${epsg.eastBoundLongitude},${epsg.northBoundLatitude}"
+        title="Search for all metadata within this area">
+        ${epsg.westBoundLongitude}°W, ${epsg.eastBoundLongitude}°E,
+        ${epsg.northBoundLatitude}°N, ${epsg.southBoundLatitude}°S</a>
+</div>
+</%def>\
+
+<%def name="format_datum(epsg)">\
+<h4>Datum</h4>
+${format_epsg(epsg)}
+<div>
+  Realisation epoch: ${format_date(epsg.realizationEpoch)}
+</div>
+% if hasattr(epsg, 'primeMeridian'):
+${format_prime_meridian(epsg.primeMeridian)}
+% endif
+% if hasattr(epsg, 'ellipsoid'):
+${format_ellipsoid(epsg.ellipsoid)}
+% endif
+</%def>\
+
+<%def name="format_ellipsoid(epsg)">\
+<h4>Ellipsoid</h4>
+${format_epsg(epsg)}
+% if hasattr(epsg, 'semiMajorAxis') and epsg.semiMajorAxis:
+<div>
+  Semi major axis: ${epsg.semiMajorAxis}
+</div>
+% endif
+% if hasattr(epsg, 'semiMinorAxis') and epsg.semiMinorAxis:
+<div>
+  Semi minor axis: ${epsg.semiMinorAxis}
+</div>
+% endif
+% if hasattr(epsg, 'inverseFlattening') and epsg.inverseFlattening:
+<div>
+  Inverse flattening: ${epsg.inverseFlattening}
+</div>
+% endif
+% if hasattr(epsg, 'isSphere') and epsg.isSphere:
+<div>
+  Is a sphere: ${epsg.isSphere}
+</div>
+% endif
+</%def>\
+
+<%def name="format_prime_meridian(epsg)">\
+<h4>Prime Meridian</h4>
+${format_epsg(epsg)}
+<div>
+  Greenwich longitude: ${epsg.greenwichLongitude}
+</div>
+</%def>\
+
+<%def name="format_cs(epsg)">\
+<h4>Coordinate System</h4>
+${format_epsg(epsg)}
+${format_cs_axes(epsg.axes)}
+</%def>\
+
+<%def name="format_cs_axes(axes)">\
+% for i, axis in enumerate(axes, 1):
+<h4>Axis ${i}</h4>
+${format_epsg(axis)}
+<div>
+  Axis direction: ${axis.axisDirection}
+</div>
+<div>
+  Axis abbreviation: ${axis.axisAbbrev}
+</div>
+<h4>Axis ${i} description</h4>
+${format_epsg(axis.descriptionReference)}
+% endfor
+</%def>\
+
+<%def name="format_crs(epsg, use_area=True)">\
+<h4>Coordinate Reference System</h4>
+${format_epsg(epsg)}
+% if use_area:
+${format_areaofuse(epsg.domainOfValidity)}
+% endif
+% if hasattr(epsg, 'geodeticDatum'):
+${format_datum(epsg.geodeticDatum)}
+% endif
+% if hasattr(epsg, 'engineeringDatum'):
+${format_datum(epsg.engineeringDatum)}
+% endif
+% if hasattr(epsg, 'verticalDatum'):
+${format_datum(epsg.verticalDatum)}
+% endif
+% if hasattr(epsg, 'ellipsoidalCS'):
+${format_cs(epsg.ellipsoidalCS)}
+% endif
+% if hasattr(epsg, 'verticalCS'):
+${format_cs(epsg.verticalCS)}
+% endif
+% if hasattr(epsg, 'cartesianCS'):
+${format_cs(epsg.cartesianCS)}
+% endif
+% if hasattr(epsg, 'baseGeodeticCRS'):
+${format_crs(epsg.baseGeodeticCRS, False)}
+% endif
+% if hasattr(epsg, 'componentReferenceSystems'):
+% for crs in epsg.componentReferenceSystems:
+${format_crs(crs)}
+% endfor
+% endif
+</%def>\
+
+<%def name="format_epsg(epsg)">\
+<div>
+  Identifier: ${epsg.identifier}
+</div>
+% if hasattr(epsg, 'name') and epsg.name:
+<div>
+  Name: ${epsg.name}
+</div>
+% endif
+% if hasattr(epsg, 'description') and epsg.description:
+<div>
+  Description: ${epsg.description}
+</div>
+% endif
+% if hasattr(epsg, 'type') and epsg.type:
+<div>
+  Type: ${epsg.type}
+</div>
+% endif
+% if hasattr(epsg, 'scope') and epsg.scope:
+<div>
+  Scope: ${epsg.scope}
+</div>
+% endif
+% if hasattr(epsg, 'informationSource') and epsg.informationSource:
+<div>
+  Information source: ${epsg.informationSource}
+</div>
+% endif
+% if hasattr(epsg, 'anchorDefinition') and epsg.anchorDefinition:
+<div>
+  Anchor definition: ${epsg.anchorDefinition}
+</div>
+% endif
+% if hasattr(epsg, 'remarks') and epsg.remarks:
+<div>Remarks: ${epsg.remarks}</div>
+% endif
+</%def>\
+
 <!-- Element 3 -->
 <h2>Abstract</h2>
 <p>${metadata.abstract}</p>
@@ -219,7 +371,7 @@ ${resource['link']}\
    keywords = []
    for keyword in metadata.keywords:
      xml_keyword = format_xml_content(keyword)
-     keywords.append('<a href="' + script_root + '/full/catalogue?q=p:' + format_url_content(keyword) + '" title="Search for all metadata having the parameter `' + xml_keyword + '`">' + xml_keyword + '</a>')
+     keywords.append('<a href="' + script_root + '/light/catalogue?q=p:' + format_url_content(keyword) + '" title="Search for all metadata having the parameter `' + xml_keyword + '`">' + xml_keyword + '</a>')
 %>
 <p>${', '.join(keywords)}</p>
 </%self:output_element>
@@ -421,16 +573,8 @@ ${metadata.bbox[3]}°N, ${metadata.bbox[1]}°S</a></p>
 <!-- Element 15 -->
 <h3>Spatial reference system</h3>
 <%self:output_element element="${metadata.reference_system}">
-<ul>
-  <li>Identifier: ${metadata.reference_system['identifier']}</li>
-  <li>Source: <a href="${metadata.reference_system['url']}">${metadata.reference_system['source']}</a></li>
-  % if metadata.reference_system['name']:
-  <li>Name: ${metadata.reference_system['name']}</li>
-  % endif
-  % if metadata.reference_system['scope']:
-  <li>Scope: ${metadata.reference_system['scope']}</li>
-  % endif
-</ul>
+  <div>Source: <a href="http://www.epsg-registry.org">European Petroleum Survey Group (EPSG)</a></div>
+  ${format_crs(metadata.reference_system)}
 </%self:output_element>
 % endif\
 

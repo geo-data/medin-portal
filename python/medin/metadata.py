@@ -812,59 +812,8 @@ class Parser(object):
         except IndexError:
             return MetadataError('Unknown spatial reference system', 'The spatial reference system could not be extracted from the metadata')
 
-        # get the XML corresponding to the code from the EPSG
-        from urllib2 import urlopen, URLError, HTTPError
-        epsg_url = 'http://www.epsg-registry.org/export.htm?gml=%s' % code
-
-        try:
-            res = urlopen(epsg_url, timeout=5)
-        except HTTPError, e:
-            return MetadataError('The spatial reference system information could not be obtained',
-                                 'The URL at %s could not be opened: %s' % (epsg_url, str(e)))
-        except URLError, e:
-            try:
-                status, msg = e.reason
-            except ValueError:
-                msg = str(e.reason)
-
-            return MetadataError('The spatial reference system information could not be obtained',
-                                 'The URL at %s could not be opened: %s' % (epsg_url, msg))
-
-        content_type = res.headers['content-type'].split(';')[0]
-        if content_type != 'text/xml':
-            return MetadataError('The spatial reference system information could not be obtained',
-                                 'The resource at %s is not valid XML' % epsg_url)
-        
-        xml = res.read()
-
-        # parse the XML
-        import libxml2
-        try:
-            document = libxml2.parseMemory(xml, len(xml))
-        except libxml2.parserError, e:
-            return MetadataError('The spatial reference system information could not be obtained',
-                                 'The reference system XML at %s could not be parsed: %s' % (epsg_url, str(e)))
-
-        # register the namespaces we need to search
-        xpath = document.xpathNewContext()
-        xpath.xpathRegisterNs('gml', 'http://www.opengis.net/gml')
-
-        details = {'identifier': code,
-                   'source': 'European Petroleum Survey Group (EPSG)',
-                   'url': epsg_url}
-        try:
-            name = xpath.xpathEval('//gml:*/gml:name')[0].content.strip()
-            details['name'] = name
-        except IndexError:
-            details['name'] = None
-
-        try:
-            scope = xpath.xpathEval('//gml:*/gml:scope')[0].content.strip()
-            details['scope'] = scope
-        except IndexError:
-            details['scope'] = None
-
-        return details
+        from sr import resolve
+        return resolve(code)
 
     @_assignContext
     def temporalReference(self):

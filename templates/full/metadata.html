@@ -147,6 +147,160 @@ ${date.date().isoformat()}\
 <%def name="format_url_content(x)" buffered="True">${x | q,u,x}</%def>\
 <%def name="format_xml_content(x)" buffered="True">${x | x}</%def>\
 
+<%def name="format_areaofuse(epsg)">\
+<h3>Area of Use</h3>
+${format_epsg(epsg)}
+<div class="sibling">
+  Extent: <a href="${script_root}/full/catalogue?bbox=${epsg.westBoundLongitude},${epsg.southBoundLatitude},${epsg.eastBoundLongitude},${epsg.northBoundLatitude}"
+        title="Search for all metadata within this area">
+        ${epsg.westBoundLongitude}&deg;W, ${epsg.eastBoundLongitude}&deg;E,
+        ${epsg.northBoundLatitude}&deg;N, ${epsg.southBoundLatitude}&deg;S</a>
+</div>
+</%def>\
+
+<%def name="format_datum(epsg)">\
+<h3>Datum</h3>
+${format_epsg(epsg)}
+<div class="sibling">
+  Realisation epoch: ${format_date(epsg.realizationEpoch)}
+</div>
+% if hasattr(epsg, 'primeMeridian'):
+${format_prime_meridian(epsg.primeMeridian)}
+% endif
+% if hasattr(epsg, 'ellipsoid'):
+${format_ellipsoid(epsg.ellipsoid)}
+% endif
+</%def>\
+
+<%def name="format_ellipsoid(epsg)">\
+<h3>Ellipsoid</h3>
+${format_epsg(epsg)}
+% if hasattr(epsg, 'semiMajorAxis') and epsg.semiMajorAxis:
+<div class="sibling">
+  Semi major axis: ${epsg.semiMajorAxis}
+</div>
+% endif
+% if hasattr(epsg, 'semiMinorAxis') and epsg.semiMinorAxis:
+<div class="sibling">
+  Semi minor axis: ${epsg.semiMinorAxis}
+</div>
+% endif
+% if hasattr(epsg, 'inverseFlattening') and epsg.inverseFlattening:
+<div class="sibling">
+  Inverse flattening: ${epsg.inverseFlattening}
+</div>
+% endif
+% if hasattr(epsg, 'isSphere') and epsg.isSphere:
+<div class="sibling">
+  Is a sphere: ${epsg.isSphere}
+</div>
+% endif
+</%def>\
+
+<%def name="format_prime_meridian(epsg)">\
+<h3>Prime Meridian</h3>
+${format_epsg(epsg)}
+<div class="sibling">
+  Greenwich longitude: ${epsg.greenwichLongitude}
+</div>
+</%def>\
+
+<%def name="format_cs(epsg)">\
+<h3>Coordinate System</h3>
+${format_epsg(epsg)}
+${format_cs_axes(epsg.axes)}
+</%def>\
+
+<%def name="format_cs_axes(axes)">\
+% for i, axis in enumerate(axes, 1):
+<h3>Axis ${i}</h3>
+${format_epsg(axis)}
+<div class="sibling">
+  Axis direction: ${axis.axisDirection}
+</div>
+<div class="sibling">
+  Axis abbreviation: ${axis.axisAbbrev}
+</div>
+<h3>Axis ${i} description</h3>
+${format_epsg(axis.descriptionReference)}
+% endfor
+</%def>\
+
+<%def name="format_crs(epsg, use_area=True)">\
+<h3>Coordinate Reference System</h3>
+${format_epsg(epsg)}
+% if use_area:
+${format_areaofuse(epsg.domainOfValidity)}
+% endif
+% if hasattr(epsg, 'geodeticDatum'):
+${format_datum(epsg.geodeticDatum)}
+% endif
+% if hasattr(epsg, 'engineeringDatum'):
+${format_datum(epsg.engineeringDatum)}
+% endif
+% if hasattr(epsg, 'verticalDatum'):
+${format_datum(epsg.verticalDatum)}
+% endif
+% if hasattr(epsg, 'ellipsoidalCS'):
+${format_cs(epsg.ellipsoidalCS)}
+% endif
+% if hasattr(epsg, 'verticalCS'):
+${format_cs(epsg.verticalCS)}
+% endif
+% if hasattr(epsg, 'cartesianCS'):
+${format_cs(epsg.cartesianCS)}
+% endif
+% if hasattr(epsg, 'baseGeodeticCRS'):
+${format_crs(epsg.baseGeodeticCRS, False)}
+% endif
+% if hasattr(epsg, 'componentReferenceSystems'):
+% for crs in epsg.componentReferenceSystems:
+${format_crs(crs)}
+% endfor
+% endif
+</%def>\
+
+<%def name="format_epsg(epsg)">\
+<div>
+  Identifier: ${epsg.identifier}
+</div>
+% if hasattr(epsg, 'name') and epsg.name:
+<div class="sibling">
+  Name: ${epsg.name}
+</div>
+% endif
+% if hasattr(epsg, 'description') and epsg.description:
+<div class="sibling">
+  Description: ${epsg.description}
+</div>
+% endif
+% if hasattr(epsg, 'type') and epsg.type:
+<div class="sibling">
+  Type: ${epsg.type}
+</div>
+% endif
+% if hasattr(epsg, 'scope') and epsg.scope:
+<div class="sibling">
+  Scope: ${epsg.scope}
+</div>
+% endif
+% if hasattr(epsg, 'informationSource') and epsg.informationSource:
+<div class="sibling">
+  Information source: ${epsg.informationSource}
+</div>
+% endif
+% if hasattr(epsg, 'anchorDefinition') and epsg.anchorDefinition:
+<div class="sibling">
+  Anchor definition: ${epsg.anchorDefinition}
+</div>
+% endif
+% if hasattr(epsg, 'remarks') and epsg.remarks:
+<div class="sibling">
+  Remarks: ${epsg.remarks}
+</div>
+% endif
+</%def>\
+
 % if metadata.bbox:
 <!-- Element 12 -->
 <div class="extent right">
@@ -882,22 +1036,10 @@ ${resource['link']}\
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.reference_system}" number="${15}">
-        <div>
-          Identifier: ${metadata.reference_system['identifier']}
-        </div>
         <div class="sibling">
-          Source: <a href="${metadata.reference_system['url']}">${metadata.reference_system['source']}</a>
+          Source: <a href="http://www.epsg-registry.org">European Petroleum Survey Group (EPSG)</a>
         </div>
-        % if metadata.reference_system['name']:
-        <div class="sibling">
-          Name: ${metadata.reference_system['name']}
-        </div>
-        % endif
-        % if metadata.reference_system['scope']:
-        <div class="sibling">
-          Scope: ${metadata.reference_system['scope']}
-        </div>
-        % endif
+        ${format_crs(metadata.reference_system)}
         </%self:output_element>
       </div>
     </td>
