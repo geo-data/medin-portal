@@ -1,6 +1,6 @@
-[submodule "html/js/jquery-ollayercontrol-plugin"]
-	path = html/js/jquery-ollayercontrol-plugin
-	url = git@github.com:geo-data/jquery-ollayercontrol-plugin.git
+[submodule "submodules/jquery-ollayercontrol-plugin"]
+	path = submodules/jquery-ollayercontrol-plugin
+	url = git://github.com/geo-data/jquery-ollayercontrol-plugin.git
 [submodule "submodules/python-epsg"]
 	path = submodules/python-epsg
 	url = git://github.com/geo-data/python-epsg.git
