@@ -25,7 +25,7 @@ environment for production deployment (e.g. www.modwsgi.org).
 
 The software has the following dependencies:
 
- * Python 2.6.4 (although any of the 2.6 series should work)
+ * Python 2.6.4 (although any of the 2.6 and 2.7 series should work)
 
  * libxml2 2.7.* (http://www.xmlsoft.org/) compiled with support for
    Python
@@ -38,6 +38,8 @@ The software has the following dependencies:
  * sqlite3 (http://www.sqlite.org/) compiled with threadsafe support
 
  * pysqlite 2.5.6 (http://pypi.python.org/pypi/pysqlite)
+
+ * SQLAlchemy 0.7.6 (http://www.sqlalchemy.org/)
 
 The CGI script is deploy/portal.cgi and the WSGI application is found
 in deploy/portal.wsgi. Your web server should be configured
@@ -62,3 +64,14 @@ as required.
 
 Specific configuration of the portal spatial services is done by
 editing the files in the templates/config directory.
+
+Additionally, the online EPSG Geodetic Parameter Database
+(http://epsg-registry.org) should be updated by running the
+`bin/epsg-update.py` script when required (e.g. on a daily basis as a
+cron job):
+
+    PYTHONPATH=./python python ./bin/epsg-update.py ./data/epsg-registry.sqlite
+
+The above command assumes the script is run from the root distribution
+directory: the PYTHONPATH variable provides access to the required
+packages provided by the distribution.
