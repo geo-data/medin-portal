@@ -119,7 +119,7 @@ class Query(GETParams):
                 errors.append('The start date cannot be greater than the end date')
 
             try:
-                self.getBBOX()
+                self.getBoxes()
             except QueryError, e:
                 errors.append(str(e))
 
@@ -201,41 +201,44 @@ class Query(GETParams):
         if cast: return dt
         return date
 
-    def getBBOX(self, cast=True, default=''):
+    def getBoxes(self, cast=True, default=''):
         try:
-            bbox = self['bbox'][0]
+            bboxes = self['bbox']
         except KeyError, AttributeError:
             return default
 
         if not cast:
-            return bbox
+            return bboxes
 
-        bbox = bbox.split(',', 3)
-        if not len(bbox) == 4:
-            if self.raise_errors:
-                raise QueryError('The bounding box must be in the format minx,miny,maxx,maxy')
-            return default
-        try:
-            bbox = [float(n) for n in bbox]
-        except ValueError:
-            if self.raise_errors:
-                raise QueryError('The bounding box must consist of numbers')
-            return default
+        boxes = []
+        for bbox in bboxes:
+            bbox = bbox.split(',', 3)
+            if not len(bbox) == 4:
+                if self.raise_errors:
+                    raise QueryError('The bounding box must be in the format minx,miny,maxx,maxy')
+                return default
+            try:
+                bbox = [float(n) for n in bbox]
+            except ValueError:
+                if self.raise_errors:
+                    raise QueryError('The bounding box must consist of numbers')
+                return default
 
-        if bbox[0] > bbox[2]:
-            if self.raise_errors:
-                raise QueryError('The bounding box east value is less than the west')
-            return default
+            if bbox[0] > bbox[2]:
+                if self.raise_errors:
+                    raise QueryError('The bounding box east value is less than the west')
+                return default
 
-        if bbox[1] > bbox[3]:
-            if self.raise_errors:
-                raise QueryError('The bounding box north value is less than the south')
-            return default
+            if bbox[1] > bbox[3]:
+                if self.raise_errors:
+                    raise QueryError('The bounding box north value is less than the south')
+                return default
 
-        return tuple(bbox)
+            boxes.append(tuple(bbox))
+        return boxes
 
-    def setBBOX(self, bbox):
-        self['bbox'] = ','.join((str(i) for i in box))
+    def setBoxes(self, bboxes):
+        self['bbox'] = [','.join((str(i) for i in box)) for box in bboxes]
 
     def getSort(self, cast=True, default=''):
         try:
@@ -376,8 +379,8 @@ class Query(GETParams):
         a['dates'] = dates
 
         # add the area
-        bbox = self.getBBOX(default=False)
-        a['bbox'] = bbox
+        bboxes = self.getBoxes(default=False)
+        a['bbox'] = bboxes
         a['area'] = self.getArea(default=None)
 
         return a

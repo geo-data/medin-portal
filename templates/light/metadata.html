@@ -263,6 +263,22 @@ ${format_crs(crs)}
 % endif
 </%def>\
 
+<%def name="format_bboxes(bboxes)">\
+  The metadata covers the following areas:
+  <ul>
+    % for bbox in bboxes:
+    <li><a href="${script_root}/light/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}" title="Area search for metadata">
+  ${bbox[0]}°;W, ${bbox[2]}°E, ${bbox[3]}°N, ${bbox[1]}°S</a></li>
+    % endfor
+  </ul>
+
+  % if len(bboxes) > 1:
+  <a
+  href="${script_root}/light/catalogue?${'&amp;'.join(['bbox='+','.join(bbox) for bbox in bboxes])}"
+  title="Area search for metadata">Search</a> for all areas listed above.
+  % endif
+</%def>\
+
 <!-- Element 3 -->
 <h2>Abstract</h2>
 <p>${metadata.abstract}</p>
@@ -285,19 +301,12 @@ ${format_crs(crs)}
 <p><strong>Parent ID:</strong> ${metadata.parent_id}</p>
 % endif\
 
-% if metadata.bbox:
+% if metadata.bboxes:
 <!-- Element 12 -->
 <h2>Geographic Extent</h2>
 <div><img id="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data" width="250" height="250"/></div>
 <p>
-  The metadata covers the area West - East from
-  ${metadata.bbox[0]}° to ${metadata.bbox[2]}° and North -
-  South from ${metadata.bbox[3]}° to ${metadata.bbox[1]}°.
-
-  <a
-  href="${script_root}/light/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
-  title="Area search for metadata">Search</a> for all metadata within
-  this area.
+  ${format_bboxes(metadata.bboxes)}
 </p>
 <p>
   Download the extent in <a href="${resource_root}/kml" title="View the extent as a KML file"><img alt="KML" width="16" height="16" src="/images/kml.png" class="icon"/> KML format</a>.
@@ -377,15 +386,13 @@ ${resource['link']}\
 </%self:output_element>
 % endif\
 
-% if metadata.bbox:
+% if metadata.bboxes:
 <!-- Element 12 -->
 <h3>Geographic bounding box</h3>
-<%self:output_element element="${metadata.bbox}">
-<p><a
-href="${script_root}/light/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
-title="Search for all metadata within this area">
-${metadata.bbox[0]}°W, ${metadata.bbox[2]}°E,
-${metadata.bbox[3]}°N, ${metadata.bbox[1]}°S</a></p>
+<%self:output_element element="${metadata.bboxes}">
+<p>
+  ${format_bboxes(metadata.bboxes)}
+</p>
 </%self:output_element>
 % endif\
 

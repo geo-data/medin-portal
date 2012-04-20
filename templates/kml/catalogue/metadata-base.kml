@@ -58,21 +58,25 @@
 
         ]]>
       </description>
-      <Polygon>
-        <tessellate>1</tessellate>
-        <altitudeMode>clampToGround</altitudeMode>
-        <outerBoundaryIs>
-          <LinearRing>
-            <coordinates>
-              ${bbox[0]},${bbox[1]}
-              ${bbox[2]},${bbox[1]}
-              ${bbox[2]},${bbox[3]}
-              ${bbox[0]},${bbox[3]}
-              ${bbox[0]},${bbox[1]}
-            </coordinates>
-          </LinearRing>
-        </outerBoundaryIs>
-      </Polygon>
+      <MultiGeometry>
+      %for bbox in bboxes:
+        <Polygon>
+          <tessellate>1</tessellate>
+          <altitudeMode>clampToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                ${bbox[0]},${bbox[1]}
+                ${bbox[2]},${bbox[1]}
+                ${bbox[2]},${bbox[3]}
+                ${bbox[0]},${bbox[3]}
+                ${bbox[0]},${bbox[1]}
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      %endfor
+     </MultiGeometry>
     </Placemark>
   </Document>
 </kml>

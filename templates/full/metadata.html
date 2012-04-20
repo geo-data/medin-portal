@@ -301,21 +301,30 @@ ${format_crs(crs)}
 % endif
 </%def>\
 
-% if metadata.bbox:
+<%def name="format_bboxes(bboxes)">\
+  The metadata covers the following areas:
+  <ul>
+    % for bbox in bboxes:
+    <li><a href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}" title="Area search for metadata">
+  ${bbox[0]}&deg;W, ${bbox[2]}&deg;E, ${bbox[3]}&deg;N, ${bbox[1]}&deg;S</a></li>
+    % endfor
+  </ul>
+
+  % if len(bboxes) > 1:
+  <a
+  href="${script_root}/full/catalogue?${'&amp;'.join(['bbox='+','.join(bbox) for bbox in bboxes])}"
+  title="Area search for metadata">Search</a> for all areas listed above.
+  % endif
+</%def>\
+
+% if metadata.bboxes:
 <!-- Element 12 -->
 <div class="extent right">
   <div class="info">
   <h3>Geographic Extent</h3>
   <img class="extent" src="${resource_root}/extent.png" alt="Geographic bounding box" title="Geographic extent of the data"/>
   <p class="no-bottom">
-  The metadata covers the area West - East from ${metadata.bbox[0]}&deg; to
-  ${metadata.bbox[2]}&deg; and North - South from ${metadata.bbox[3]}&deg; to
-  ${metadata.bbox[1]}&deg;.
-
-  <a
-  href="${script_root}/full/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
-  title="Area search for metadata">Search</a> for all metadata within
-  this area.
+    ${format_bboxes(metadata.bboxes)}
   </p>
   </div>
   <p class="lower-link right">
@@ -537,7 +546,7 @@ ${resource['link']}\
   </tr>
   % endif\
 
-  % if metadata.bbox:
+  % if metadata.bboxes:
   <!-- Element 12 -->
   <tr>
     <td class="heading">
@@ -565,11 +574,7 @@ ${resource['link']}\
       </div>
       <div class="cell">
         <%self:output_element element="${metadata.online_resource}" number="${12}">
-        <a
-        href="${script_root}/full/catalogue?bbox=${metadata.bbox[0]},${metadata.bbox[1]},${metadata.bbox[2]},${metadata.bbox[3]}"
-        title="Search for all metadata within this area"> ${metadata.bbox[0]}&deg;W,
-        ${metadata.bbox[2]}&deg;E, ${metadata.bbox[3]}&deg;N,
-        ${metadata.bbox[1]}&deg;S</a>
+        ${format_bboxes(metadata.bboxes)}
         </%self:output_element>
       </div>
     </td>

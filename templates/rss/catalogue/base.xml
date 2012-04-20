@@ -23,7 +23,7 @@
  You can obtain a full copy of the RPL from
  http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 </%doc>\
-<%namespace import="rfc822format, content, description" file="/common/feeds.xml"/><%!
+<%namespace import="rfc822format, content, description, bboxes2georss" file="/common/feeds.xml"/><%!
     template_ = ""
 %><?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" 
@@ -65,9 +65,7 @@
       <pubDate>${rfc822format(result['updated'])}</pubDate>
       <link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</link>
       <description>${content(result)}</description>
-      %if result['bbox']:
-      <georss:polygon>${result['bbox'][1]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][2]} ${result['bbox'][3]} ${result['bbox'][0]} ${result['bbox'][1]} ${result['bbox'][0]}</georss:polygon>
-      %endif
+      ${bboxes2georss(result['bbox'])}
     </item>
 % endfor
 % if not results:

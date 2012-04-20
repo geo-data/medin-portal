@@ -80,10 +80,10 @@
     <script type="text/javascript" src="/js/full/search.js"></script>
     <script type="text/javascript">
         <!--
-%if bbox:
-var bbox = new OpenLayers.Bounds(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]});
+%if bboxes:
+var bboxes = [${','.join(['new OpenLayers.Bounds('+','.join(map(str, bbox))+')' for bbox in bboxes])}];
 %else:
-var bbox = null;
+var bboxes = null;
 %endif
 %if area:
 var area = '${area}';
@@ -473,9 +473,18 @@ ${area_selection('ices-rectangles')}
         </div>
       </div>
       <h3>Edit the search box coordinates</h3>
+<%
+bbox = None
+if bboxes:
+   bbox = [
+     min((box[0] for box in bboxes)),
+     min((box[1] for box in bboxes)),
+     max((box[2] for box in bboxes)),
+     max((box[3] for box in bboxes))]
+%>
       <input size="38" name="bbox" id="bbox" type="text" value="\
     %if bbox:
-  ${','.join(map(str, bbox))}\
+${','.join(map(str, bbox))}\
     %endif
 " />
       <input type="submit" value="search"/>

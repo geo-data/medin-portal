@@ -113,9 +113,18 @@
   <fieldset>
     <legend>Geographic search</legend>
     <div><label for="bbox">Enter search box coordinates in the format <strong>West,South,East,North</strong>.</label></div>
+<%
+bbox = None
+if bboxes:
+   bbox = [
+     min((box[0] for box in bboxes)),
+     min((box[1] for box in bboxes)),
+     max((box[2] for box in bboxes)),
+     max((box[3] for box in bboxes))]
+%>
     <input name="bbox" id="bbox" type="text" value="\
     %if bbox:
-  ${','.join(map(str, bbox))}\
+${','.join(map(str, bbox))}\
     %endif
 " /> <input type="submit" value="search"/>
 	<div>Or select <strong>one</strong> area from the following lists:</div>

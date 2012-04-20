@@ -55,7 +55,7 @@ class Metadata(object):
     topic_category = None               # element 9
     service_type = None                 # element 10
     keywords = None                     # element 11
-    bbox = None                         # element 12
+    bboxes = None                       # element 12
     extents = None                      # element 13
     vertical_extent = None              # element 14
     reference_system = None             # element 15
@@ -453,7 +453,7 @@ class Parser(object):
         m.topic_category = self.topicCategory()       # element 9
         m.service_type = self.serviceType()           # element 10
         m.keywords = self.keywords()                  # element 11
-        m.bbox = self.bbox()                          # element 12
+        m.bboxes = self.bboxes()                      # element 12
         m.extents = self.extents()                    # element 13
         m.vertical_extent = self.verticalExtent()     # element 14
         m.reference_system = self.referenceSystem()    # element 15
@@ -647,26 +647,24 @@ class Parser(object):
         return keywords
 
     @_assignContext
-    def bbox(self):
+    def bboxes(self):
         """Element 12: Geographic Bounding Box"""
-        
-        try:
-            node = self.xpath.xpathEval('//gmd:EX_Extent/gmd:geographicElement/gmd:EX_GeographicBoundingBox')[0]
-        except IndexError:
-            return []
-        self.xpath.setContextNode(node)
-        
-        ordinates = []
 
-        for direction, latlon in (('west', 'longitude'), ('south', 'latitude'), ('east', 'longitude'), ('north', 'latitude')):
-            try:
-                
-                ordinate = self.xpath.xpathEval('./gmd:%sBound%s/gco:Decimal/text()' % (direction, latlon.capitalize()))[0].content.strip()
-            except IndexError:
-                return []
-            ordinates.append(float(ordinate))
-            
-        return ordinates
+        boxes = []
+        for node in self.xpath.xpathEval('//gmd:EX_Extent/gmd:geographicElement/gmd:EX_GeographicBoundingBox'):
+            self.xpath.setContextNode(node)
+
+            ordinates = []
+
+            for direction, latlon in (('west', 'longitude'), ('south', 'latitude'), ('east', 'longitude'), ('north', 'latitude')):
+                try:
+
+                    ordinate = self.xpath.xpathEval('./gmd:%sBound%s/gco:Decimal/text()' % (direction, latlon.capitalize()))[0].content.strip()
+                except IndexError:
+                    return []
+                ordinates.append(float(ordinate))
+            boxes.append(tuple(ordinates))
+        return boxes
 
     @_assignContext
     def extents(self):
@@ -1252,13 +1250,17 @@ def metadata2csv(metadata, file):
 
     writer.writerows(iter_element_values(11, 'Keywords', metadata.keywords))
 
-    row = metadata.bbox
+    row = metadata.bboxes
+    boxes = []
     if row and not isinstance(row, Exception):
-        row = [['West', metadata.bbox[0]],
-               ['South', metadata.bbox[1]],
-               ['East', metadata.bbox[2]],
-               ['North', metadata.bbox[3]]]
-    writer.writerows(iter_element_values(12, 'Geographic extent', row))
+        for box in row:
+            boxes.extend(
+                [['West', box[0]],
+                 ['South', box[1]],
+                 ['East', box[2]],
+                 ['North', box[3]]]
+                )
+    writer.writerows(iter_element_values(12, 'Geographic extent', boxes))
 
     row = metadata.extents
     if row and not isinstance(row, Exception):
@@ -1270,10 +1272,10 @@ def metadata2csv(metadata, file):
     row = metadata.reference_system
     if row and not isinstance(row, Exception):
         tmp = []
-        for key in ('identifier', 'source', 'url', 'name', 'scope'):
-            if not row[key]:
+        for key in ('identifier', 'name', 'type', 'scope'):
+            if not hasattr(row, key):
                 continue
-            tmp.append([key.capitalize(), row[key]])
+            tmp.append([key.capitalize(), getattr(row, key)])
         row = tmp
     writer.writerows(iter_element_values(15, 'Spatial reference system', row))
 

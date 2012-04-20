@@ -78,14 +78,24 @@
       <atom:link>${script_root}/${self.attr.template}/catalogue/${result['id'] | x}</atom:link>
       <description>&lt;strong&gt;Catalogue entry:&lt;/strong&gt; &lt;a href=&quot;${script_root}/${self.attr.template}/catalogue/${result['id'] | x}&quot;&gt;${result['id'] | x}&lt;/a&gt;&lt;br/&gt;${content(result)}</description>
       %if result['bbox']:
-       <Polygon>
-         <outerBoundaryIs>
-           <LinearRing>
-             <gx:altitudeMode>clampToSeaFloor</gx:altitudeMode>
-             <coordinates>${result['bbox'][0]},${result['bbox'][1]} ${result['bbox'][2]},${result['bbox'][1]} ${result['bbox'][2]},${result['bbox'][3]} ${result['bbox'][0]},${result['bbox'][3]} ${result['bbox'][0]},${result['bbox'][1]}</coordinates>
-           </LinearRing>
-         </outerBoundaryIs>
-       </Polygon>
+      <MultiGeometry>
+      %for bbox in result['bbox']:
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <gx:altitudeMode>clampToSeaFloor</gx:altitudeMode>
+              <coordinates>
+                ${bbox[0]},${bbox[1]}
+                ${bbox[2]},${bbox[1]}
+                ${bbox[2]},${bbox[3]}
+                ${bbox[0]},${bbox[3]}
+                ${bbox[0]},${bbox[1]}
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      %endfor
+      </MultiGeometry>
       %endif
     </Placemark>
 % endfor

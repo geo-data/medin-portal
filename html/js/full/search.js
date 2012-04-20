@@ -196,7 +196,11 @@ function populate_areas() {
     // if there's an existing area, select it
     if (area) {
         select.filter(':visible').change();
-    } else if (bbox) {
+    } else if (bboxes) {
+        var bbox = new OpenLayers.Bounds();
+        for (var i = 0; i < bboxes.length; i++) {
+            bbox.extend(bboxes[i]);
+        }
         add_box(bbox);
         map.zoomToExtent(bbox);   // zoom to the box
     } else {
@@ -522,7 +526,7 @@ function check_query() {
                 area.empty();
                 if (!criteria['terms'].length &&
                     !criteria['dates'].start && !criteria['dates'].end &&
-                    !criteria['area'] && !criteria['bbox']) {
+                    !criteria['area'] && !criteria['bbox'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
                 } else if (!criteria['terms'].length)
@@ -550,12 +554,14 @@ function check_query() {
 
                 if (criteria['area'])
                     area.append('<span> in <strong>'+criteria['area']+'</strong></span>');
-                else if (criteria['bbox']) {
-                    var n = criteria['bbox'][3].toFixed(2);
-                    var s = criteria['bbox'][1].toFixed(2);
-                    var e = criteria['bbox'][2].toFixed(2);
-                    var w = criteria['bbox'][0].toFixed(2);
-                    area.append('<span> in <strong>'+n+'N '+s+'S '+e+'E '+w+'W</strong></span>');
+                else if (criteria['bbox'].length) {
+                    for (var i = 0; i < criteria['bbox'].length; i++) {
+                        var n = criteria['bbox'][i][3].toFixed(2);
+                        var s = criteria['bbox'][i][1].toFixed(2);
+                        var e = criteria['bbox'][i][2].toFixed(2);
+                        var w = criteria['bbox'][i][0].toFixed(2);
+                        area.append('<span> in <strong>'+n+'N '+s+'S '+e+'E '+w+'W</strong></span>');
+                    }
                 }
             },
             complete: function(req, status) {

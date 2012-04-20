@@ -49,6 +49,21 @@ MEDIN catalogue entries.
 % endif
 </%def>
 
+<%def name="bboxes2georss(bboxes)">
+<%
+bbox = None
+if bboxes:
+   bbox = [
+     min((box[0] for box in bboxes)),
+     min((box[1] for box in bboxes)),
+     max((box[2] for box in bboxes)),
+     max((box[3] for box in bboxes))]
+%>
+    %if bbox:
+      <georss:polygon>${bbox[1]} ${bbox[0]} ${bbox[1]} ${bbox[2]} ${bbox[3]} ${bbox[2]} ${bbox[3]} ${bbox[0]} ${bbox[1]} ${bbox[0]}</georss:polygon>
+    %endif
+</%def>
+
 <%def name="content(entry)">
 &lt;strong&gt;Originator:&lt;/strong&gt; ${entry['originator'] | x}&lt;br/&gt;
 &lt;strong&gt;Last updated:&lt;/strong&gt; ${dateformat(entry['updated']) | x}

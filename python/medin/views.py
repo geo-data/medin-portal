@@ -349,7 +349,7 @@ class Search(MakoApp):
         count = q.getCount(default=None) # We need to get the number of hits for the query.
         search_term = q.getSearchTerm(cast=False)
         sort = q.getSort(cast=False)
-        bbox = q.getBBOX()
+        bboxes = q.getBoxes()
         start_date = q.getStartDate(cast=False)
         end_date = q.getEndDate(cast=False)
         area = q.getArea(cast=False)
@@ -402,7 +402,7 @@ class Search(MakoApp):
                    data_formats=formats,
                    resource_types=resources,
                    access_types=access,
-                   bbox=bbox)
+                   bboxes=bboxes)
 
         headers = [('Etag', etag), # propagate the result update time to the HTTP layer
                    ('Cache-Control', 'no-cache, must-revalidate')]
@@ -712,11 +712,18 @@ class CSVResults(Results):
                 ]
 
             if result['bbox']:
+                # get the total extent of multiple bounding boxes
+                bbox = [
+                    min((box[0] for box in result['bbox'])),
+                    min((box[1] for box in result['bbox'])),
+                    max((box[2] for box in result['bbox'])),
+                    max((box[3] for box in result['bbox']))]
+
                 row.extend([
-                        result['bbox'][0],
-                        result['bbox'][2],
-                        result['bbox'][1],
-                        result['bbox'][3]])
+                        bbox[0],
+                        bbox[2],
+                        bbox[1],
+                        bbox[3]])
             else:
                 row.extend(['', '', '', ''])
 
@@ -919,7 +926,7 @@ class MetadataKML(Metadata):
         if parser:
             title = parser.title()
             tvars = dict(gid=parser.uid,
-                         bbox=parser.bbox(),
+                         bboxes=parser.bboxes(),
                          author=parser.author(),
                          abstract=parser.abstract())
         else:
@@ -995,8 +1002,8 @@ class MetadataImage(object):
             headers.extend([('Etag', etag),
                             ('Cache-Control', 'no-cache, must-revalidate')])
 
-        bbox = parser.bbox()
-        if not bbox:
+        bboxes = parser.bboxes()
+        if not bboxes:
             raise HTTPError('404 Not Found', 'The metadata record does not have a geographic bounding box')
 
         # ensure the background raster datasource has been created
@@ -1010,7 +1017,7 @@ class MetadataImage(object):
         mapfile = template.render(root_dir=environ.root)
 
         # create the image
-        image = medin.spatial.metadata_image(bbox, mapfile)
+        image = medin.spatial.metadata_image(bboxes, mapfile)
 
         # serialise the image
         bytes = image.tostring('png')

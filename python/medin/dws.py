@@ -218,14 +218,16 @@ class SummaryResponse(BriefResponse):
 
     def _processDocument(self, doc):
 
-        try:
-            extent = doc.Spatial[0].BoundingBox
-            bbox = [extent.LimitWest, extent.LimitSouth, extent.LimitEast, extent.LimitNorth]
-        except AttributeError, IndexError:
-            bbox = None
+        bboxes = []
+        for extent in doc.Spatial:
+            try:
+                extent = extent.BoundingBox
+                bboxes.append([extent.LimitWest, extent.LimitSouth, extent.LimitEast, extent.LimitNorth])
+            except (AttributeError, IndexError):
+                pass
 
         ret = super(SummaryResponse, self)._processDocument(doc)
-        ret['bbox'] = bbox
+        ret['bbox'] = bboxes
         ret['abstract'] = doc.Abstract
 
         return ret
@@ -368,11 +370,21 @@ class SearchRequest(Request):
 
         # add the spatial criteria
         aid = query.getArea(cast=False)
+        boxes = []
         if aid:
-            bbox = query.areas.getBBOX(aid)
+            boxes.append(query.areas.getBBOX(aid))
         else:
-            bbox = query.getBBOX()
-        if bbox:
+            boxes.extend(query.getBoxes())
+
+        if boxes:
+            # get the total extent, as the DWS does not currently
+            # support multiple bounding boxes
+            bbox = [
+                min((box[0] for box in boxes)),
+                min((box[1] for box in boxes)),
+                max((box[2] for box in boxes)),
+                max((box[3] for box in boxes))]
+
             (search.SpatialSearch.BoundingBox.LimitWest,
              search.SpatialSearch.BoundingBox.LimitSouth,
              search.SpatialSearch.BoundingBox.LimitEast,

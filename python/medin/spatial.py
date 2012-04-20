@@ -198,40 +198,47 @@ def tilecache (environ, start_response):
         
     return wsgiHandler(environ, start_response, _tilecache_service)
 
-def metadata_image(bbox, mapfile):
+def metadata_image(bboxes, mapfile):
     """Create a metadata image"""
 
     from json import dumps as tojson
     import mapnik
 
-    minx, miny, maxx, maxy = bbox
+    features = []
 
-    # create the bounding box as a json string
-    width, height = (maxx - minx, maxy - miny)
-    min_dim = 0.0125                        # minimum dimension for display as a rectangle (in degrees)
-    if width < min_dim or height < min_dim:   # it should be a point
-        feature = { "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [minx, miny]
-                        },
-                    "properties": {
-                        "type": "point"
-                        }
-                    }
-        width, height = (9, 9)
-    else:
-        feature = { "type": "Feature",
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]]
-                        },
-                    "properties": {
-                        "type": "bbox"
-                        }
-                    }
+    for bbox in bboxes:
+        minx, miny, maxx, maxy = bbox
 
-    json = tojson(feature)
+        # create the bounding box as a json string
+        width, height = (maxx - minx, maxy - miny)
+        min_dim = 0.0125                        # minimum dimension for display as a rectangle (in degrees)
+        if width < min_dim or height < min_dim:   # it should be a point
+            feature = { "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [minx, miny]
+                            },
+                        "properties": {
+                            "type": "point"
+                            }
+                        }
+            width, height = (9, 9)
+        else:
+            feature = { "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy], [minx, miny]]]
+                            },
+                        "properties": {
+                            "type": "bbox"
+                            }
+                        }
+        features.append(feature)
+
+    json = tojson({
+            "type": "FeatureCollection",
+            "features": features
+            })
 
     # instantiate the map
     m = mapnik.Map(250, 250)
