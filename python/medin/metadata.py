@@ -408,6 +408,50 @@ def _assignContext(f):
 
     return newf
 
+class Proxy(object):
+    """
+    Proxy class
+
+    This class wraps an object. It passes all unhandled attribute
+    calls to the underlying object. This enables the proxy to override
+    the underlying object's attributes. In practice this works like
+    runtime inheritance.
+    """
+    def __init__(self, obj):
+        self._obj = obj
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
+
+class Year(Proxy):
+    """
+    Class representing a year
+    """
+
+    def __init__(self, year):
+        from datetime import date
+        super(Year, self).__init__(date(year, 1, 1))
+
+    def isoformat(self):
+        return '%d' % self.year
+
+    def __str__(self):
+        return str(self.year)
+
+class YearMonth(Proxy):
+    """
+    Class representing a year and a month
+    """
+    def __init__(self, year, month):
+        from datetime import date
+        super(YearMonth, self).__init__(date(year, month, 1))
+
+    def isoformat(self):
+        return '%d-%02d' % (self._obj.year, self._obj.month)
+
+    def __str__(self):
+        return self.isoformat()
+
 class Parser(object):
     """Parses MEDIN XML creating an object model
 
@@ -476,8 +520,32 @@ class Parser(object):
         return m
 
     def xsDate2pyDatetime(self, date):
+        """
+        Parse a date string into a datetime object
+        """
         import datetime
-        return datetime.datetime.strptime(date, '%Y-%m-%d')
+        global _datep
+        try:
+            datep = _datep
+        except NameError:
+            from re import compile
+            # create a pattern that matches any isoformat date or time
+            datep = _datep = compile('^(?P<year>\d{4})(?:-(?P<month>\d{2})(?:-(?P<day>\d{2}))?)?$')
+
+        try:
+            groups = datep.match(date.strip()).groupdict()
+        except AttributeError:
+            raise ValueError('Bad date value: %s' % str(date))
+
+        if groups['day']:
+            # it is a date object
+            return datetime.date(*[int(groups[k]) for k in ('year', 'month', 'day')])
+        elif groups['month']:
+            #  it is a YearMonth object
+            return YearMonth(*[int(groups[k]) for k in ('year', 'month')])
+
+        # it's a Year object
+        return Year(int(groups['year']))
         
     def xsDatetime2pyDatetime(self, timestamp):
         import datetime

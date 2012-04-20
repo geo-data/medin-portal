@@ -26,6 +26,7 @@
 <%inherit file="base-ok.html"/>
 <%!
     from medin.filters import quote as q
+    from medin.metadata import Year, YearMonth
 %>
 
 <%def name="nav_links()">
@@ -44,11 +45,42 @@
   % endif
 </%def>\
 <%def name="format_date(date)">\
+% if isinstance(date, Year):
+${date.strftime('%Y')}\
+% elif isinstance(date, YearMonth):
+${date.strftime('%B %Y')}\
+% elif date.year >= 1900:
 ${date.strftime('%A %d %B %Y')}\
+% else:
+${date.isoformat()}\
+% endif
 </%def>\
-<%def name="format_search_date(date)">\
-${date.strftime('%Y-%m-%d')}\
+
+<%def name="format_search_start_date(date)">\
+<%
+if isinstance(date, Year):
+   date = date.replace(month=1, day=1)
+elif isinstance(date, YearMonth):
+   date = date.replace(day=1)
+%>\
+${date.isoformat()}\
 </%def>\
+
+<%def name="format_search_end_date(date)">\
+<%
+if isinstance(date, Year):
+   date = date.replace(month=12, day=31)
+elif isinstance(date, YearMonth):
+   from datetime import timedelta
+   try:
+     date = date.replace(month=date.month+1, day=1)
+   except ValueError:
+     date = date.replace(year=date.year+1, month=1, day=1)
+   date -= timedelta(days=1)
+%>\
+${date.isoformat()}\
+</%def>\
+
 <%def name="format_contacts(contacts, quote=False)">
   % if quote:
   <blockquote>
@@ -495,11 +527,11 @@ ${resource['link']}\
 <h3>Temporal reference</h3>
 <%self:output_element element="${metadata.temporal_reference}">
 %if 'range' in metadata.temporal_reference:
-  <p>The data span the period from <a href="${script_root}/light/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
+  <p>The data span the period from <a href="${script_root}/light/catalogue?sd=${format_search_start_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_end_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.</p>
 %endif
 %if 'single' in metadata.temporal_reference:
   % for i, (code, date) in enumerate(metadata.temporal_reference['single']):
-  <p>${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/light/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/light/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]</p>
+  <p>${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/light/catalogue?ed=${format_search_end_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/light/catalogue?sd=${format_search_start_date(date)}" title="List all subsequent records">Subsequent records</a>]</p>
   % endfor
 %endif
 </%self:output_element>

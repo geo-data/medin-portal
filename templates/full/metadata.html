@@ -27,6 +27,7 @@
 <%inherit file="base-ok.html"/>\
 <%!
     from medin.filters import quote as q
+    from medin.metadata import Year, YearMonth
 %>
 
 <%def name="header()">
@@ -61,15 +62,40 @@
 </%def>\
 
 <%def name="format_date(date)">\
-% if date.year >= 1900:
-  ${date.strftime('%A %d %B %Y')}\
+% if isinstance(date, Year):
+${date.strftime('%Y')}\
+% elif isinstance(date, YearMonth):
+${date.strftime('%B %Y')}\
+% elif date.year >= 1900:
+${date.strftime('%A %d %B %Y')}\
 % else:
-  ${date.date().isoformat()}\
+${date.isoformat()}\
 % endif
 </%def>\
 
-<%def name="format_search_date(date)">\
-${date.date().isoformat()}\
+<%def name="format_search_start_date(date)">\
+<%
+if isinstance(date, Year):
+   date = date.replace(month=1, day=1)
+elif isinstance(date, YearMonth):
+   date = date.replace(day=1)
+%>\
+${date.isoformat()}\
+</%def>\
+
+<%def name="format_search_end_date(date)">\
+<%
+if isinstance(date, Year):
+   date = date.replace(month=12, day=31)
+elif isinstance(date, YearMonth):
+   from datetime import timedelta
+   try:
+     date = date.replace(month=date.month+1, day=1)
+   except ValueError:
+     date = date.replace(year=date.year+1, month=1, day=1)
+   date -= timedelta(days=1)
+%>\
+${date.isoformat()}\
 </%def>\
 
 <%def name="output_element(element, number)">
@@ -785,7 +811,7 @@ ${resource['link']}\
         <%self:output_element element="${metadata.temporal_reference}" number="${16}">
         %if 'range' in metadata.temporal_reference:
         <div>
-          The data span the period from <a href="${script_root}/full/catalogue?sd=${format_search_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
+          The data span the period from <a href="${script_root}/full/catalogue?sd=${format_search_start_date(metadata.temporal_reference['range'][0])}&amp;ed=${format_search_end_date(metadata.temporal_reference['range'][1])}" title="Search for all records between these dates">${format_date(metadata.temporal_reference['range'][0])} to ${format_date(metadata.temporal_reference['range'][1])}</a> inclusive.
         </div>
         %endif
         %if 'single' in metadata.temporal_reference:
@@ -795,7 +821,7 @@ ${resource['link']}\
           % else:
         <div>
           % endif
-        ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_date(date)}" title="List all subsequent records">Subsequent records</a>]
+        ${code.capitalize()} date was ${format_date(date)} [<a href="${script_root}/full/catalogue?ed=${format_search_end_date(date)}" title="List all previous records">Previous records</a>] [<a href="${script_root}/full/catalogue?sd=${format_search_start_date(date)}" title="List all subsequent records">Subsequent records</a>]
         </div>
           % endfor
         %endif
