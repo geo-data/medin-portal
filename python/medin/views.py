@@ -606,8 +606,10 @@ class Results(MakoApp):
 class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
+        from medin.terms import Vocabulary
 
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
+        self.vocab = Vocabulary()
 
     def setup(self, environ):
         from copy import deepcopy
@@ -615,6 +617,17 @@ class HTMLResults(Results):
         # create the data structure for the template sort logic
         ctxt = super(HTMLResults, self).setup(environ)
         query = deepcopy(ctxt.tvars['query'])
+
+        # set up the related terms mapping
+        mapping = {}
+        for op_or, op_not, target, word in query.getSearchTerm(skip_errors=True):
+            related = self.vocab.getRelated('P211', word.strip('"'))
+            if not related:
+                continue
+            mapping[word] = related
+        ctxt.tvars['mapping'] = mapping
+
+        # set up the sort criteria
         ctxt.tvars['criteria'] = query.asDict(False)
 
         sorts = {}

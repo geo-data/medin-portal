@@ -88,6 +88,9 @@ class Query(GETParams):
         except KeyError:
             pass
 
+    def clone(self):
+        return Query(str(self), self.areas, self.fields, self.max_count)
+
     def verify(self):
         """
         Check the validity of the Query, logging any errors
@@ -160,6 +163,22 @@ class Query(GETParams):
             if self.raise_errors: raise
 
         return default
+
+    def addSearchTerm(self, term):
+        try:
+            self['q'][0] += ' %s' % term
+        except KeyError, AttributeError:
+            self['q'] = [term]
+
+    def replaceSearchTerm(self, find, replace):
+        import re
+        pattern = re.compile(r'^("%s"|%s)$' % (find, find), re.IGNORECASE)
+        terms = []
+        for op_or, op_not, target, word in self.getSearchTerm(skip_errors=True):
+            term = (op_or, op_not, target, pattern.sub(replace, word))
+            terms.append(' '.join((t for t in term if t)))
+        if terms:
+            self['q'][0] = ' '.join(terms)
 
     def getStartDate(self, cast=True, default=''):
         return self.asDate('sd', cast, default, True)

@@ -92,19 +92,23 @@ ${query_string | x}\
             height: 400px;
             border: 1px solid #ADACA8;
         }
-        #geographic-coverage {
+        .fieldset {
             padding: 0.5em;
-            margin-bottom: 0.75em;
+            margin-bottom: 1em;
             border: 1px solid #ADACA8;
         }
-        #geographic-coverage.off {
+        .fieldset dd {
+            margin-left: 1em;
+            margin-bottom: 0.5em;
+        }
+        div.off {
             border-bottom: 0;
             border-left: 0;
             border-right: 0;
             padding-bottom: 0;
-            margin-bottom: 0;
+            margin-bottom: 0.5;
         }
-        #geographic-coverage h4 {
+        #geographic-coverage h4, #related-searches h4 {
             font-size:1.4em; 
             font-weight:normal;
             margin-top: -1em;
@@ -233,6 +237,47 @@ $(function() {
 </div>
 </%def>
 
+<%def name="related_searches()">
+% if mapping:
+<div id="related-searches" class="fieldset">
+  <h4 class="box"><a href="javascript:toggle_fieldset('related-searches')" title="Show or hide related searches">Related searches</a></h4>
+  <div class="content">
+  <p>For the text term(s) you entered alternatives, sourced from the Marisaurus thesaurus, are available below.  The use of an alternative term may influence the records returned. To substitute your term with an alternative, click on its link to resubmit your search.  This process may be repeated as required.  Note: your other search criteria will be preserved.
+  </p>
+  %for term, related in mapping.items():
+      <%
+         relationships = {
+           'minor': 'Minor matches for',
+           'exact': 'Synonyms for',
+           'broad': 'Broader terms for',
+           'narrow': 'Narrower terms for'
+         }
+      %>
+      <dl>
+      % for relationship, mapped in related.items():
+          <dt>${relationships[relationship]} <kbd>${term}</kbd></dt>
+          <dd>
+          <%
+             cmap = []
+             for map in mapped:
+               q = query.clone()
+               q.replaceSearchTerm(term, '"%s"' % map)
+               cmap.append((map, str(q)))
+          %>
+          %for i, (mapped, q) in enumerate(cmap):
+            %if i:
+,
+            %endif
+            <a href="${script_root}/full/catalogue?${str(q)}">${mapped | x}</a>\
+          %endfor
+          </dd>
+      % endfor
+      </dl>
+  % endfor
+  </div>
+</div>
+% endif
+</%def>
 
 %if hits == 0:
 <p>Your search did not return any results. Try <a href="${script_root}/full${query_string | x}" title="Edit the current search criteria">editing your search</a> 
@@ -242,6 +287,7 @@ to correct the errors.
 to make it less restrictive.
 %endif
 </p>
+${related_searches()}
 <%return '' %>
 %endif
 
@@ -272,9 +318,10 @@ ${start_index} - ${end_index}
 % else:
 all results
 % endif
-</strong>:</p>
-
-<div id="geographic-coverage" class="off">
+</strong>:
+</p>
+${related_searches()}
+<div id="geographic-coverage" class="fieldset off">
   <h4 class="box"><a href="javascript:toggle_fieldset('geographic-coverage')" title="Show or hide the geographic coverage of the results">Geographic coverage</a></h4>
   <div class="content" style="display:none">
     <p>The geographic coverage of the results on this page. Note that this does <strong>not</strong> include datasets with global coverage.</p>

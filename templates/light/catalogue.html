@@ -102,6 +102,44 @@ ${query_string | x}\
 % endif
 </%def>
 
+<%def name="related_searches()">
+% if mapping:
+  <h3>Related searches</h3>
+  <p>For the text term(s) you entered alternatives, sourced from the Marisaurus thesaurus, are available below.  The use of an alternative term may influence the records returned. To substitute your term with an alternative, click on its link to resubmit your search.  This process may be repeated as required.  Note: your other search criteria will be preserved.
+  </p>
+  %for term, related in mapping.items():
+      <%
+         relationships = {
+           'minor': 'Minor matches for',
+           'exact': 'Synonyms for',
+           'broad': 'Broader terms for',
+           'narrow': 'Narrower terms for'
+         }
+      %>
+      <dl>
+      % for relationship, mapped in related.items():
+          <dt>${relationships[relationship]} <kbd>${term}</kbd></dt>
+          <dd>
+          <%
+             cmap = []
+             for map in mapped:
+               q = query.clone()
+               q.replaceSearchTerm(term, '"%s"' % map)
+               cmap.append((map, str(q)))
+          %>
+          %for i, (mapped, q) in enumerate(cmap):
+            %if i:
+,
+            %endif
+            <a href="${script_root}/light/catalogue?${str(q)}">${mapped | x}</a>\
+          %endfor
+          </dd>
+      % endfor
+      </dl>
+  % endfor
+% endif
+</%def>
+
 %if hits == 0:
 <p>Your search did not return any results. Try <a href="${script_root}/light${query_string | x}" title="Edit the current search criteria">editing your search</a> 
 %if log:
@@ -110,6 +148,7 @@ to correct the errors.
 to make it less restrictive.
 %endif
 </p>
+${related_searches()}
 <%return '' %>
 %endif
 
@@ -136,6 +175,7 @@ all results\
 % endif
 </strong>:</p>
 
+${related_searches()}
 ${result_links()}
 
 % for i, res in enumerate(results):

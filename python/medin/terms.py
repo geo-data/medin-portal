@@ -90,11 +90,12 @@ class Vocabulary(object):
             try:
                 term = r.verifiedTerm
             except AttributeError:
-                raise LookupError('The term "%s" does not exist in the list %s' % (term, listKey))
+                raise LookupError('The term \'%s\' does not exist in the list %s' % (term, listKey))
 
         return dict(long=term.entryTerm,
                     short=term.entryTermAbbr,
-                    defn=term.entryTermDef)
+                    defn=term.entryTermDef,
+                    key=term.entryKey)
 
     def getList(self, list_id):
         """
@@ -109,6 +110,34 @@ class Vocabulary(object):
                          defn=entry.entryTermDef) for entry in r[0]]
         except TypeError:
             return []
+
+    def getRelated(self, list_id, term):
+        """Get related terms"""
+        related = {}
+        def getRelationship(relationship, record):
+            try:
+                related[relationship] = [term.entryTerm for term in record['%sMatch' % relationship]]
+            except AttributeError:
+                pass
+
+        try:
+            term = self.lookupTerm(list_id, term)
+        except LookupError:
+            return related
+
+        recordKey = [term['key']]
+        objectKey = []
+        predicate = 255
+        inference = 'true'
+        r = self._callService(self.client.service.getRelatedRecordByTerm, recordKey, predicate, objectKey, inference)
+
+        record = r.codeTableRecord[0]
+        getRelationship('minor', record)
+        getRelationship('exact', record)
+        getRelationship('broad', record)
+        getRelationship('narrow', record)
+
+        return related
 
 class CachedVocabulary(Vocabulary):
     """
@@ -286,7 +315,7 @@ class StaticVocabList(object):
                         short=entry['abbr'],
                         defn=entry['defn'])
         except KeyError:
-            raise LookupError('The term "%s" does not exist in the list' % term)
+            raise LookupError('The term \'%s\' does not exist in the list' % term)
         except AttributeError:
             pass
 
@@ -301,3 +330,4 @@ class StaticVocabList(object):
     def getList(self):
         from copy import deepcopy
         return deepcopy(self.vocab)
+
