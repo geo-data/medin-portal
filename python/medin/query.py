@@ -174,9 +174,9 @@ class Query(GETParams):
         import re
         pattern = re.compile(r'^("%s"|%s)$' % (find, find), re.IGNORECASE)
         terms = []
-        for op_or, op_not, target, word in self.getSearchTerm(skip_errors=True):
-            term = (op_or, op_not, target, pattern.sub(replace, word))
-            terms.append(' '.join((t for t in term if t)))
+        for token in self.getSearchTerm(skip_errors=True):
+            token.word = pattern.sub(replace, token.word)
+            terms.append(str(token))
         if terms:
             self['q'][0] = ' '.join(terms)
 
@@ -410,6 +410,33 @@ class TargetError(QueryError):
     """
     pass
 
+class TermToken(object):
+    """
+    A combination of a word, target and query operators
+
+    Multiple TermTokens can be combined to define a query. Query
+    operators are `OR` and `-` (NOT).
+    """
+
+    def __init__(self, word, target=None, not_=False, or_=False):
+        self.word = word
+        self.target = target
+        self.not_ = not_
+        self.or_ = or_
+
+    def __str__(self):
+        ret = ''
+        if self.or_:
+            ret += 'OR '
+        if self.not_:
+            ret += '-'
+        if self.target:
+            ret += '%s:' % self.target
+        return ret + self.word
+
+    def __repr__(self):
+        return "TermToken('%s')" % str(self)
+
 class TermParser(object):
     """
     Parse a search term into a list of tokens
@@ -446,7 +473,8 @@ class TermParser(object):
                 continue        # skip reserved words
             if target not in self.targets:
                 bad_targets.append(target)
-            tokens.append((op_or, op_not, target, word))
+            token = TermToken(word, target, bool(op_not), bool(op_or))
+            tokens.append(token)
 
         if not skip_errors and bad_targets:
             targets = [t for t in self.targets if t]
@@ -476,22 +504,22 @@ class TermAnalyser(object):
         Returns query tokens transformed into a human friendly structure
         """
 
-        op_map = {'': 'and',
-                  'OR': 'or'}
+        op_map = {False: 'and',
+                  True: 'or'}
         query = []
-        for i, (op_or, op_not, target, word) in enumerate(tokens):
-            op = op_map[op_or]
+        for i, token in enumerate(tokens):
+            op = op_map[token.or_]
             ops = []
             if i and op:
                 ops.append(op)
-            if op_not:
+            if token.not_:
                 ops.append('not')
 
             try:
-                targets = [target, self.mapping[target]]
+                targets = [token.target, self.mapping[token.target]]
             except KeyError:
-                if target:
-                    targets = [target, None]
+                if token.target:
+                    targets = [token.target, None]
                 else:
                     targets = [None, None]
 
@@ -502,7 +530,7 @@ class TermAnalyser(object):
                 
             term = {'op': op,
                     'target': targets,
-                    'word': word}
+                    'word': token.word}
             query.append(term)
 
         return query

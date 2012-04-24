@@ -87,17 +87,19 @@ class TermBuilder(object):
 
         # Create the termSearch objects from the tokens
         terms = []
-        for i, (op_or, op_not, target, word) in enumerate(tokens):
+        for i, token in enumerate(tokens):
             op = ''
             if i:
-                if op_or and op_not:
+                if token.or_ and token.not_:
                     op = 'OR_NOT'
-                elif op_not:
+                elif token.not_:
                     op ='AND_NOT'
-                elif op_or:
+                elif token.or_:
                     op = 'OR'
-            elif op_not:
+            elif token.not_:
                 op = 'NOT'
+
+            word = token.word
 
             # If the term is a phrase ensure it is enclosed with two
             # pairs of quotes for the DWS
@@ -107,10 +109,10 @@ class TermBuilder(object):
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = word
             try:
-                term.TermTarget = self.targets[target.lower()]
+                term.TermTarget = self.targets[token.target.lower()]
             except KeyError:
                 if not skip_errors:
-                    raise ValueError('The following target is not recognised: %s' % target)
+                    raise ValueError('The following target is not recognised: %s' % token.target)
                 term.TermTarget = self.targets['']
 
             term._id = i+1

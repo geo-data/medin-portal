@@ -620,11 +620,11 @@ class HTMLResults(Results):
 
         # set up the related terms mapping
         mapping = {}
-        for op_or, op_not, target, word in query.getSearchTerm(skip_errors=True):
-            related = self.vocab.getRelated('P211', word.strip('"'))
+        for token in query.getSearchTerm(skip_errors=True):
+            related = self.vocab.getRelated('P211', token.word.strip('"'))
             if not related:
                 continue
-            mapping[word] = related
+            mapping[token.word] = related
         ctxt.tvars['mapping'] = mapping
 
         # set up the sort criteria
