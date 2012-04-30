@@ -555,12 +555,15 @@ function check_query() {
                 if (criteria['area'])
                     area.append('<span> in <strong>'+criteria['area']+'</strong></span>');
                 else if (criteria['bbox'].length) {
+                    function formatNorthing(northing) {
+                        return northing + ((northing >= 0) ? 'N' : 'S');
+                    }
                     for (var i = 0; i < criteria['bbox'].length; i++) {
-                        var n = criteria['bbox'][i][3].toFixed(2);
-                        var s = criteria['bbox'][i][1].toFixed(2);
+                        var n = formatNorthing(criteria['bbox'][i][3].toFixed(2));
+                        var s = formatNorthing(criteria['bbox'][i][1].toFixed(2));
                         var e = criteria['bbox'][i][2].toFixed(2);
                         var w = criteria['bbox'][i][0].toFixed(2);
-                        area.append('<span> in <strong>'+n+'N '+s+'S '+e+'E '+w+'W</strong></span>');
+                        area.append('<span> in <strong>'+n+' '+s+' '+e+'E '+w+'W</strong></span>');
                     }
                 }
             },
