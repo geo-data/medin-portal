@@ -402,7 +402,7 @@ def wsgi_app():
 
     # the default entry point for the search
     app = TemplateChooser(default_template)
-    view = views.SOAPRequest(views.Search())
+    view = views.SOAPRequest(config(views.Search()))
     app.addContentTypes(view, 'light', light_types, light_default)
     app.addContentTypes(view, 'full', full_types)
     application.add('/{template}[/]',

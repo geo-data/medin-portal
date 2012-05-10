@@ -4,3 +4,6 @@
 [submodule "submodules/python-epsg"]
 	path = submodules/python-epsg
 	url = git://github.com/geo-data/python-epsg.git
+[submodule "submodules/python-skos"]
+	path = submodules/python-skos
+	url = git@github.com:geo-data/python-skos.git

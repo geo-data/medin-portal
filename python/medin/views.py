@@ -299,10 +299,8 @@ class OpenSearch(MakoApp):
 class Search(MakoApp):
     def __init__(self):
         from medin.dws import SearchRequest
-        from medin.terms import MEDINVocabulary
 
         self.request = SearchRequest()
-        self.vocab = MEDINVocabulary()
         super(Search, self).__init__(['%s', 'search.html'], check_etag=False)
 
         self.filters.append(ObfuscateEmails()) # ensure emails are obfuscated when rendered
@@ -330,7 +328,9 @@ class Search(MakoApp):
         return self.request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
 
     def setup(self, environ):
-        from medin.terms import VocabError
+        from medin.vocab import Vocabularies
+        vocab_db = environ['config'].get('Portal', 'vocabularies')
+        vocab = Vocabularies(vocab_db)
 
         # run the query
         self.prepareSOAP(environ)
@@ -363,29 +363,10 @@ class Search(MakoApp):
                     'ices-rectangles': areas.icesRectangles()}
 
         # get the vocabulary lists
-        try:
-            params = self.vocab.getList('P021')
-        except VocabError, e:
-            msg = 'The parameter list could not be retrieved'
-            msg_error(environ, msg)
-            environ['logging.logger'].exception(msg)
-            params = None
-        try:
-            topics = self.vocab.getList('P051')
-        except VocabError, e:
-            msg = 'The topic category list could not be retrieved'
-            msg_error(environ, msg)
-            environ['logging.logger'].exception(msg)
-            topics = None
-        try:
-            formats = self.vocab.getList('M010')
-        except VocabError, e:
-            msg = 'The data format list could not be retrieved'
-            msg_error(environ, msg)
-            environ['logging.logger'].exception(msg)
-            formats = None
-        resources = self.vocab.getList('resource-types')
-        access = self.vocab.getList('access-types')
+        params = vocab['http://vocab.nerc.ac.uk/collection/P02/current']
+        formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
+        resources = vocab['medin-resource-types.xml']
+        access = vocab['medin-access-types.xml']
 
         tvars=dict(search_term=search_term,
                    hits=r.hits,
@@ -398,7 +379,6 @@ class Search(MakoApp):
                    area_type=area_type,
                    area_ids=area_ids,
                    parameters=params,
-                   topic_categories=topics,
                    data_formats=formats,
                    resource_types=resources,
                    access_types=access,

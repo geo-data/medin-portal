@@ -515,32 +515,32 @@ ${','.join(map(str, bbox))}\
       %if parameters:
       <select class="target" name="" id="target-p">
         <option value="">Choose a parameter...</option>
-        %for parameter in parameters:
-        <option title="${parameter['defn'] | x}" value="${parameter['term'] | q,x}">${parameter['term'] | x}</option>
+        %for parameter in parameters.members.itervalues():
+        <option title="${(parameter.definition or parameter.prefLabel) | x}" value="${parameter.prefLabel | q,x}">${parameter.prefLabel | x}</option>
         %endfor
       </select>
       %endif
       %if resource_types:
       <select class="target" name="" id="target-rt">
         <option value="">Choose a resource type...</option>
-        %for rtype in resource_types:
-        <option title="${rtype['defn'] | x}" value="${rtype['abbr'] | q,x}">${rtype['term'] | x}</option>
+        %for rtype in resource_types.members.itervalues():
+        <option title="${(rtype.definition or rtype.prefLabel) | x}" value="${rtype.prefLabel | q,x}">${rtype.prefLabel | x}</option>
         %endfor
       </select>
       %endif
       %if access_types:
       <select class="target" name="" id="target-al">
         <option value="">Choose an access type...</option>
-        %for atype in access_types:
-        <option title="${atype['defn'] | x}" value="${atype['term'] | q,x}">${atype['term'] | x}</option>
+        %for atype in access_types.members.itervalues():
+        <option title="${(atype.definition or atype.prefLabel) | x}" value="${atype.prefLabel | q,x}">${atype.prefLabel | x}</option>
         %endfor
       </select>
       %endif
       %if data_formats:
       <select class="target" name="" id="target-f">
         <option value="">Choose a data format...</option>
-        %for format in data_formats:
-        <option title="${format['defn'] | x}" value="${format['term'] | q,x}">${format['term'] | x}</option>
+        %for format in data_formats.members.itervalues():
+        <option title="${(format.definition or format.prefLabel) | x}" value="${format.prefLabel | q,x}">${format.prefLabel | x}</option>
         %endfor
       </select>
       %endif

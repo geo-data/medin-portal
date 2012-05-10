@@ -9,6 +9,9 @@
 [DEFAULT]
 email = enquiries@oceannet.org
 
+[Portal]
+vocabularies = sqlite:////tmp/vocabularies.sqlite
+
 [SMTP]
 ; Uncomment and edit the following options to cater for non default
 ; SMTP settings

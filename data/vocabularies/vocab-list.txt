@@ -1,0 +1,16 @@
+./medin-access-types.xml
+./medin-resource-types.xml
+http://vocab.nerc.ac.uk/collection/C47/current/accepted
+http://vocab.nerc.ac.uk/collection/P03/current/accepted
+http://vocab.nerc.ac.uk/collection/P02/current/accepted
+http://vocab.nerc.ac.uk/collection/P21/current/accepted
+http://vocab.nerc.ac.uk/collection/P22/current/accepted
+http://vocab.nerc.ac.uk/collection/P23/current/accepted
+http://vocab.nerc.ac.uk/collection/L19/current/accepted
+http://vocab.nerc.ac.uk/collection/P09/current/accepted
+http://vocab.nerc.ac.uk/collection/P01/current/accepted
+http://vocab.nerc.ac.uk/collection/P04/current/accepted
+http://vocab.nerc.ac.uk/collection/P07/current/accepted
+http://vocab.nerc.ac.uk/collection/A01/current/accepted
+http://vocab.nerc.ac.uk/collection/P05/current/accepted
+http://vocab.nerc.ac.uk/collection/M01/current/accepted

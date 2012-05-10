@@ -75,3 +75,13 @@ cron job):
 The above command assumes the script is run from the root distribution
 directory: the PYTHONPATH variable provides access to the required
 packages provided by the distribution.
+
+The vocabulary cache should be updated in a similar way using
+`bin/vocab-update.py`. This script uses a newline separated text file
+as input to define a number of both local file-based and online
+vocabularies. These vocabularies are then cached in a SQLite database
+specified as a command line argument along the following lines:
+
+    PYTHONPATH=./python python ./bin/vocab-update.py \
+    --vocabularies ./data/vocabularies/vocab-list.txt \
+    ./data/vocabularies.sqlite
