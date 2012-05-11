@@ -459,14 +459,13 @@ class Parser(object):
     http://www.oceannet.org/marine_data_standards/medin_approved_standards/documents/medin_schema_documentation_2_3_2_10nov09.doc
     """
     
-    def __init__(self, uid, document, areas):
+    def __init__(self, uid, document, areas, vocab):
         import re
         import libxml2
-        from terms import MEDINVocabulary
 
-        self.vocab = MEDINVocabulary() # instantiate the Vocabulary interface
         self.areas = areas
         self.uid = uid
+        self.vocab = vocab
 
         try:
             self.document = libxml2.parseMemory(document, len(document))
@@ -585,22 +584,20 @@ class Parser(object):
 
     def resourceType(self):
         """Element 4: Resource Type"""
-        from terms import VocabError
-        
         try:
             code = self.xpath.xpathEval('//gmd:hierarchyLevel/gmd:MD_ScopeCode/text()')[0].content.strip()
         except IndexError:
             return None
 
-        try:
-            defn = self.vocab.lookupTerm('resource-types', code)
-        except LookupError:
+        concept = self.vocab.getMatchingConcept(code, 'medin-resource-types.xml')
+        if not concept:
             defn = {'short':code,
                     'long':code,
                     'defn':'Unknown term'}
-        except VocabError, e:
-            defn = {'error': e.message}
-
+        else:
+            defn = {'short': concept.prefLabel,
+                    'long': concept.prefLabel,
+                    'defn': concept.definition}
         return defn
 
     def onlineResource(self, node):
@@ -674,19 +671,18 @@ class Parser(object):
 
     def topicCategory(self):
         """Element 9: Topic Category"""
-        from terms import VocabError
-        
         categories = {}
         for node in self.xpath.xpathEval('//gmd:MD_TopicCategoryCode/text()'):
             key = node.content.strip()
-            try:
-                defn = self.vocab.lookupTerm('P051', key)
-            except LookupError:
+            concept = self.vocab.getMatchingConcept(key, 'http://vocab.nerc.ac.uk/collection/P05/current')
+            if not concept:
                 defn = {'short':key,
                         'long':key,
                         'defn':'Unknown term'}
-            except VocabError, e:
-                defn = {'error': e.message}
+            else:
+                defn = {'short': concept.prefLabel,
+                        'long': concept.prefLabel,
+                        'defn': concept.definition}
             categories[key] = defn
 
         return categories
@@ -972,19 +968,19 @@ class Parser(object):
 
     def accessLimits(self):
         """Element 20: Limitations On Public Access"""
-        from terms import VocabError
-        
         limits = []
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:accessConstraints/gmd:MD_RestrictionCode'):
             key = node.content.strip()
-            try:
-                defn = self.vocab.lookupTerm('access-types', key)
-            except LookupError:
+            concept = self.vocab.getMatchingConcept(key, 'medin-access-types.xml')
+            if not concept:
                 defn = {'short':key,
                         'long':key,
                         'defn':'Unknown term'}
-            except VocabError, e:
-                defn = {'error': e.message}
+            else:
+                defn = {'short': concept.prefLabel,
+                        'long': concept.prefLabel,
+                        'defn': concept.definition}
+
             limits.append(defn)
 
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceConstraints/gmd:MD_LegalConstraints/gmd:otherConstraints'):
@@ -1101,8 +1097,6 @@ class Parser(object):
     @_assignContext
     def dataFormat(self):
         """Element 23: Data Format"""
-        from terms import VocabError
-        
         formats = {}
         for node in self.xpath.xpathEval('//gmd:MD_DataIdentification/gmd:resourceFormat/gmd:MD_Format'):
             self.xpath.setContextNode(node)
@@ -1113,15 +1107,16 @@ class Parser(object):
 
             # only continue if the format is not empty
             if not key: continue
-            
-            try:
-                defn = self.vocab.lookupTerm('M010', key)
-            except LookupError:
+
+            concept = self.vocab.getMatchingConcept(code, 'http://vocab.nerc.ac.uk/collection/M01/current')
+            if not concept:
                 defn = {'short':key,
                         'long':key,
                         'defn':'Unknown term'}
-            except VocabError, e:
-                defn = {'error': e.message}
+            else:
+                defn = {'short': concept.prefLabel,
+                        'long': concept.prefLabel,
+                        'defn': concept.definition}
             formats[key] = defn
 
         return formats

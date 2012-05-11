@@ -31,20 +31,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from collections import Mapping
 
-
 class Vocabularies(Mapping):
-    _sessions = {}              # cached sessions
-    def __init__(self, connstr):
-        try:
-            # try and retrieve a cached session
-            self.session = self.__class__._sessions[connstr]()
-        except KeyError:
-            pass
-
-        engine = create_engine(connstr) # get a handle on the vocabulary
-
+    def __init__(self, engine):
         # get a session to the local database
-        Session = self._sessions[connstr] = sessionmaker(bind=engine)
+        Session = sessionmaker(bind=engine)
         self.session = Session()
 
     def __getitem__(self, key):

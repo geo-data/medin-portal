@@ -141,6 +141,39 @@ def get_areas(environ):
     areas = _areas[thread_id] = Areas(get_db(environ))
     return areas
 
+def get_vocab(environ):
+    """
+    Returns the vocabulary interface
+
+    Because this object references the thread sensitive sqlite
+    database this function returns an object which is unique to the
+    calling thread.
+    """
+    from medin.vocab import Vocabularies
+    from thread import get_ident
+
+    thread_id = get_ident()
+
+    global _vocab_engines
+    engine = None
+    try:
+        engine = _vocab_engines[thread_id]
+    except NameError:
+        _vocab_engines = {}
+        pass
+    except KeyError:
+        pass
+
+    if not engine:
+        from sqlalchemy import create_engine
+        import os.path
+
+        filepath = os.path.abspath(os.path.join(environ.root, 'data', 'vocabularies.sqlite'))
+        connstr = 'sqlite:///%s' % filepath
+        _vocab_engines[thread_id] = engine = create_engine(connstr)
+
+    return Vocabularies(engine)
+
 def get_db(environ):
     """
     Returns the portal sqlite database object
@@ -328,9 +361,7 @@ class Search(MakoApp):
         return self.request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
 
     def setup(self, environ):
-        from medin.vocab import Vocabularies
-        vocab_db = environ['config'].get('Portal', 'vocabularies')
-        vocab = Vocabularies(vocab_db)
+        vocab = get_vocab(environ)
 
         # run the query
         self.prepareSOAP(environ)
@@ -589,11 +620,9 @@ class HTMLResults(Results):
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
 
     def setup(self, environ):
-        from medin.vocab import Vocabularies
         from copy import deepcopy
 
-        vocab_db = environ['config'].get('Portal', 'vocabularies')
-        vocab = Vocabularies(vocab_db)
+        vocab = get_vocab(environ)
 
         # create the data structure for the template sort logic
         ctxt = super(HTMLResults, self).setup(environ)
@@ -843,8 +872,9 @@ class Metadata(MakoApp):
         """
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
+        vocab = get_vocab(environ)
 
-        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas, vocab)
 
     def setup(self, environ, etag_data=''):
 
@@ -984,8 +1014,9 @@ class MetadataImage(object):
     def prepareSOAP(self, environ):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
+        vocab = get_vocab(environ)
 
-        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas, vocab)
 
     def __call__(self, environ, start_response):
         import os.path

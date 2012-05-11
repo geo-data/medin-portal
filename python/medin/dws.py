@@ -542,11 +542,12 @@ class MetadataRequest(Request):
 
 class MedinMetadataRequest(MetadataRequest):
 
-    def prepareCaller(self, logger, gid, areas):
+    def prepareCaller(self, logger, gid, areas, vocab):
         # get a document in MEDIN XML format
         format = 'MEDIN_2.3'
 
         self.areas = areas
+        self.vocab = vocab
         return super(MedinMetadataRequest, self).prepareCaller(logger, gid, format)
 
     def __call__(self):
@@ -559,7 +560,7 @@ class MedinMetadataRequest(MetadataRequest):
         # return a Metadata parser instance
         from metadata import Parser
         try:
-            return Parser(self.gid, xml, self.areas)
+            return Parser(self.gid, xml, self.areas, self.vocab)
         except ValueError, e:
             msg = 'The metadata does not appear to be valid'
             logger.exception(msg)
