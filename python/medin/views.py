@@ -586,13 +586,14 @@ class Results(MakoApp):
 class HTMLResults(Results):
     def __init__(self):
         from medin.dws import RESULT_BRIEF
-        from medin.terms import Vocabulary
-
         super(HTMLResults, self).__init__(['%s', 'catalogue.html'], RESULT_BRIEF)
-        self.vocab = Vocabulary()
 
     def setup(self, environ):
+        from medin.vocab import Vocabularies
         from copy import deepcopy
+
+        vocab_db = environ['config'].get('Portal', 'vocabularies')
+        vocab = Vocabularies(vocab_db)
 
         # create the data structure for the template sort logic
         ctxt = super(HTMLResults, self).setup(environ)
@@ -601,10 +602,18 @@ class HTMLResults(Results):
         # set up the related terms mapping
         mapping = {}
         for token in query.getSearchTerm(skip_errors=True):
-            related = self.vocab.getRelated('P211', token.word.strip('"'))
-            if not related:
+            concept = vocab.getMatchingConcept(token.word.strip('"'), 'http://vocab.nerc.ac.uk/collection/P21/current')
+            if not concept:
                 continue
-            mapping[token.word] = related
+
+            related = {}
+            for attr_name in ('related', 'narrower', 'broader', 'synonyms'):
+                attr = getattr(concept, attr_name)
+                if not attr:
+                    continue
+                related[attr_name] = [c.prefLabel for c in attr.itervalues()]
+            if related:
+                mapping[token.word] = related
         ctxt.tvars['mapping'] = mapping
 
         # set up the sort criteria

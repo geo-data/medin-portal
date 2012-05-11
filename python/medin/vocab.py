@@ -58,3 +58,15 @@ class Vocabularies(Mapping):
 
     def __iter__(self):
         return iter(self.session.query(skos.Object.uri))
+
+    def getMatchingConcept(self, term, collection):
+        """
+        Retrieve a matching term from a particular collection
+
+        The match is case insensitive.
+        """
+
+        return self.session.query(skos.Concept)\
+            .join(skos.Concept.collections)\
+            .filter(skos.Collection.uri == collection)\
+            .filter(skos.Concept.prefLabel.ilike(term)).first()

@@ -244,15 +244,15 @@ $(function() {
   <div class="content">
   <p>For the text term(s) you entered alternatives, sourced from the Marisaurus thesaurus, are available below.  The use of an alternative term may influence the records returned. To substitute your term with an alternative, click on its link to resubmit your search.  This process may be repeated as required.  Note: your other search criteria will be preserved.
   </p>
+  <%
+     relationships = {
+       'related': 'Related terms for',
+       'synonyms': 'Synonyms for',
+       'broader': 'Broader terms for',
+       'narrower': 'Narrower terms for'
+     }
+  %>
   %for term, related in mapping.items():
-      <%
-         relationships = {
-           'minor': 'Minor matches for',
-           'exact': 'Synonyms for',
-           'broad': 'Broader terms for',
-           'narrow': 'Narrower terms for'
-         }
-      %>
       <dl>
       % for relationship, mapped in related.items():
           <dt>${relationships[relationship]} <kbd>${term}</kbd></dt>
@@ -268,7 +268,7 @@ $(function() {
             %if i:
 ,
             %endif
-            <a href="${script_root}/full/catalogue?${str(q)}">${mapped | x}</a>\
+            <a href="${script_root}/full/catalogue?${str(q) | x}">${mapped | x}</a>\
           %endfor
           </dd>
       % endfor
