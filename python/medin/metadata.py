@@ -1108,7 +1108,7 @@ class Parser(object):
             # only continue if the format is not empty
             if not key: continue
 
-            concept = self.vocab.getMatchingConcept(code, 'http://vocab.nerc.ac.uk/collection/M01/current')
+            concept = self.vocab.getMatchingConcept(key, 'http://vocab.nerc.ac.uk/collection/M01/current')
             if not concept:
                 defn = {'short':key,
                         'long':key,
