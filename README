@@ -25,7 +25,7 @@ environment for production deployment (e.g. www.modwsgi.org).
 
 The software has the following dependencies:
 
- * Python 2.6.4 (although any of the 2.6 and 2.7 series should work)
+ * Python 2.{6,7}
 
  * libxml2 2.7.* (http://www.xmlsoft.org/) compiled with support for
    Python
