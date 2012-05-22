@@ -41,6 +41,10 @@ The software has the following dependencies:
 
  * SQLAlchemy 0.7.6 (http://www.sqlalchemy.org/)
 
+ * rdfextras 0.2 (http://pypi.python.org/pypi/rdfextras/0.2)
+
+ * RDFLib 3.2.1 (http://pypi.python.org/pypi/rdflib/3.2.1)
+
 The CGI script is deploy/portal.cgi and the WSGI application is found
 in deploy/portal.wsgi. Your web server should be configured
 appropriately to invoke the required script.

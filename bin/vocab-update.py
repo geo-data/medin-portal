@@ -88,6 +88,11 @@ def main():
     logging.basicConfig(level=logging.INFO)
     filename = abspath(args.file[0])
 
+    # Annoyingly we have to register a plugin to deal with the
+    # `text/xml` content type representing the RDF returned from the
+    # NERC vocabulary server
+    rdflib.plugin.register('text/xml', rdflib.plugin.Parser, 'rdflib.plugins.parsers.rdfxml', 'RDFXMLParser')
+
     try:
         engine = create_engine('sqlite:///%s' % filename) # get a handle on the local database
 
