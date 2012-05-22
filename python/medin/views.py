@@ -1125,9 +1125,10 @@ class MetadataCSV(object):
     def prepareSOAP(self, environ):
         gid = environ['selector.vars']['gid'] # the global metadata identifier
         areas = get_areas(environ)
+        vocab = get_vocab(environ)
 
         self.gid = gid
-        return self.request.prepareCaller(environ['logging.logger'], gid, areas)
+        return self.request.prepareCaller(environ['logging.logger'], gid, areas, vocab)
 
     def __call__(self, environ, start_response):
         from cStringIO import StringIO
