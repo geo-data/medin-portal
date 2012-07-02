@@ -225,7 +225,7 @@ ${format_epsg(axis.descriptionReference)}
 <%def name="format_crs(epsg, use_area=True)">\
 <h4>Coordinate Reference System</h4>
 ${format_epsg(epsg)}
-% if use_area:
+% if use_area and hasattr(epsg, 'domainOfValidity'):
 ${format_areaofuse(epsg.domainOfValidity)}
 % endif
 % if hasattr(epsg, 'geodeticDatum'):
