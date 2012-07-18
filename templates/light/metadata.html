@@ -666,7 +666,7 @@ ${resource['link']}\
 <!-- Element 17 -->
 <h3>Lineage</h3>
 <%self:output_element element="${metadata.lineage}">
-<p>${metadata.lineage}</p>
+<p>${metadata.lineage | x}</p>
 </%self:output_element>
 % endif\
 
@@ -674,7 +674,7 @@ ${resource['link']}\
 <!-- Element 19 -->
 <h3>Additional information</h3>
 <%self:output_element element="${metadata.additional_info}">
-<p>${metadata.additional_info}</p>
+<p>${metadata.additional_info | x}</p>
 </%self:output_element>
 % endif\
 
