@@ -259,9 +259,9 @@ class Comment(object):
 
     def __call__(self, environ, start_response):
         form = get_post(environ)
-        comment = form.getfirst('comment').strip()
+        comment = form.getfirst('comment', '').strip()
         check = form.getfirst('comment-check')
-        question = form.getfirst('comment-question').strip()
+        question = form.getfirst('comment-question', '').strip()
         request_uri = environ.request_uri()
         submit = True
 
