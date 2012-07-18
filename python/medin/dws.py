@@ -221,12 +221,17 @@ class SummaryResponse(BriefResponse):
     def _processDocument(self, doc):
 
         bboxes = []
-        for extent in doc.Spatial:
-            try:
-                extent = extent.BoundingBox
-                bboxes.append([extent.LimitWest, extent.LimitSouth, extent.LimitEast, extent.LimitNorth])
-            except (AttributeError, IndexError):
-                pass
+        try:
+            extents = doc.Spatial
+        except AttributeError:
+            pass
+        else:
+            for extent in extents:
+                try:
+                    extent = extent.BoundingBox
+                    bboxes.append([extent.LimitWest, extent.LimitSouth, extent.LimitEast, extent.LimitNorth])
+                except (AttributeError, IndexError):
+                    pass
 
         ret = super(SummaryResponse, self)._processDocument(doc)
         ret['bbox'] = bboxes
