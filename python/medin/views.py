@@ -929,7 +929,7 @@ class MetadataHTML(Metadata):
         if metadata.additional_info:
             metadata.additional_info = self.urlify(metadata.additional_info)
 
-        custodians = [contact.organisation for contact in metadata.responsible_party.getContactsForRole('custodian')]
+        custodians = [contact.organisation or contact.name for contact in metadata.responsible_party.getContactsForRole('custodian') if contact and (contact.organisation or contact.name)]
 
         tvars = dict(metadata=metadata,
                      criteria=criteria,
