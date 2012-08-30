@@ -219,6 +219,8 @@ class ObfuscateEmails(object):
     _email_pattern = re.compile(r"""((mailto:)?[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*\.[a-zA-Z]+)""")
 
     def __call__(self, text):
+        if not text:
+            return text
         return self._email_pattern.sub(lambda x: ''.join(['&#' + hex(ord(i))[1:] + ';' for i in x.group()]), text);
 
 # The WSGI Applications
