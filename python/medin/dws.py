@@ -379,7 +379,9 @@ class SearchRequest(Request):
         aid = query.getArea(cast=False)
         boxes = []
         if aid:
-            boxes.append(query.areas.getBBOX(aid))
+            bbox = query.areas.getBBOX(aid)
+            if bbox:
+                boxes.append(bbox)
         else:
             boxes.extend(query.getBoxes())
 
