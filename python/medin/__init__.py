@@ -418,7 +418,7 @@ def wsgi_app():
 
     # create the app to return the required formats
     app = TemplateChooser(default_template)
-    view = views.SOAPRequest(config(views.HTMLResults()))
+    view = config(views.SOAPRequest(views.HTMLResults()))
     app.addContentTypes(view, 'light', light_types, light_default)
     app.addContentTypes(view, 'full', full_types)
     rss = views.SOAPRequest(views.RSSResults())
