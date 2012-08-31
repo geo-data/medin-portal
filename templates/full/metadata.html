@@ -62,14 +62,14 @@
 </%def>\
 
 <%def name="format_date(date)">\
-% if isinstance(date, Year):
+% if date.year < 1900:
+${date.isoformat()}\
+% elif isinstance(date, Year):
 ${date.strftime('%Y')}\
 % elif isinstance(date, YearMonth):
 ${date.strftime('%B %Y')}\
-% elif date.year >= 1900:
-${date.strftime('%A %d %B %Y')}\
 % else:
-${date.isoformat()}\
+${date.strftime('%A %d %B %Y')}\
 % endif
 </%def>\
 
