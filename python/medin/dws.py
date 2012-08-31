@@ -530,6 +530,7 @@ class MetadataRequest(Request):
                                  [simpledoc],
                                  retrieve)
         self.gid = gid
+        self.logger = logger
         return self.caller
 
     def __call__(self):
@@ -542,7 +543,7 @@ class MetadataRequest(Request):
 
         if not response:
             msg = 'Data could not be retrieved as the Discovery Web Service failed'
-            logger.error(msg + ': %s' % response.message)
+            self.logger.error(msg + ': %s' % response.message)
             raise DWSError(msg)
 
         return response
@@ -570,5 +571,5 @@ class MedinMetadataRequest(MetadataRequest):
             return Parser(self.gid, xml, self.areas, self.vocab)
         except ValueError, e:
             msg = 'The metadata does not appear to be valid'
-            logger.exception(msg)
+            self.logger.exception(msg)
             raise DWSError(msg)
