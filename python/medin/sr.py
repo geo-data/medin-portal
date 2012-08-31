@@ -37,6 +37,8 @@ def resolve(code):
         return _registry[code]
     except TypeError:
         pass
+    except KeyError:
+        return None
 
     path = os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir, 'data', 'epsg-registry.sqlite')
     engine = create_engine('sqlite:///%s' % path)
