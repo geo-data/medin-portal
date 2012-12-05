@@ -1102,7 +1102,7 @@ class Parser(object):
             self.xpath.setContextNode(node)
             try:
                 key = self.xpath.xpathEval('./gmd:name/gco:CharacterString')[0].content.strip()
-            except KeyError:
+            except IndexError:
                 continue
 
             # only continue if the format is not empty
