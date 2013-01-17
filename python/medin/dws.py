@@ -201,7 +201,11 @@ class BriefResponse(SearchResponse):
             return []
 
         i = doc.AdditionalInformation
-        updated = datetime.strptime(i.DatasetUpdateDate, '%Y-%m-%d %H:%M:%S.%f')
+        if i.DatasetUpdateDate:
+            updated = datetime.strptime(i.DatasetUpdateDate, '%Y-%m-%d %H:%M:%S.%f')
+        else:
+            updated = datetime.utcnow() # only happens with bad DWS responses
+
         return {'id': doc.DocumentId,
                 'title': doc.Title,
                 'updated': updated,
