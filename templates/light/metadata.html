@@ -313,7 +313,7 @@ ${format_crs(crs)}
 
 <!-- Element 3 -->
 <h2>Abstract</h2>
-<p>${metadata.abstract}</p>
+<p>${metadata.abstract | x}</p>
 
 <p><strong>Data holder:</strong> ${', '.join(custodians) or 'Unknown'}</p>
 
@@ -379,7 +379,7 @@ ${format_crs(crs)}
 <!-- Element 3 -->
 <h3>Abstract</h3>
 <%self:output_element element="${metadata.abstract}">
-<p>${metadata.abstract}</p>
+<p>${metadata.abstract | x}</p>
 </%self:output_element>
 % endif\
 
