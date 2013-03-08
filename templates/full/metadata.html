@@ -338,7 +338,7 @@ ${format_crs(crs)}
 
   % if len(bboxes) > 1:
   <a
-  href="${script_root}/full/catalogue?${'&amp;'.join(['bbox='+','.join(bbox) for bbox in bboxes])}"
+  href="${script_root}/full/catalogue?${'&amp;'.join(['bbox='+','.join(map(str, bbox)) for bbox in bboxes])}"
   title="Area search for metadata">Search</a> for all areas listed above.
   % endif
 </%def>\
