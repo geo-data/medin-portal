@@ -1194,6 +1194,30 @@ def query_criteria(environ, start_response):
     start_response('200 OK', headers)
     return [json]
 
+def sub_themes(environ, start_response):
+    from json import dumps as tojson
+
+    broader = 'http://vocab.nerc.ac.uk/collection/P23/current/' + environ['selector.vars']['broader']
+    vocab = get_vocab(environ)
+    themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P03/current', broader)]
+    json = tojson(themes)
+
+    # need to add caching
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [json]
+
+def parameters(environ, start_response):
+    from json import dumps as tojson
+
+    broader = 'http://vocab.nerc.ac.uk/collection/P03/current/' + environ['selector.vars']['broader']
+    vocab = get_vocab(environ)
+    themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P02/current', broader)]
+    json = tojson(themes)
+
+    # need to add caching
+    start_response('200 OK', [('Content-Type', 'application/json')])
+    return [json]
+
 class SOAPRequest(object):
     """
     WSGI Middleware to output SOAP requests for SOAP apps

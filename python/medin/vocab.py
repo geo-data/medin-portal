@@ -60,3 +60,20 @@ class Vocabularies(Mapping):
             .join(skos.Concept.collections)\
             .filter(skos.Collection.uri == collection)\
             .filter(skos.Concept.prefLabel.ilike(term)).first()
+
+    def getConceptsFromCollection(self, collection):
+        """
+        Retrieve all concepts from a particular collection
+        """
+
+        return self.session.query(skos.Concept).join(skos.Concept.collections).filter(skos.Collection.uri == collection).order_by(skos.Concept.prefLabel).all()
+
+    def getConceptsHavingBroader(self, source_collection, broader_member):
+        """
+        Retrieve all concepts from a collection having a particular broader member
+        """
+
+        # this could probably be generated from one SQL/ORM query
+        for concept in self.getConceptsFromCollection(source_collection):
+            if broader_member in concept.broader:
+                yield concept

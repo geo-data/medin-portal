@@ -400,6 +400,10 @@ def wsgi_app():
     # the OpenSearch Description document
     application.add('/opensearch/catalogue/{template}.xml', GET=views.OpenSearch())
 
+    # the API for retrieving vocabulary related information
+    application.add('/{template}/vocabs/sub-themes/{broader:any}', GET=views.sub_themes)
+    application.add('/{template}/vocabs/parameters/{broader:any}', GET=views.parameters)
+
     # the default entry point for the search
     app = TemplateChooser(default_template)
     view = views.SOAPRequest(config(views.Search()))
@@ -408,7 +412,7 @@ def wsgi_app():
     application.add('/{template}[/]',
                     GET=app,
                     POST=config(views.Comment(app)))
-
+    
     # the API for analysing search criteria passed in via GET parameters
     application.add('/{template}/query.json', GET=views.query_criteria)
 
