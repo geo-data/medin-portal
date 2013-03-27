@@ -78,9 +78,9 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens, skip_errors=True):
+    def __call__(self, tokens, parameters, skip_errors=True):
         # If there aren't any tokens we need to do a full text search
-        if not tokens:
+        if not tokens and not parameters:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.TermTarget = 'FullText'
             return [term]
@@ -117,6 +117,18 @@ class TermBuilder(object):
 
             term._id = i+1
             term._operator = op
+            terms.append(term)
+
+        # add parameters to the search terms
+        if parameters:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(['""%s""' % param for param in parameters]) # `OR` query
+            term.TermTarget = self.targets['p']
+            if terms:
+                term._op = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
             terms.append(term)
 
         return terms
@@ -346,8 +358,8 @@ class SearchRequest(Request):
             raise ValueError('Unknown result type: %s' % str(result_type))
 
         count = query.getCount()
-        search_term = query.getSearchTerm(skip_errors=True)
-
+        search_term = query.getSearchTerm(default=[], skip_errors=True)
+        
         # do a sanity check on the start index
         if query.getStartIndex() < (1 - count):
             query.setStartIndex(1)
@@ -375,8 +387,9 @@ class SearchRequest(Request):
         search = self.client.factory.create('ns0:SearchCriteria')
 
         # add the terms
+        parameters = query.getParameters()
         term_parser = TermBuilder(self.client)
-        terms = term_parser(search_term)
+        terms = term_parser(search_term, parameters)
         search.TermSearch.extend(terms)
 
         # add the spatial criteria

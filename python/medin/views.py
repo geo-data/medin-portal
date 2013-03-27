@@ -113,7 +113,7 @@ def get_query(environ, from_referrer=False):
                 qsl = ''
 
     fields = ('updated', 'originator', 'title')
-    return Query(qsl, get_areas(environ), fields)
+    return Query(qsl, get_areas(environ), fields, get_vocab(environ))
 
 def get_areas(environ):
     """
@@ -395,8 +395,11 @@ class Search(MakoApp):
                     'progress-areas': areas.chartingProgressAreas(),
                     'ices-rectangles': areas.icesRectangles()}
 
+        # get the data themes for the dropdown
+        data_themes = vocab.getDataThemeIds()
+        selected_data_themes = [theme[0] for theme in criteria['data_themes']]
+
         # get the vocabulary lists
-        params = vocab['http://vocab.nerc.ac.uk/collection/P02/current']
         formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
         resources = vocab['medin-resource-types.xml']
         access = vocab['medin-access-types.xml']
@@ -411,10 +414,11 @@ class Search(MakoApp):
                    area=area,
                    area_type=area_type,
                    area_ids=area_ids,
-                   parameters=params,
                    data_formats=formats,
                    resource_types=resources,
                    access_types=access,
+                   data_themes=data_themes,
+                   selected_data_themes=selected_data_themes,
                    bboxes=bboxes)
 
         headers = [('Etag', etag), # propagate the result update time to the HTTP layer
@@ -1202,8 +1206,9 @@ def sub_themes(environ, start_response):
     themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P03/current', broader)]
     json = tojson(themes)
 
-    # need to add caching
-    start_response('200 OK', [('Content-Type', 'application/json')])
+    headers = [('Cache-Control', 'max-age=3600, must-revalidate'),
+               ('Content-Type', 'application/json')]
+    start_response('200 OK', headers)
     return [json]
 
 def parameters(environ, start_response):
@@ -1214,8 +1219,9 @@ def parameters(environ, start_response):
     themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P02/current', broader)]
     json = tojson(themes)
 
-    # need to add caching
-    start_response('200 OK', [('Content-Type', 'application/json')])
+    headers = [('Cache-Control', 'max-age=3600, must-revalidate'),
+               ('Content-Type', 'application/json')]
+    start_response('200 OK', headers)
     return [json]
 
 class SOAPRequest(object):

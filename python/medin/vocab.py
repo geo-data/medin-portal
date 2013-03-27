@@ -27,7 +27,7 @@ An interface to the portal vocabularies
 """
 
 import skos
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from collections import Mapping
 
@@ -61,19 +61,72 @@ class Vocabularies(Mapping):
             .filter(skos.Collection.uri == collection)\
             .filter(skos.Concept.prefLabel.ilike(term)).first()
 
-    def getConceptsFromCollection(self, collection):
-        """
-        Retrieve all concepts from a particular collection
-        """
-
-        return self.session.query(skos.Concept).join(skos.Concept.collections).filter(skos.Collection.uri == collection).order_by(skos.Concept.prefLabel).all()
-
     def getConceptsHavingBroader(self, source_collection, broader_member):
         """
         Retrieve all concepts from a collection having a particular broader member
         """
 
-        # this could probably be generated from one SQL/ORM query
-        for concept in self.getConceptsFromCollection(source_collection):
-            if broader_member in concept.broader:
-                yield concept
+        sql = """SELECT o.*
+FROM object o,
+     concept c1,
+     concepts2collections c2c1,
+     concept_broader cb1
+WHERE o.uri = c1.uri
+AND c1.uri = c2c1.concept_uri
+AND c2c1.collection_uri = ?
+AND c1.uri = cb1.narrower_uri
+AND cb1.broader_uri = ?
+ORDER BY c1.prefLabel"""
+        conn = self.session.connection()
+        result = conn.execute(sql, [source_collection, broader_member])
+        for concept in self.session.query(skos.Concept).instances(result):
+            yield concept
+
+    def getDataThemeIds(self):
+        concepts = self['http://vocab.nerc.ac.uk/collection/P23/current'].members.values()
+        concepts.sort(cmp=lambda a, b: cmp(a.prefLabel, b.prefLabel))
+        return self.getIdsFromConcepts(concepts)
+
+    def getDataThemesFromIds(self, ids):
+        filt = or_()
+        for id_ in ids:
+            filt.append(skos.Concept.uri.ilike('%%/%s' % id_))
+
+        return self.session.query(skos.Concept)\
+            .join(skos.Concept.collections)\
+            .filter(skos.Collection.uri == 'http://vocab.nerc.ac.uk/collection/P23/current')\
+            .filter(filt).all()
+
+    def getIdsFromConcepts(self, concepts):
+        return [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in concepts]
+
+    def getParametersFromDataThemeIds(self, ids):
+        sql = """SELECT c1.prefLabel
+FROM concept c1,
+     concepts2collections c2c1,
+     concept c2,
+     concepts2collections c2c2,
+     concept_broader cb1,
+     concept c3,
+     concepts2collections c2c3,
+     concept_broader cb2
+WHERE c1.uri = c2c1.concept_uri
+AND c2c1.collection_uri = 'http://vocab.nerc.ac.uk/collection/P02/current'
+
+AND c2.uri = c2c2.concept_uri
+AND c2c2.collection_uri = 'http://vocab.nerc.ac.uk/collection/P03/current'
+
+AND c1.uri = cb1.narrower_uri
+AND c2.uri = cb1.broader_uri
+
+AND c3.uri = c2c3.concept_uri
+AND c2c3.collection_uri = 'http://vocab.nerc.ac.uk/collection/P23/current'
+
+AND c2.uri = cb2.narrower_uri
+AND c3.uri = cb2.broader_uri
+
+AND c3.uri IN (%s)""" % ','.join('?' * len(ids))
+        conn = self.session.connection()
+        params = ['http://vocab.nerc.ac.uk/collection/P23/current/%s' % id_ for id_ in ids]
+        for row in conn.execute(sql, params):
+            yield row[0]

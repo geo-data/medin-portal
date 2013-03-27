@@ -69,6 +69,10 @@
         div.text-right {
             text-align: right;
         }
+        img.loader {
+            vertical-align: middle;
+            margin: 0.5em;
+        }
     </style>
     <script type="text/javascript" src="/js/jquery.iclick.js"></script>
     <script type="text/javascript" src="/js/jquery.alignwith.js"></script>
@@ -109,7 +113,7 @@ $(function() {
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
-    $('#search-form input[type=text]:not(#bbox, #search-term)').change(function() {
+    $('#search-form input[type=text]:not(#bbox)').change(function() {
         check_query();
     });
 });
@@ -189,68 +193,97 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
   <fieldset id="text-search">
     <legend><a href="javascript:toggle_fieldset('text-search')" title="Show or hide the text search">Search term</a></legend>
     <div class="content">
-      <div><label for="search-term">Type your search terms below, using the pop-up menus to query specific metadata fields.</label></div>
-      <input id="search-term" type="text" name="q" size="30"\
+      <div><label for="search-term">Free text search</label></div>
+      <input id="search-term" type="text" name="q"\
       %if search_term:
  value="${search_term | x}"\
       %endif
-/> <input type="submit" value="search"/> (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">Advanced search</a>)
-      <div>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</div>
-      <div id="advanced-search" style="display:none">
-      <h3>Advanced search</h3>
-      <p>Words typed in 'as is' will result in a full text search that
-      requires all words to be present in the results.</p>      
-      <blockquote>
-        <div>
-          <p><strong>Example</strong>: type the following to find all
-          documents containing the words <kbd>acoustic</kbd>
-          <strong>and</strong> <kbd>currents</kbd>
-          <strong>and</strong> <kbd>sediment</kbd>:</p>
-        </div>
-        <div class="example"><kbd>acoustic currents sediment</kbd></div>
-      </blockquote>
+/>
+      <input type="submit" value="search"/>
+      <span>Leave blank to match everything. (<a href="javascript:toggle('search-term-help', 'help', 'hide help')" id="search-term-help-link" title="Show or hide the help">help</a>)</span>
 
-      <p>Phrases can be specified as search terms by wrapping them in double quotes.</p>      
-      <blockquote>
-        <div>
-          <p><strong>Example</strong>: type the following to find all
-          documents containing the phrases <kbd>offshore wind</kbd>
-          <strong>and</strong> <kbd>bird survey</kbd>:</p>
-        </div>
-        <div class="example"><kbd>"offshore wind" "bird survey"</kbd></div>
-      </blockquote>
-      
-      <p>Search terms can be excluded from result matches using the
-      <strong>minus sign</strong> (<strong>-</strong>).</p>
-      <blockquote>
-        <div>
-          <p><strong>Example</strong>: type the following to find all
-          documents that contain <kbd>currents</kbd> but
-          <strong>not</strong> <kbd>acoustic</kbd> <strong>or</strong>
-          <kbd>sediment</kbd>:</p>
-        </div>
-        <div class="example"><kbd><strong>-</strong>acoustic currents <strong>-</strong>sediment</kbd></div>
-      </blockquote>
-      
-      <p>Instead of finding all matching terms, alternative matches can
-      be specified using the word <strong>OR</strong>
-      (in capitals)</p>
-      <blockquote>
-        <div>
-          <p><strong>Example</strong>: type the following to find
-          all documents that contain <kbd>sediment</kbd> and
-          <strong>either</strong> <kbd>acoustic</kbd>
-          <strong>or</strong> <kbd>currents</kbd>:</p>
-        </div>
-        <div class="example"><kbd>acoustic <strong>OR</strong> currents sediment</kbd></div>
-      </blockquote>
-      
-      <p>As well as running full text searches, more specific search
-      targets can be specified by prefixing search terms with a target
-      identifier.  Available target identifiers and how they relate to
-      search fields are as follows:</p>
-      
-      <table class="help" summary="Available target identifiers" style="margin-left:1.5em">
+      <div id="search-term-help" style="display:none">
+        <h3>Search help</h3>
+        <p>The interface allows the user to search specific metadata fields. The following explains the fields.</p>
+	<table class="help" summary="Target field definitions">
+          <tbody>
+	    <tr>
+	      <td>Parameter</td>
+	      <td>parameters are those in the <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP021%2Fcurrent&amp;earliestRecord=&amp;submit=submit">BODC Parameter Discovery Vocabulary (P021) list</a> and are terms describing fine-grained related groups of measurements. <a href="http://seadatanet.maris2.nl/v_bodc_vocab/vocabrelations.aspx">This</a> is a user friendly interface showing the relationship between list P021 and other parameter lists P081 and P031.</td>
+            </tr>
+            <tr>
+              <td>Resource type</td>
+              <td>describes the nature of the information, for example, dataset, service, series, model, feature or software. All terms can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
+            </tr>
+            <tr>
+              <td>Public access limits</td>
+              <td>describes restrictions imposed on the resource. All terms are selected from a controlled vocabulary that can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
+            </tr>
+            <tr>
+              <td>Data originator</td>
+              <td>free text field to search for the person or organisation that created the resource.</td>
+            </tr>
+            <tr>
+              <td>Data format</td>
+              <td>describes the formats in which digital data can be provided for example, database, image or GIS. This list is <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FM010%2Fcurrent&amp;earliestRecord=&amp;submit=submit">MEDIN controlled vocabulary M010</a>.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Advanced search</h3>
+        <p>Words typed in 'as is' will result in a full text search that
+          requires all words to be present in the results.</p>      
+        <blockquote>
+          <div>
+            <p><strong>Example</strong>: type the following to find all
+              documents containing the words <kbd>acoustic</kbd>
+              <strong>and</strong> <kbd>currents</kbd>
+              <strong>and</strong> <kbd>sediment</kbd>:</p>
+          </div>
+          <div class="example"><kbd>acoustic currents sediment</kbd></div>
+        </blockquote>
+
+        <p>Phrases can be specified as search terms by wrapping them in double quotes.</p>      
+        <blockquote>
+          <div>
+            <p><strong>Example</strong>: type the following to find all
+              documents containing the phrases <kbd>offshore wind</kbd>
+              <strong>and</strong> <kbd>bird survey</kbd>:</p>
+          </div>
+          <div class="example"><kbd>"offshore wind" "bird survey"</kbd></div>
+        </blockquote>
+        
+        <p>Search terms can be excluded from result matches using the
+          <strong>minus sign</strong> (<strong>-</strong>).</p>
+        <blockquote>
+          <div>
+            <p><strong>Example</strong>: type the following to find all
+              documents that contain <kbd>currents</kbd> but
+              <strong>not</strong> <kbd>acoustic</kbd> <strong>or</strong>
+              <kbd>sediment</kbd>:</p>
+          </div>
+          <div class="example"><kbd><strong>-</strong>acoustic currents <strong>-</strong>sediment</kbd></div>
+        </blockquote>
+        
+        <p>Instead of finding all matching terms, alternative matches can
+          be specified using the word <strong>OR</strong>
+          (in capitals)</p>
+        <blockquote>
+          <div>
+            <p><strong>Example</strong>: type the following to find
+              all documents that contain <kbd>sediment</kbd> and
+              <strong>either</strong> <kbd>acoustic</kbd>
+              <strong>or</strong> <kbd>currents</kbd>:</p>
+          </div>
+          <div class="example"><kbd>acoustic <strong>OR</strong> currents sediment</kbd></div>
+        </blockquote>
+        
+        <p>As well as running full text searches, more specific search
+          targets can be specified by prefixing search terms with a target
+          identifier.  Available target identifiers and how they relate to
+          search fields are as follows:</p>
+        
+        <table class="help" summary="Available target identifiers" style="margin-left:1.5em">
           <tbody>
             <tr>
               <td>p</td><td>= Parameter</td>
@@ -268,51 +301,60 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
               <td>f</td><td>= Data format</td>
             </tr>
           </tbody>
-      </table>
+        </table>
+        
+        <p>The identifier is separated from the search term using a
+          <strong>colon</strong> (<strong>:</strong>)</p>
+        <blockquote>
+          <div>
+            <p><strong>Example</strong>: type the following to find all
+              documents that contain <kbd>acoustic</kbd> that also have
+              a <strong>data format</strong> suitable for Geographic
+              Information Systems and a <strong>parameter</strong>
+              containing <kbd>sediment</kbd>:</p>
+          </div>
+          <div class="example"><kbd>acoustic <strong>f:</strong>"Geographic Information System"<strong> p:</strong>sediment</kbd></div>
+        </blockquote>
+      </div>
       
-      <p>The identifier is separated from the search term using a
-      <strong>colon</strong> (<strong>:</strong>)</p>
-      <blockquote>
+      <div id="data-themes">and/or choose a data theme:
         <div>
-          <p><strong>Example</strong>: type the following to find all
-          documents that contain <kbd>acoustic</kbd> that also have
-          a <strong>data format</strong> suitable for Geographic
-          Information Systems and a <strong>parameter</strong>
-          containing <kbd>sediment</kbd>:</p>
+          <select name="dt">
+            <option value="_all">All</option>
+            %for id, name in data_themes:
+            <option value="${id}"
+                    %if id in selected_data_themes:
+ selected="selected"\
+                    %endif
+>${name | x}</option>
+            %endfor
+          </select>
         </div>
-        <div class="example"><kbd>acoustic <strong>f:</strong>"Geographic Information System"<strong> p:</strong>sediment</kbd></div>
-      </blockquote>
       </div>
 
-      <div id="search-term-help" style="display:none">
-        <h3>Search help</h3>
-        <p>The ‘advanced search’ allows the user to search specific metadata fields. The following explains the targeted field names.</p>
-		<table class="help" summary="Target field definitions">
-          <tbody>
-		  <tr>
-			<td>Parameter</td>
-			<td>parameters are those in the <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP021%2Fcurrent&amp;earliestRecord=&amp;submit=submit">BODC Parameter Discovery Vocabulary (P021) list</a> and are terms describing fine-grained related groups of measurements. <a href="http://seadatanet.maris2.nl/v_bodc_vocab/vocabrelations.aspx">This</a> is a user friendly interface showing the relationship between list P021 and other parameter lists P081 and P031.</td>
-          </tr>
-          <tr>
-            <td>Resource type</td>
-            <td>describes the nature of the information, for example, dataset, service, series, model, feature or software. All terms can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
-          </tr>
-          <tr>
-            <td>Public access limits</td>
-            <td>describes restrictions imposed on the resource. All terms are selected from a controlled vocabulary that can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
-          </tr>
-          <tr>
-            <td>Data originator</td>
-            <td>free text field to search for the person or organisation that created the resource.</td>
-          </tr>
-          <tr>
-            <td>Data format</td>
-            <td>describes the formats in which digital data can be provided for example, database, image or GIS. This list is <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FM010%2Fcurrent&amp;earliestRecord=&amp;submit=submit">MEDIN controlled vocabulary M010</a>.</td>
-          </tr>
-          </tbody>
-        </table>
-	  </div>
-    </div>
+      <div id="sub-themes" style="display:none">
+        <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading sub-themes...</div>
+        <div class="box-off" style="display:none">There are no sub-themes for this selection</div>
+        <div class="box-on">choose a sub theme:
+          <div>
+            <select name="st">
+              <option value="_all">All</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="parameters" style="display:none">
+        <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading parameters...</div>
+        <div class="box-off" style="display:none">There are no parameters for this selection</div>
+        <div class="box-on">choose a parameter:
+          <div>
+            <select name="p">
+              <option value="_all">All</option>
+            </select>
+          </div>
+        </div>
+      </div>
     
     %if sort:
     <input name="s" type="hidden" value="${sort}" />
@@ -491,66 +533,4 @@ ${','.join(map(str, bbox))}\
       <div>Coordinates should use decimal degrees in the format <strong>West,South,East,North</strong>.</div>
     </div>
   </fieldset>
-</form>
-
-<form method="get" action="">
-  <!-- search term controls are in a separate form to stop GET variable namespace pollution -->
-  <div id="search-term-controls" style="display:none;">
-    Search
-    <select name="" id="target-type">
-      <option value="">Choose a metadata field...</option>
-      %if parameters:
-      <option value="p">Parameter</option>
-      %endif
-      <option value="rt">Resource type</option>
-      <option value="al">Public access limits</option>
-      <option value="o">Data originator</option>
-      %if data_formats:
-      <option value="f">Data format</option>
-      %endif
-    </select>
-    <span id="target-controls" style="display:none">
-      for
-      <input type="text" class="target" name="" id="target-o" value=""/>
-      %if parameters:
-      <select class="target" name="" id="target-p">
-        <option value="">Choose a parameter...</option>
-        %for parameter in parameters.members.itervalues():
-        <option title="${(parameter.definition or parameter.prefLabel) | x}" value="${parameter.prefLabel | q,x}">${parameter.prefLabel | x}</option>
-        %endfor
-      </select>
-      %endif
-      %if resource_types:
-      <select class="target" name="" id="target-rt">
-        <option value="">Choose a resource type...</option>
-        %for rtype in resource_types.members.itervalues():
-        <option title="${(rtype.definition or rtype.prefLabel) | x}" value="${rtype.prefLabel | q,x}">${rtype.prefLabel | x}</option>
-        %endfor
-      </select>
-      %endif
-      %if access_types:
-      <select class="target" name="" id="target-al">
-        <option value="">Choose an access type...</option>
-        %for atype in access_types.members.itervalues():
-        <option title="${(atype.definition or atype.prefLabel) | x}" value="${atype.prefLabel | q,x}">${atype.prefLabel | x}</option>
-        %endfor
-      </select>
-      %endif
-      %if data_formats:
-      <select class="target" name="" id="target-f">
-        <option value="">Choose a data format...</option>
-        %for format in data_formats.members.itervalues():
-        <option title="${(format.definition or format.prefLabel) | x}" value="${format.prefLabel | q,x}">${format.prefLabel | x}</option>
-        %endfor
-      </select>
-      %endif
-    </span> (<a href="javascript:toggle('search-controls-help', 'help', 'hide help')" id="search-controls-help-link" title="Show or hide the help">help</a>)
-    <div id="search-controls-help" style="display:none">
-      <ul>
-        <li>Use these dropdown lists to create search terms for specific metadata fields.</li>
-        <li>Once selected <strong>exclude terms</strong> by prefixing them with a <strong>minus sign</strong> (<strong>-</strong>).</li>
-        <li>Create <strong>alternative searches</strong> by separating search terms with the word <strong>OR</strong> (in capitals).</li>
-      </ul>
-    </div>
-  </div>
 </form>

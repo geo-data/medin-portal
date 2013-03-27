@@ -75,11 +75,12 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    def __init__(self, qsl, areas, fields, max_count=300, *args, **kwargs):
+    def __init__(self, qsl, areas, fields, vocabs, max_count=300, *args, **kwargs):
         super(Query, self).__init__(qsl, *args, **kwargs)
         self.raise_errors = False
         self.areas = areas
         self.fields = fields
+        self.vocabs = vocabs
         self.max_count = max_count
 
         # join multiple search terms into a single term
@@ -145,7 +146,7 @@ class Query(GETParams):
                 self.getArea()
             except QueryError, e:
                 errors.append(str(e))
-                
+
         finally:
             self.raise_errors = errsetting
             
@@ -258,6 +259,23 @@ class Query(GETParams):
 
     def setBoxes(self, bboxes):
         self['bbox'] = [','.join((str(i) for i in box)) for box in bboxes]
+
+    def getDataThemes(self, cast=True, default=''):
+        try:
+            themes = self['dt']
+        except KeyError, AttributeError:
+            return default
+
+        if not cast:
+            return themes
+
+        return self.vocabs.getDataThemesFromIds(themes)
+
+    def setDataThemes(self, themes):
+        self['dt'] = self.vocabs.getIdsFromConcepts(themes)
+
+    def getParameters(self):
+        return self.vocabs.getParametersFromDataThemeIds(self.getDataThemes(cast=False))
 
     def getSort(self, cast=True, default=''):
         try:
@@ -402,6 +420,9 @@ class Query(GETParams):
         a['bbox'] = bboxes
         a['area'] = self.getArea(default=None)
 
+        # add the data themes
+        a['data_themes'] = self.vocabs.getIdsFromConcepts(self.getDataThemes(default=[]))
+
         return a
 
 class TargetError(QueryError):
@@ -487,7 +508,6 @@ class TermParser(object):
                 msg = 'The following targets in the search term are not recognised: %s' % ', '.join(bad_targets)
             raise TargetError('%s. Please choose one of: %s' % (msg, targets))
 
-            
         return tokens
 
 class TermAnalyser(object):

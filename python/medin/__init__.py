@@ -401,8 +401,8 @@ def wsgi_app():
     application.add('/opensearch/catalogue/{template}.xml', GET=views.OpenSearch())
 
     # the API for retrieving vocabulary related information
-    application.add('/{template}/vocabs/sub-themes/{broader:any}', GET=views.sub_themes)
-    application.add('/{template}/vocabs/parameters/{broader:any}', GET=views.parameters)
+    application.add('/{template}/vocabs/sub-themes/{broader:word}', GET=views.sub_themes)
+    application.add('/{template}/vocabs/parameters/{broader:word}', GET=views.parameters)
 
     # the default entry point for the search
     app = TemplateChooser(default_template)

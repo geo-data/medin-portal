@@ -32,7 +32,7 @@ def format_northing(northing):
 <%def name="search_criteria()">\
     <h3>You are searching for...</h3>
     <span id="criteria-term">
-    %if not criteria['terms'] and not criteria['dates'] and not criteria['area'] and not criteria['bbox']:
+    %if not criteria['terms'] and not criteria['dates'] and not criteria['area'] and not criteria['bbox'] and not criteria['data_themes']:
       <strong>everything</strong> in the catalogue.
     %elif not criteria['terms']:
       <strong>everything</strong>
@@ -50,7 +50,18 @@ def format_northing(northing):
       (<span class="error">ignoring unknown target <strong>${term['target'][0]}</strong></span>)
       %endif
     %endfor
-    </span><span id="criteria-date">
+    %if criteria['data_themes']:
+      <span> with any parameters matching the data 
+        %if len(criteria['data_themes']) > 1:
+        themes
+        %else:
+        theme
+        %endif
+      </span>
+      <span> ${' or '.join(['<kbd>%s</kbd>' % theme[1] for theme in criteria['data_themes']])} </span>
+    %endif
+    </span>
+    <span id="criteria-date">
     %if 'start' in criteria['dates'] and 'end' in criteria['dates']:
       between <strong>${criteria['dates']['start']}</strong> and <strong>${criteria['dates']['end']}</strong>
     %elif 'start' in criteria['dates']:
