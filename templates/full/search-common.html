@@ -46,9 +46,10 @@ theme_key = None
     criteria['bbox'] and not\
     criteria['data_themes'] and not\
     criteria['sub_themes'] and not\
-    criteria['data_holders']:
+    criteria['data_holders'] and not\
+    criteria['access_types']:
       <strong>everything</strong> in the catalogue.
-    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes'] and not criteria['data_holders']:
+    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes'] and not criteria['data_holders'] and not criteria['access_types']:
       <strong>everything</strong>
     %else:
       documents
@@ -89,6 +90,13 @@ s
         held by ${' or '.join(['<kbd>%s</kbd>' % holder[1] for holder in criteria['data_holders']])}
       </span>
       %endif
+
+      %if criteria['access_types']:
+      <span>
+        having the access type ${' or '.join(['<kbd>%s</kbd>' % type_[1] for type_ in criteria['access_types']])}
+      </span>
+      %endif
+
     </span>
     <span id="criteria-date">
     %if 'start' in criteria['dates'] and 'end' in criteria['dates']:

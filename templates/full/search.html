@@ -395,14 +395,14 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
       </div>
       <br/>
     (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">
-        %if selected_data_holders:
+        %if selected_data_holders or selected_access_types:
         Hide the advanced search
         %else:
         Advanced search
         %endif
       </a>)
       <div id="advanced-search"
-           %if not selected_data_holders:
+           %if not selected_data_holders and not selected_access_types:
            style="display:none"
            %endif
            >
@@ -421,6 +421,22 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
             </select>
           </div>
         </div>
+
+        <div>Choose a data access type:
+          <div>
+            <select class="checkable" name="at">
+              <option value="">All</option>
+              %for id, name in access_types:
+              <option value="${id}"
+                      %if id in selected_access_types:
+                      selected="selected"\
+                      %endif
+                      >${name | x}</option>
+              %endfor
+            </select>
+          </div>
+        </div>
+
       </div>
 
     %if sort:

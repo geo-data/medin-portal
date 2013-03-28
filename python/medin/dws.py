@@ -78,13 +78,7 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens, parameters, data_holders, skip_errors=True):
-        # If there aren't any tokens we need to do a full text search
-        if not tokens and not parameters and not data_holders:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.TermTarget = 'FullText'
-            return [term]
-
+    def __call__(self, tokens, parameters, data_holders, access_types, skip_errors=True):
         # Create the termSearch objects from the tokens
         terms = []
         for i, token in enumerate(tokens):
@@ -141,6 +135,24 @@ class TermBuilder(object):
                 term._id = len(terms) + 1
             else:
                 term._id = 1
+            terms.append(term)
+
+        # add access types to the search terms
+        if access_types:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(['""%s""' % type_.prefLabel for type_ in access_types]) # `OR` query
+            term.TermTarget = self.targets['al']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # If there aren't any tokens we need to do a full text search
+        if not terms:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.TermTarget = 'FullText'
             terms.append(term)
 
         return terms
@@ -401,8 +413,9 @@ class SearchRequest(Request):
         # add the terms
         parameters = query.getParameterLabels()
         data_holders = query.getDataHolders(default=[])
+        access_types = query.getAccessTypes(default=[])
         term_parser = TermBuilder(self.client)
-        terms = term_parser(search_term, parameters, data_holders)
+        terms = term_parser(search_term, parameters, data_holders, access_types)
         search.TermSearch.extend(terms)
 
         # add the spatial criteria

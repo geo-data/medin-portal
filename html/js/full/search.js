@@ -337,14 +337,16 @@ function check_query() {
                     !criteria['data_themes'].length &&
                     !criteria['sub_themes'].length &&
                     !criteria['parameters'].length &&
-                    !criteria['data_holders'].length) {
+                    !criteria['data_holders'].length &&
+                    !criteria['access_types'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
                 } else if (!criteria['terms'].length &&
                            !criteria['data_themes'].length &&
                            !criteria['sub_themes'].length &&
                            !criteria['parameters'].length &&
-                           !criteria['data_holders'].length)
+                           !criteria['data_holders'].length &&
+                           !criteria['access_types'].length)
                     term.append('<strong>everything</strong>');
                 else
                     term.append('<span>documents ' + (criteria['terms'].length ? ' containing' : '') + '</span>');
@@ -393,6 +395,14 @@ function check_query() {
                         holders.push('<kbd>' + criteria['data_holders'][i][1] + '</kbd>');
                     }
                     term.append('<span> ' + ((theme_key) ? ' and' : '') + ' held by ' + holders.join(' or ') + ' </span>');
+                }
+
+                if (criteria['access_types'].length) {
+                    var types = [];
+                    for (i = 0; i < criteria['access_types'].length; i++) {
+                        types.push('<kbd>' + criteria['access_types'][i][1] + '</kbd>');
+                    }
+                    term.append('<span> having the access type ' + types.join(' or ') + ' </span>');
                 }
 
                 if (criteria['dates'].start && criteria['dates'].end)

@@ -93,15 +93,21 @@ ORDER BY c1.prefLabel"""
     def getDataThemeIds(self):
         return self.getMemberIdsFromCollection('http://vocab.nerc.ac.uk/collection/P23/current')
 
+    def getAccessTypeIds(self):
+        return self.getIdsFromConcepts(self['medin-access-types.xml'].members.values())
+
+    def getAccessTypesFromIds(self, ids):
+        return self.getConceptsFromIds(ids, 'medin-access-types.xml', '%s')
+    
     def getMemberIdsFromCollection(self, uri):
         concepts = self[uri].members.values()
         concepts.sort(cmp=lambda a, b: cmp(a.prefLabel, b.prefLabel))
         return self.getIdsFromConcepts(concepts)
 
-    def getConceptsFromIds(self, ids, collection_uri):
+    def getConceptsFromIds(self, ids, collection_uri, ilike='%%/%s'):
         filt = or_()
         for id_ in ids:
-            filt.append(skos.Concept.uri.ilike('%%/%s' % id_))
+            filt.append(skos.Concept.uri.ilike(ilike % id_))
 
         return self.session.query(skos.Concept)\
             .join(skos.Concept.collections)\

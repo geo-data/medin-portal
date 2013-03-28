@@ -424,7 +424,10 @@ class Search(MakoApp):
 
         # get the vocabulary lists
         formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
-        access = vocab['medin-access-types.xml']
+
+        # get the access types
+        access = vocab.getAccessTypeIds()
+        selected_access_types = set([item[0] for item in criteria['access_types']])
 
         # get the data holders
         data_holders = db.getDataHolders()
@@ -442,6 +445,7 @@ class Search(MakoApp):
                    area_ids=area_ids,
                    data_formats=formats,
                    access_types=access,
+                   selected_access_types=selected_access_types,
                    data_themes=data_themes,
                    selected_data_themes=selected_data_themes,
                    sub_themes=sub_themes,

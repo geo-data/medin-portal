@@ -335,6 +335,20 @@ class Query(GETParams):
 
         return self.db.getDataHoldersFromIds(holders)
 
+    def getAccessTypes(self, cast=True, default=''):
+        try:
+            types = filter(None, self['at'])
+        except KeyError, AttributeError:
+            return default
+
+        if not types:
+            return default
+
+        if not cast:
+            return types
+
+        return self.vocabs.getAccessTypesFromIds(types)
+
     def getSort(self, cast=True, default=''):
         try:
             sort = self['s'][0]
@@ -482,7 +496,10 @@ class Query(GETParams):
         a['data_themes'] = self.vocabs.getIdsFromConcepts(self.getDataThemes(default=[]))
         a['sub_themes'] = self.vocabs.getIdsFromConcepts(self.getSubThemes(default=[]))
         a['parameters'] = self.vocabs.getIdsFromConcepts(self.getParameters(default=[]))
+
+        # add the advanced options
         a['data_holders'] = zip(self.getDataHolders(cast=False, default=[]), self.getDataHolders(default=[]))
+        a['access_types'] = zip(self.getAccessTypes(cast=False, default=[]), [c.prefLabel for c in self.getAccessTypes(default=[])])
 
         return a
 
