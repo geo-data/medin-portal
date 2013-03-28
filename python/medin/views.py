@@ -422,8 +422,9 @@ class Search(MakoApp):
         parameters = list(chain(*[vocab.getParameterIdsForSubThemeId(id_) for id_ in selected_sub_themes]))
         selected_parameters = set([theme[0] for theme in criteria['parameters']])
 
-        # get the vocabulary lists
-        formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
+        # get the data formats
+        data_formats = vocab.getDataFormatIds()
+        selected_data_formats = set([item[0] for item in criteria['data_formats']])
 
         # get the access types
         access = vocab.getAccessTypeIds()
@@ -443,7 +444,8 @@ class Search(MakoApp):
                    area=area,
                    area_type=area_type,
                    area_ids=area_ids,
-                   data_formats=formats,
+                   data_formats=data_formats,
+                   selected_data_formats=selected_data_formats,
                    access_types=access,
                    selected_access_types=selected_access_types,
                    data_themes=data_themes,

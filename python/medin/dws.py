@@ -78,7 +78,7 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens, parameters, data_holders, access_types, skip_errors=True):
+    def __call__(self, tokens, parameters, data_holders, access_types, data_formats, skip_errors=True):
         # Create the termSearch objects from the tokens
         terms = []
         for i, token in enumerate(tokens):
@@ -142,6 +142,18 @@ class TermBuilder(object):
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = ' '.join(['""%s""' % type_.prefLabel for type_ in access_types]) # `OR` query
             term.TermTarget = self.targets['al']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # add data formats to the search terms
+        if data_formats:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(['""%s""' % fmt.prefLabel for fmt in data_formats]) # `OR` query
+            term.TermTarget = self.targets['f']
             if terms:
                 term._operator = 'AND'
                 term._id = len(terms) + 1
@@ -414,8 +426,9 @@ class SearchRequest(Request):
         parameters = query.getParameterLabels()
         data_holders = query.getDataHolders(default=[])
         access_types = query.getAccessTypes(default=[])
+        data_formats = query.getDataFormats(default=[])
         term_parser = TermBuilder(self.client)
-        terms = term_parser(search_term, parameters, data_holders, access_types)
+        terms = term_parser(search_term, parameters, data_holders, access_types, data_formats)
         search.TermSearch.extend(terms)
 
         # add the spatial criteria

@@ -349,6 +349,20 @@ class Query(GETParams):
 
         return self.vocabs.getAccessTypesFromIds(types)
 
+    def getDataFormats(self, cast=True, default=''):
+        try:
+            formats = filter(None, self['f'])
+        except KeyError, AttributeError:
+            return default
+
+        if not formats:
+            return default
+
+        if not cast:
+            return formats
+
+        return self.vocabs.getDataFormatsFromIds(formats)
+
     def getSort(self, cast=True, default=''):
         try:
             sort = self['s'][0]
@@ -500,6 +514,7 @@ class Query(GETParams):
         # add the advanced options
         a['data_holders'] = zip(self.getDataHolders(cast=False, default=[]), self.getDataHolders(default=[]))
         a['access_types'] = zip(self.getAccessTypes(cast=False, default=[]), [c.prefLabel for c in self.getAccessTypes(default=[])])
+        a['data_formats'] = zip(self.getDataFormats(cast=False, default=[]), [c.prefLabel for c in self.getDataFormats(default=[])])
 
         return a
 

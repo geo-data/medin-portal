@@ -93,6 +93,12 @@ ORDER BY c1.prefLabel"""
     def getDataThemeIds(self):
         return self.getMemberIdsFromCollection('http://vocab.nerc.ac.uk/collection/P23/current')
 
+    def getDataFormatIds(self):
+        return self.getIdsFromConcepts(self['http://vocab.nerc.ac.uk/collection/M01/current'].members.values())
+    
+    def getDataFormatsFromIds(self, ids):
+        return self.getConceptsFromIds(ids, 'http://vocab.nerc.ac.uk/collection/M01/current')
+
     def getAccessTypeIds(self):
         return self.getIdsFromConcepts(self['medin-access-types.xml'].members.values())
 

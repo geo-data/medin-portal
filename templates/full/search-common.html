@@ -47,9 +47,10 @@ theme_key = None
     criteria['data_themes'] and not\
     criteria['sub_themes'] and not\
     criteria['data_holders'] and not\
-    criteria['access_types']:
+    criteria['access_types'] and not\
+    criteria['data_formats']:
       <strong>everything</strong> in the catalogue.
-    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes'] and not criteria['data_holders'] and not criteria['access_types']:
+    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes'] and not criteria['data_holders'] and not criteria['access_types'] and not criteria['data_formats']:
       <strong>everything</strong>
     %else:
       documents
@@ -94,6 +95,12 @@ s
       %if criteria['access_types']:
       <span>
         having the access type ${' or '.join(['<kbd>%s</kbd>' % type_[1] for type_ in criteria['access_types']])}
+      </span>
+      %endif
+
+      %if criteria['data_formats']:
+      <span>
+        which have the data format ${' or '.join(['<kbd>%s</kbd>' % fmt[1] for fmt in criteria['data_formats']])}
       </span>
       %endif
 

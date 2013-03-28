@@ -338,7 +338,8 @@ function check_query() {
                     !criteria['sub_themes'].length &&
                     !criteria['parameters'].length &&
                     !criteria['data_holders'].length &&
-                    !criteria['access_types'].length) {
+                    !criteria['access_types'].length &&
+                    !criteria['data_formats'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
                 } else if (!criteria['terms'].length &&
@@ -346,7 +347,8 @@ function check_query() {
                            !criteria['sub_themes'].length &&
                            !criteria['parameters'].length &&
                            !criteria['data_holders'].length &&
-                           !criteria['access_types'].length)
+                           !criteria['access_types'].length &&
+                           !criteria['data_formats'].length)
                     term.append('<strong>everything</strong>');
                 else
                     term.append('<span>documents ' + (criteria['terms'].length ? ' containing' : '') + '</span>');
@@ -403,6 +405,14 @@ function check_query() {
                         types.push('<kbd>' + criteria['access_types'][i][1] + '</kbd>');
                     }
                     term.append('<span> having the access type ' + types.join(' or ') + ' </span>');
+                }
+
+                if (criteria['data_formats'].length) {
+                    var formats = [];
+                    for (i = 0; i < criteria['data_formats'].length; i++) {
+                        formats.push('<kbd>' + criteria['data_formats'][i][1] + '</kbd>');
+                    }
+                    term.append('<span> which have the data format ' + formats.join(' or ') + ' </span>');
                 }
 
                 if (criteria['dates'].start && criteria['dates'].end)
