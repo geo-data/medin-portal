@@ -387,7 +387,7 @@ class SearchRequest(Request):
         search = self.client.factory.create('ns0:SearchCriteria')
 
         # add the terms
-        parameters = query.getParameters()
+        parameters = query.getParameterLabels()
         term_parser = TermBuilder(self.client)
         terms = term_parser(search_term, parameters)
         search.TermSearch.extend(terms)

@@ -32,8 +32,9 @@ def format_northing(northing):
 <%def name="search_criteria()">\
 <%
 theme_labels = {
-   'data_themes': 'with any parameters matching the data theme',
-   'sub_themes': 'with any parameters matching the sub theme'
+   'data_themes': 'any parameters matching the data theme',
+   'sub_themes': 'any parameters matching the sub theme',
+   'parameters': 'the parameter'
 }
 theme_key = None
 %>
@@ -46,7 +47,7 @@ theme_key = None
     criteria['data_themes'] and not\
     criteria['sub_themes']:
       <strong>everything</strong> in the catalogue.
-    %elif not criteria['terms']:
+    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes']:
       <strong>everything</strong>
     %else:
       documents containing 
@@ -63,16 +64,15 @@ theme_key = None
       %endif
     %endfor
     <%
-       if criteria['sub_themes']: theme_key = 'sub_themes'
+       if criteria['parameters']: theme_key = 'parameters'
+       elif criteria['sub_themes']: theme_key = 'sub_themes'
        elif criteria['data_themes']: theme_key = 'data_themes'
     %>\
     %if theme_key:
-      <span> ${theme_labels[theme_key]}
-        %if len(criteria[theme_key]) > 1:
-        themes
-        %else:
-        theme
-        %endif
+      <span> ${theme_labels[theme_key]}\
+%if len(criteria[theme_key]) > 1:
+s
+%endif
       </span>
       <span> ${' or '.join(['<kbd>%s</kbd>' % theme[1] for theme in criteria[theme_key]])} </span>
     %endif

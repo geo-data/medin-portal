@@ -294,7 +294,27 @@ class Query(GETParams):
     def setSubThemes(self, themes):
         self['st'] = self.vocabs.getIdsFromConcepts(themes)
 
-    def getParameters(self):
+    def getParameters(self, cast=True, default=''):
+        try:
+            parameters = self['p']
+        except KeyError, AttributeError:
+            return default
+
+        if parameters[0] == '_all':
+            return default
+
+        if not cast:
+            return parameters
+
+        return self.vocabs.getParametersFromIds(parameters)
+
+    def setParameters(self, parameters):
+        self['p'] = self.vocabs.getIdsFromConcepts(parameters)
+
+    def getParameterLabels(self):
+        parameters = self.getParameters(cast=False)
+        if parameters:
+            return [concept.prefLabel for concept in self.vocabs.getParametersFromIds(parameters)]
         sub_themes = self.getSubThemes(cast=False)
         if sub_themes:
             return self.vocabs.getParametersFromSubThemeIds(sub_themes)
@@ -446,6 +466,7 @@ class Query(GETParams):
         # add the themes
         a['data_themes'] = self.vocabs.getIdsFromConcepts(self.getDataThemes(default=[]))
         a['sub_themes'] = self.vocabs.getIdsFromConcepts(self.getSubThemes(default=[]))
+        a['parameters'] = self.vocabs.getIdsFromConcepts(self.getParameters(default=[]))
 
         return a
 

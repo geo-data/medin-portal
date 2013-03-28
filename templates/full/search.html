@@ -113,7 +113,7 @@ $(function() {
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
-    $('#search-form input[type=text]:not(#bbox)').change(function() {
+    $('#search-form input[type=text]:not(#bbox),#parameters select:first').change(function() {
         check_query();
     });
 });
@@ -363,13 +363,32 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         </div>
       </div>
 
-      <div id="parameters" style="display:none">
+      <div id="parameters"
+           %if not parameters:
+           style="display:none"
+           %endif
+           >
         <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading parameters...</div>
-        <div class="box-off" style="display:none">There are no parameters for this selection</div>
-        <div class="box-on">choose a parameter:
+        <div class="box-off"
+             %if selected_sub_themes and parameters:
+             style="display:none"
+             %endif
+             >There are no parameters for this selection</div>
+        <div class="box-on"
+             %if selected_sub_themes and not parameters:
+             style="display:none"
+             %endif
+             >choose a parameter:
           <div>
             <select name="p">
               <option value="_all">All</option>
+              %for id, name in parameters:
+              <option value="${id}"
+                      %if id in selected_parameters:
+                      selected="selected"\
+                      %endif
+                      >${name | x}</option>
+              %endfor
             </select>
           </div>
         </div>

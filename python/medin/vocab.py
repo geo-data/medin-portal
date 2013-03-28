@@ -85,6 +85,10 @@ ORDER BY c1.prefLabel"""
     def getSubThemeIdsForDataThemeId(self, data_theme_id):
         broader = 'http://vocab.nerc.ac.uk/collection/P23/current/' + data_theme_id
         return self.getIdsFromConcepts(self.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P03/current', broader))
+
+    def getParameterIdsForSubThemeId(self, sub_theme_id):
+        broader = 'http://vocab.nerc.ac.uk/collection/P03/current/' + sub_theme_id
+        return self.getIdsFromConcepts(self.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P02/current', broader))
             
     def getDataThemeIds(self):
         return self.getMemberIdsFromCollection('http://vocab.nerc.ac.uk/collection/P23/current')
@@ -110,6 +114,9 @@ ORDER BY c1.prefLabel"""
     def getSubThemesFromIds(self, ids):
         return self.getConceptsFromIds(ids, 'http://vocab.nerc.ac.uk/collection/P03/current')
 
+    def getParametersFromIds(self, ids):
+        return self.getConceptsFromIds(ids, 'http://vocab.nerc.ac.uk/collection/P02/current')
+    
     def getIdsFromConcepts(self, concepts):
         return [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in concepts]
 

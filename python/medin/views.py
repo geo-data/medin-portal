@@ -396,11 +396,13 @@ class Search(MakoApp):
                     'progress-areas': areas.chartingProgressAreas(),
                     'ices-rectangles': areas.icesRectangles()}
 
-        # get the data themes for the dropdown
+        # get the themes for the dropdowns
         data_themes = vocab.getDataThemeIds()
         selected_data_themes = [theme[0] for theme in criteria['data_themes']]
         sub_themes = list(chain(*[vocab.getSubThemeIdsForDataThemeId(id_) for id_ in selected_data_themes]))
         selected_sub_themes = [theme[0] for theme in criteria['sub_themes']]
+        parameters = list(chain(*[vocab.getParameterIdsForSubThemeId(id_) for id_ in selected_sub_themes]))
+        selected_parameters = [theme[0] for theme in criteria['parameters']]
 
         # get the vocabulary lists
         formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
@@ -424,6 +426,8 @@ class Search(MakoApp):
                    selected_data_themes=selected_data_themes,
                    sub_themes=sub_themes,
                    selected_sub_themes=selected_sub_themes,
+                   parameters=parameters,
+                   selected_parameters=selected_parameters,
                    bboxes=bboxes)
 
         headers = [('Etag', etag), # propagate the result update time to the HTTP layer
@@ -1218,10 +1222,9 @@ def sub_themes(environ, start_response):
 def parameters(environ, start_response):
     from json import dumps as tojson
 
-    broader = 'http://vocab.nerc.ac.uk/collection/P03/current/' + environ['selector.vars']['broader']
     vocab = get_vocab(environ)
-    themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P02/current', broader)]
-    json = tojson(themes)
+    parameters = vocab.getParameterIdsForSubThemeId(environ['selector.vars']['broader'])
+    json = tojson(parameters)
 
     headers = [('Cache-Control', 'max-age=3600, must-revalidate'),
                ('Content-Type', 'application/json')]

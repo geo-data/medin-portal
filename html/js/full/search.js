@@ -335,10 +335,14 @@ function check_query() {
                     !criteria['dates'].start && !criteria['dates'].end &&
                     !criteria['area'] && !criteria['bbox'].length &&
                     !criteria['data_themes'].length &&
-                    !criteria['sub_themes'].length) {
+                    !criteria['sub_themes'].length &&
+                    !criteria['parameters'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
-                } else if (!criteria['terms'].length)
+                } else if (!criteria['terms'].length &&
+                           !criteria['data_themes'].length &&
+                           !criteria['sub_themes'].length &&
+                           !criteria['parameters'].length)
                     term.append('<strong>everything</strong>');
                 else
                     term.append('<span>documents containing </span>');
@@ -355,12 +359,15 @@ function check_query() {
                 }
 
                 var theme_labels = {
-                    data_themes: 'with any parameters matching the data theme',
-                    sub_themes: 'with any parameters matching the sub theme'
+                    data_themes: 'any parameters matching the data theme',
+                    sub_themes: 'any parameters matching the sub theme',
+                    parameters: 'the parameter'
                 },
                     theme_key = null;
 
-                if (criteria['sub_themes'].length) {
+                if (criteria['parameters'].length) {
+                    theme_key = 'parameters';
+                } else if (criteria['sub_themes'].length) {
                     theme_key = 'sub_themes';
                 } else if (criteria['data_themes'].length) {
                     theme_key = 'data_themes';
@@ -740,14 +747,14 @@ function init_theme_dropdown(dropdown, id) {
 
         if (do_check_query) check_query();
         
+        // set the child with a default value
+        $('#'+ id + ' select:first').val('_all')
+            .change(); // and trigger a change to propagate to any sub dropdowns
+
         if (value == '_all') {
             $('#'+ id).hide();  // we don't want to see the child
             return;
         }
-
-        // set the child with a default value
-        $('#'+ id + ' select:first').val('_all')
-            .change(); // and trigger a change to propagate to any sub dropdowns
 
         $('#'+ id + ' div.box-loading').show();         //show the loading div
         $('#'+ id + ' > div:not(.box-loading)').hide(); //hide all other divs
