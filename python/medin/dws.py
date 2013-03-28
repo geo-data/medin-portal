@@ -78,9 +78,9 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens, parameters, skip_errors=True):
+    def __call__(self, tokens, parameters, data_holders, skip_errors=True):
         # If there aren't any tokens we need to do a full text search
-        if not tokens and not parameters:
+        if not tokens and not parameters and not data_holders:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.TermTarget = 'FullText'
             return [term]
@@ -125,7 +125,19 @@ class TermBuilder(object):
             term.Term = ' '.join(['""%s""' % param for param in parameters]) # `OR` query
             term.TermTarget = self.targets['p']
             if terms:
-                term._op = 'AND'
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # add data holders to the search terms
+        if data_holders:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(['""%s""' % holder for holder in data_holders]) # `OR` query
+            term.TermTarget = self.targets['o']
+            if terms:
+                term._operator = 'AND'
                 term._id = len(terms) + 1
             else:
                 term._id = 1
@@ -388,8 +400,9 @@ class SearchRequest(Request):
 
         # add the terms
         parameters = query.getParameterLabels()
+        data_holders = query.getDataHolders(default=[])
         term_parser = TermBuilder(self.client)
-        terms = term_parser(search_term, parameters)
+        terms = term_parser(search_term, parameters, data_holders)
         search.TermSearch.extend(terms)
 
         # add the spatial criteria

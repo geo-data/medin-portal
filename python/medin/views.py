@@ -114,7 +114,7 @@ def get_query(environ, from_referrer=False):
                 qsl = ''
 
     fields = ('updated', 'originator', 'title')
-    return Query(qsl, get_areas(environ), fields, get_vocab(environ))
+    return Query(qsl, get_areas(environ), fields, get_vocab(environ), get_db(environ))
 
 def get_areas(environ):
     """
@@ -175,6 +175,23 @@ def get_vocab(environ):
 
     return Vocabularies(engine)
 
+import sqlite3
+class Connection(sqlite3.Connection):
+    """
+    Attach portal specific queries to the connection
+    """
+
+    def getDataHoldersFromIds(self, ids):
+        sql = "SELECT name FROM data_holders WHERE id in (%s)" % ','.join('?' * len(ids))
+        cur = self.cursor()
+        cur.execute(sql, ids)
+        return [row[0] for row in cur]
+
+    def getDataHolders(self):
+        cur = self.cursor()
+        cur.execute('SELECT id,name FROM data_holders ORDER BY name')
+        return cur.fetchall()
+
 def get_db(environ):
     """
     Returns the portal sqlite database object
@@ -194,10 +211,10 @@ def get_db(environ):
     except KeyError:
         pass
 
-    import os.path, sqlite3
+    import os.path
     filepath = os.path.join(environ.root, 'data', 'portal.sqlite')
 
-    db = _dbs[thread_id] = sqlite3.connect(filepath)
+    db = _dbs[thread_id] = sqlite3.connect(filepath, factory=Connection)
     return db
 
 def get_post(environ):
@@ -364,6 +381,7 @@ class Search(MakoApp):
         return self.request.prepareCaller(q, RESULT_SIMPLE, environ['logging.logger'])
 
     def setup(self, environ):
+        db = get_db(environ)
         vocab = get_vocab(environ)
 
         # run the query
@@ -398,16 +416,19 @@ class Search(MakoApp):
 
         # get the themes for the dropdowns
         data_themes = vocab.getDataThemeIds()
-        selected_data_themes = [theme[0] for theme in criteria['data_themes']]
+        selected_data_themes = set([theme[0] for theme in criteria['data_themes']])
         sub_themes = list(chain(*[vocab.getSubThemeIdsForDataThemeId(id_) for id_ in selected_data_themes]))
-        selected_sub_themes = [theme[0] for theme in criteria['sub_themes']]
+        selected_sub_themes = set([theme[0] for theme in criteria['sub_themes']])
         parameters = list(chain(*[vocab.getParameterIdsForSubThemeId(id_) for id_ in selected_sub_themes]))
-        selected_parameters = [theme[0] for theme in criteria['parameters']]
+        selected_parameters = set([theme[0] for theme in criteria['parameters']])
 
         # get the vocabulary lists
         formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
-        resources = vocab['medin-resource-types.xml']
         access = vocab['medin-access-types.xml']
+
+        # get the data holders
+        data_holders = db.getDataHolders()
+        selected_data_holders = set([int(item[0]) for item in criteria['data_holders']])
 
         tvars=dict(search_term=search_term,
                    hits=r.hits,
@@ -420,7 +441,6 @@ class Search(MakoApp):
                    area_type=area_type,
                    area_ids=area_ids,
                    data_formats=formats,
-                   resource_types=resources,
                    access_types=access,
                    data_themes=data_themes,
                    selected_data_themes=selected_data_themes,
@@ -428,6 +448,8 @@ class Search(MakoApp):
                    selected_sub_themes=selected_sub_themes,
                    parameters=parameters,
                    selected_parameters=selected_parameters,
+                   data_holders=data_holders,
+                   selected_data_holders=selected_data_holders,
                    bboxes=bboxes)
 
         headers = [('Etag', etag), # propagate the result update time to the HTTP layer

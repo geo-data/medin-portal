@@ -75,12 +75,13 @@ class GETParams(object):
 class Query(GETParams):
     """Provides an interface to MEDIN OpenSearch query parameters"""
 
-    def __init__(self, qsl, areas, fields, vocabs, max_count=300, *args, **kwargs):
+    def __init__(self, qsl, areas, fields, vocabs, db, max_count=300, *args, **kwargs):
         super(Query, self).__init__(qsl, *args, **kwargs)
         self.raise_errors = False
         self.areas = areas
         self.fields = fields
         self.vocabs = vocabs
+        self.db = db
         self.max_count = max_count
 
         # join multiple search terms into a single term
@@ -320,6 +321,20 @@ class Query(GETParams):
             return self.vocabs.getParametersFromSubThemeIds(sub_themes)
         return self.vocabs.getParametersFromDataThemeIds(self.getDataThemes(cast=False))
 
+    def getDataHolders(self, cast=True, default=''):
+        try:
+            holders = filter(None, self['dh'])
+        except KeyError, AttributeError:
+            return default
+
+        if not holders:
+            return default
+
+        if not cast:
+            return holders
+
+        return self.db.getDataHoldersFromIds(holders)
+
     def getSort(self, cast=True, default=''):
         try:
             sort = self['s'][0]
@@ -467,6 +482,7 @@ class Query(GETParams):
         a['data_themes'] = self.vocabs.getIdsFromConcepts(self.getDataThemes(default=[]))
         a['sub_themes'] = self.vocabs.getIdsFromConcepts(self.getSubThemes(default=[]))
         a['parameters'] = self.vocabs.getIdsFromConcepts(self.getParameters(default=[]))
+        a['data_holders'] = zip(self.getDataHolders(cast=False, default=[]), self.getDataHolders(default=[]))
 
         return a
 

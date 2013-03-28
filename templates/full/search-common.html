@@ -32,9 +32,9 @@ def format_northing(northing):
 <%def name="search_criteria()">\
 <%
 theme_labels = {
-   'data_themes': 'any parameters matching the data theme',
-   'sub_themes': 'any parameters matching the sub theme',
-   'parameters': 'the parameter'
+   'data_themes': 'with any parameters matching the data theme',
+   'sub_themes': 'with any parameters matching the sub theme',
+   'parameters': 'with the parameter'
 }
 theme_key = None
 %>
@@ -45,12 +45,16 @@ theme_key = None
     criteria['area'] and not\
     criteria['bbox'] and not\
     criteria['data_themes'] and not\
-    criteria['sub_themes']:
+    criteria['sub_themes'] and not\
+    criteria['data_holders']:
       <strong>everything</strong> in the catalogue.
-    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes']:
+    %elif not criteria['terms'] and not criteria['data_themes'] and not criteria['sub_themes'] and not criteria['data_holders']:
       <strong>everything</strong>
     %else:
-      documents containing 
+      documents
+      %if criteria['terms']:
+      containing
+      %endif
     %endif
     %for term in criteria['terms']:
       %if term['op']:
@@ -76,6 +80,15 @@ s
       </span>
       <span> ${' or '.join(['<kbd>%s</kbd>' % theme[1] for theme in criteria[theme_key]])} </span>
     %endif
+
+      %if criteria['data_holders']:
+      <span>
+        %if theme_key:
+        and
+        %endif
+        held by ${' or '.join(['<kbd>%s</kbd>' % holder[1] for holder in criteria['data_holders']])}
+      </span>
+      %endif
     </span>
     <span id="criteria-date">
     %if 'start' in criteria['dates'] and 'end' in criteria['dates']:

@@ -113,7 +113,7 @@ $(function() {
 
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
-    $('#search-form input[type=text]:not(#bbox),#parameters select:first').change(function() {
+    $('#search-form input[type=text]:not(#bbox),select.checkable').change(function() {
         check_query();
     });
 });
@@ -380,7 +380,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
              %endif
              >choose a parameter:
           <div>
-            <select name="p">
+            <select class="checkable" name="p">
               <option value="_all">All</option>
               %for id, name in parameters:
               <option value="${id}"
@@ -393,7 +393,36 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
           </div>
         </div>
       </div>
-    
+      <br/>
+    (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">
+        %if selected_data_holders:
+        Hide the advanced search
+        %else:
+        Advanced search
+        %endif
+      </a>)
+      <div id="advanced-search"
+           %if not selected_data_holders:
+           style="display:none"
+           %endif
+           >
+        <h3>Search by other terms</h3>
+        <div>Choose a data holder:
+          <div>
+            <select class="checkable" name="dh">
+              <option value="">All</option>
+              %for id, name in data_holders:
+              <option value="${id}"
+                      %if id in selected_data_holders:
+                      selected="selected"\
+                      %endif
+                      >${name | x}</option>
+              %endfor
+            </select>
+          </div>
+        </div>
+      </div>
+
     %if sort:
     <input name="s" type="hidden" value="${sort}" />
     %endif

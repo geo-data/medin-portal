@@ -336,16 +336,18 @@ function check_query() {
                     !criteria['area'] && !criteria['bbox'].length &&
                     !criteria['data_themes'].length &&
                     !criteria['sub_themes'].length &&
-                    !criteria['parameters'].length) {
+                    !criteria['parameters'].length &&
+                    !criteria['data_holders'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
                 } else if (!criteria['terms'].length &&
                            !criteria['data_themes'].length &&
                            !criteria['sub_themes'].length &&
-                           !criteria['parameters'].length)
+                           !criteria['parameters'].length &&
+                           !criteria['data_holders'].length)
                     term.append('<strong>everything</strong>');
                 else
-                    term.append('<span>documents containing </span>');
+                    term.append('<span>documents ' + (criteria['terms'].length ? ' containing' : '') + '</span>');
 
                 for (var i = 0; i < criteria['terms'].length; i++) {
                     var tterm = criteria['terms'][i];
@@ -359,9 +361,9 @@ function check_query() {
                 }
 
                 var theme_labels = {
-                    data_themes: 'any parameters matching the data theme',
-                    sub_themes: 'any parameters matching the sub theme',
-                    parameters: 'the parameter'
+                    data_themes: 'with any parameters matching the data theme',
+                    sub_themes: 'with any parameters matching the sub theme',
+                    parameters: 'with the parameter'
                 },
                     theme_key = null;
 
@@ -384,7 +386,15 @@ function check_query() {
                     }
                     term.append('<span> ' + themes.join(' or ') + ' </span>');
                 }
-                
+
+                if (criteria['data_holders'].length) {
+                    var holders = [];
+                    for (i = 0; i < criteria['data_holders'].length; i++) {
+                        holders.push('<kbd>' + criteria['data_holders'][i][1] + '</kbd>');
+                    }
+                    term.append('<span> ' + ((theme_key) ? ' and' : '') + ' held by ' + holders.join(' or ') + ' </span>');
+                }
+
                 if (criteria['dates'].start && criteria['dates'].end)
                     date.append('<span> between <strong>'+criteria['dates'].start+'</strong> and <strong>'+criteria['dates'].end+'</strong></span>');
                 else if (criteria['dates'].start)
