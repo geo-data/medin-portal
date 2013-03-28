@@ -30,9 +30,21 @@ def format_northing(northing):
    return '%.2fS' % northing
 %>
 <%def name="search_criteria()">\
+<%
+theme_labels = {
+   'data_themes': 'with any parameters matching the data theme',
+   'sub_themes': 'with any parameters matching the sub theme'
+}
+theme_key = None
+%>
     <h3>You are searching for...</h3>
     <span id="criteria-term">
-    %if not criteria['terms'] and not criteria['dates'] and not criteria['area'] and not criteria['bbox'] and not criteria['data_themes']:
+    %if not criteria['terms'] and not\
+    criteria['dates'] and not\
+    criteria['area'] and not\
+    criteria['bbox'] and not\
+    criteria['data_themes'] and not\
+    criteria['sub_themes']:
       <strong>everything</strong> in the catalogue.
     %elif not criteria['terms']:
       <strong>everything</strong>
@@ -50,15 +62,19 @@ def format_northing(northing):
       (<span class="error">ignoring unknown target <strong>${term['target'][0]}</strong></span>)
       %endif
     %endfor
-    %if criteria['data_themes']:
-      <span> with any parameters matching the data 
-        %if len(criteria['data_themes']) > 1:
+    <%
+       if criteria['sub_themes']: theme_key = 'sub_themes'
+       elif criteria['data_themes']: theme_key = 'data_themes'
+    %>\
+    %if theme_key:
+      <span> ${theme_labels[theme_key]}
+        %if len(criteria[theme_key]) > 1:
         themes
         %else:
         theme
         %endif
       </span>
-      <span> ${' or '.join(['<kbd>%s</kbd>' % theme[1] for theme in criteria['data_themes']])} </span>
+      <span> ${' or '.join(['<kbd>%s</kbd>' % theme[1] for theme in criteria[theme_key]])} </span>
     %endif
     </span>
     <span id="criteria-date">

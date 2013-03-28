@@ -266,6 +266,9 @@ class Query(GETParams):
         except KeyError, AttributeError:
             return default
 
+        if themes[0] == '_all':
+            return default
+
         if not cast:
             return themes
 
@@ -274,7 +277,27 @@ class Query(GETParams):
     def setDataThemes(self, themes):
         self['dt'] = self.vocabs.getIdsFromConcepts(themes)
 
+    def getSubThemes(self, cast=True, default=''):
+        try:
+            themes = self['st']
+        except KeyError, AttributeError:
+            return default
+
+        if themes[0] == '_all':
+            return default
+
+        if not cast:
+            return themes
+
+        return self.vocabs.getSubThemesFromIds(themes)
+
+    def setSubThemes(self, themes):
+        self['st'] = self.vocabs.getIdsFromConcepts(themes)
+
     def getParameters(self):
+        sub_themes = self.getSubThemes(cast=False)
+        if sub_themes:
+            return self.vocabs.getParametersFromSubThemeIds(sub_themes)
         return self.vocabs.getParametersFromDataThemeIds(self.getDataThemes(cast=False))
 
     def getSort(self, cast=True, default=''):
@@ -420,8 +443,9 @@ class Query(GETParams):
         a['bbox'] = bboxes
         a['area'] = self.getArea(default=None)
 
-        # add the data themes
+        # add the themes
         a['data_themes'] = self.vocabs.getIdsFromConcepts(self.getDataThemes(default=[]))
+        a['sub_themes'] = self.vocabs.getIdsFromConcepts(self.getSubThemes(default=[]))
 
         return a
 

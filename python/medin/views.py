@@ -37,6 +37,7 @@ from errata import HTTPError
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
 from medin.log import msg_info, msg_warn, msg_error
 from medin.metadata import MetadataError
+from itertools import chain
 
 # Utility functions
 
@@ -398,6 +399,8 @@ class Search(MakoApp):
         # get the data themes for the dropdown
         data_themes = vocab.getDataThemeIds()
         selected_data_themes = [theme[0] for theme in criteria['data_themes']]
+        sub_themes = list(chain(*[vocab.getSubThemeIdsForDataThemeId(id_) for id_ in selected_data_themes]))
+        selected_sub_themes = [theme[0] for theme in criteria['sub_themes']]
 
         # get the vocabulary lists
         formats = vocab['http://vocab.nerc.ac.uk/collection/M01/current']
@@ -419,6 +422,8 @@ class Search(MakoApp):
                    access_types=access,
                    data_themes=data_themes,
                    selected_data_themes=selected_data_themes,
+                   sub_themes=sub_themes,
+                   selected_sub_themes=selected_sub_themes,
                    bboxes=bboxes)
 
         headers = [('Etag', etag), # propagate the result update time to the HTTP layer
@@ -1201,9 +1206,8 @@ def query_criteria(environ, start_response):
 def sub_themes(environ, start_response):
     from json import dumps as tojson
 
-    broader = 'http://vocab.nerc.ac.uk/collection/P23/current/' + environ['selector.vars']['broader']
     vocab = get_vocab(environ)
-    themes = [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in vocab.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P03/current', broader)]
+    themes = vocab.getSubThemeIdsForDataThemeId(environ['selector.vars']['broader'])
     json = tojson(themes)
 
     headers = [('Cache-Control', 'max-age=3600, must-revalidate'),

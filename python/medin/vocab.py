@@ -82,20 +82,33 @@ ORDER BY c1.prefLabel"""
         for concept in self.session.query(skos.Concept).instances(result):
             yield concept
 
+    def getSubThemeIdsForDataThemeId(self, data_theme_id):
+        broader = 'http://vocab.nerc.ac.uk/collection/P23/current/' + data_theme_id
+        return self.getIdsFromConcepts(self.getConceptsHavingBroader('http://vocab.nerc.ac.uk/collection/P03/current', broader))
+            
     def getDataThemeIds(self):
-        concepts = self['http://vocab.nerc.ac.uk/collection/P23/current'].members.values()
+        return self.getMemberIdsFromCollection('http://vocab.nerc.ac.uk/collection/P23/current')
+
+    def getMemberIdsFromCollection(self, uri):
+        concepts = self[uri].members.values()
         concepts.sort(cmp=lambda a, b: cmp(a.prefLabel, b.prefLabel))
         return self.getIdsFromConcepts(concepts)
 
-    def getDataThemesFromIds(self, ids):
+    def getConceptsFromIds(self, ids, collection_uri):
         filt = or_()
         for id_ in ids:
             filt.append(skos.Concept.uri.ilike('%%/%s' % id_))
 
         return self.session.query(skos.Concept)\
             .join(skos.Concept.collections)\
-            .filter(skos.Collection.uri == 'http://vocab.nerc.ac.uk/collection/P23/current')\
+            .filter(skos.Collection.uri == collection_uri)\
             .filter(filt).all()
+        
+    def getDataThemesFromIds(self, ids):
+        return self.getConceptsFromIds(ids, 'http://vocab.nerc.ac.uk/collection/P23/current')
+
+    def getSubThemesFromIds(self, ids):
+        return self.getConceptsFromIds(ids, 'http://vocab.nerc.ac.uk/collection/P03/current')
 
     def getIdsFromConcepts(self, concepts):
         return [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in concepts]
@@ -128,5 +141,25 @@ AND c3.uri = cb2.broader_uri
 AND c3.uri IN (%s)""" % ','.join('?' * len(ids))
         conn = self.session.connection()
         params = ['http://vocab.nerc.ac.uk/collection/P23/current/%s' % id_ for id_ in ids]
-        for row in conn.execute(sql, params):
-            yield row[0]
+        return [row[0] for row in conn.execute(sql, params)]
+
+    def getParametersFromSubThemeIds(self, ids):
+        sql = """SELECT c1.prefLabel
+FROM concept c1,
+     concepts2collections c2c1,
+     concept c2,
+     concepts2collections c2c2,
+     concept_broader cb1
+WHERE c1.uri = c2c1.concept_uri
+AND c2c1.collection_uri = 'http://vocab.nerc.ac.uk/collection/P02/current'
+
+AND c2.uri = c2c2.concept_uri
+AND c2c2.collection_uri = 'http://vocab.nerc.ac.uk/collection/P03/current'
+
+AND c1.uri = cb1.narrower_uri
+AND c2.uri = cb1.broader_uri
+
+AND c2.uri IN (%s)""" % ','.join('?' * len(ids))
+        conn = self.session.connection()
+        params = ['http://vocab.nerc.ac.uk/collection/P03/current/%s' % id_ for id_ in ids]
+        return [row[0] for row in conn.execute(sql, params)]

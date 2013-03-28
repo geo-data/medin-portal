@@ -334,7 +334,8 @@ function check_query() {
                 if (!criteria['terms'].length &&
                     !criteria['dates'].start && !criteria['dates'].end &&
                     !criteria['area'] && !criteria['bbox'].length &&
-                    !criteria['data_themes'].length) {
+                    !criteria['data_themes'].length &&
+                    !criteria['sub_themes'].length) {
                     term.append('<span><strong>everything</strong> in the catalogue.</span>');
                     return;
                 } else if (!criteria['terms'].length)
@@ -353,15 +354,26 @@ function check_query() {
                         term.append('<span> (<span class="error">ignoring unknown target <strong>'+tterm['target'][0]+'</strong></span>) </span>');
                 }
 
-                if (criteria['data_themes'].length) {
-                    var label = '<span> with any parameters matching the data theme';
-                    if (criteria['data_themes'].length > 1) label += 's';
+                var theme_labels = {
+                    data_themes: 'with any parameters matching the data theme',
+                    sub_themes: 'with any parameters matching the sub theme'
+                },
+                    theme_key = null;
+
+                if (criteria['sub_themes'].length) {
+                    theme_key = 'sub_themes';
+                } else if (criteria['data_themes'].length) {
+                    theme_key = 'data_themes';
+                }
+                if (theme_key) {
+                    var label = '<span> ' + theme_labels[theme_key];
+                    if (criteria[theme_key].length > 1) label += 's';
                     label += '</span>';
                     term.append(label);
 
                     var themes = [];
-                    for (i = 0; i < criteria['data_themes'].length; i++) {
-                        themes.push('<kbd>' + criteria['data_themes'][i][1] + '</kbd>');
+                    for (i = 0; i < criteria[theme_key].length; i++) {
+                        themes.push('<kbd>' + criteria[theme_key][i][1] + '</kbd>');
                     }
                     term.append('<span> ' + themes.join(' or ') + ' </span>');
                 }

@@ -332,13 +332,32 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         </div>
       </div>
 
-      <div id="sub-themes" style="display:none">
+      <div id="sub-themes"
+           %if not selected_data_themes:
+           style="display:none"
+           %endif
+           >
         <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading sub-themes...</div>
-        <div class="box-off" style="display:none">There are no sub-themes for this selection</div>
-        <div class="box-on">choose a sub theme:
+        <div class="box-off"
+             %if selected_data_themes and sub_themes:
+             style="display:none"
+             %endif
+             >There are no sub-themes for this selection</div>
+        <div class="box-on"
+             %if selected_data_themes and not sub_themes:
+             style="display:none"
+             %endif
+             >choose a sub theme:
           <div>
             <select name="st">
               <option value="_all">All</option>
+              %for id, name in sub_themes:
+              <option value="${id}"
+                      %if id in selected_sub_themes:
+                      selected="selected"\
+                      %endif
+                      >${name | x}</option>
+              %endfor
             </select>
           </div>
         </div>
