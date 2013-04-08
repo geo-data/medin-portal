@@ -773,7 +773,7 @@ var do_check_query = true;
 function init_theme_dropdown(dropdown, id) {
     dropdown.change(function onSelect(event) {
         var value = $(this).find('option:selected').val(),
-            url = 'full/vocabs/' + id + '/' + value;
+            url = script_root + '/full/vocabs/' + id + '/' + value;
 
         if (do_check_query) check_query();
         
