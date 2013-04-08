@@ -133,6 +133,9 @@ ORDER BY c1.prefLabel"""
         return [(c.uri.rsplit('/', 1)[-1], c.prefLabel) for c in concepts]
 
     def getParametersFromDataThemeIds(self, ids):
+        if not ids:
+            return []
+
         sql = """SELECT c1.prefLabel
 FROM concept c1,
      concepts2collections c2c1,
@@ -158,11 +161,15 @@ AND c2.uri = cb2.narrower_uri
 AND c3.uri = cb2.broader_uri
 
 AND c3.uri IN (%s)""" % ','.join('?' * len(ids))
+
         conn = self.session.connection()
         params = ['http://vocab.nerc.ac.uk/collection/P23/current/%s' % id_ for id_ in ids]
         return [row[0] for row in conn.execute(sql, params)]
 
     def getParametersFromSubThemeIds(self, ids):
+        if not ids:
+            return []
+
         sql = """SELECT c1.prefLabel
 FROM concept c1,
      concepts2collections c2c1,
