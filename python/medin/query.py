@@ -91,7 +91,10 @@ class Query(GETParams):
             pass
 
     def clone(self):
-        return Query(str(self), self.areas, self.fields, self.max_count)
+        return Query(str(self), self.areas, self.fields, self.vocabs, self.db, self.max_count)
+
+    def __deepcopy__(self, memo):
+        return self.clone()
 
     def verify(self):
         """
