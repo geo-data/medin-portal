@@ -793,7 +793,7 @@ function init_theme_dropdown(dropdown, id) {
         $.getJSON(url, function onSuccess(data) {
             var items = [];
             
-            data.forEach(function onItem(item) {
+            $.each(data, function onItem(index, item) {
                 items.push('<option value="' + item[0] + '">' + item[1] + '</option>');
             });
 
