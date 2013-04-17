@@ -415,8 +415,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         <h3>Search by other terms</h3>
         <div>Choose a data holder:
           <div>
-            <select class="checkable" name="dh">
-              <option value="">All</option>
+            <select class="checkable" id="dh" name="dh" multiple="multiple">
               %for id, name in data_holders:
               <option value="${id}"
                       %if id in selected_data_holders:
@@ -430,8 +429,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
 
         <div>Choose a data access type:
           <div>
-            <select class="checkable" name="at">
-              <option value="">All</option>
+            <select class="checkable" id="at" name="at" multiple="multiple">
               %for id, name in access_types:
               <option value="${id}"
                       %if id in selected_access_types:
@@ -445,8 +443,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
 
         <div>Choose a data format:
           <div>
-            <select class="checkable" name="f">
-              <option value="">All</option>
+            <select class="checkable" id="f" name="f" multiple="multiple">
               %for id, name in data_formats:
               <option value="${id}"
                       %if id in selected_data_formats:

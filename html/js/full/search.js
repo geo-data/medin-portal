@@ -817,7 +817,7 @@ function init_theme_dropdown(dropdown, id) {
 }
 
 function init_dropdowns() {
-    $('#dt,#st,#p').multiselect({
+    $('#dt,#st,#p,#dh,#at,#f').multiselect({
         header: false,
         noneSelectedText: 'All'
     });
