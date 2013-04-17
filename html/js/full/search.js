@@ -798,7 +798,7 @@ function init_theme_dropdown(dropdown, id) {
             });
 
             do_check_query = false; // don't run a query check due to this change
-            if (items.length > 1) {
+            if (items.length) {
                 $('#'+ id + ' select:first').empty().append(items.join('')) //add the options to the select
                     .multiselect('refresh') // make the multiselect aware of the change
                     .change();                                              //trigger a change
