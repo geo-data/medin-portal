@@ -377,6 +377,7 @@ def wsgi_app():
     # applications are added is important; the most specific URL matches
     # must be before the more generic ones.
     application = selector.Selector(consume_path=False)
+    application.parser.patterns['id_list'] = r'\w+(,\w+)*'
 
     # replace the default 404 handler on the selector
     application.status404 = http404
@@ -401,8 +402,8 @@ def wsgi_app():
     application.add('/opensearch/catalogue/{template}.xml', GET=views.OpenSearch())
 
     # the API for retrieving vocabulary related information
-    application.add('/{template}/vocabs/sub-themes/{broader:word}', GET=views.sub_themes)
-    application.add('/{template}/vocabs/parameters/{broader:word}', GET=views.parameters)
+    application.add('/{template}/vocabs/sub-themes/{broader:id_list}', GET=views.sub_themes)
+    application.add('/{template}/vocabs/parameters/{broader:id_list}', GET=views.parameters)
 
     # the default entry point for the search
     app = TemplateChooser(default_template)

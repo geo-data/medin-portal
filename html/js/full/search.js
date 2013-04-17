@@ -772,16 +772,15 @@ OpenLayers.Handler.DrawBox = OpenLayers.Class(OpenLayers.Handler.Box, {
 var do_check_query = true;
 function init_theme_dropdown(dropdown, id) {
     dropdown.change(function onSelect(event) {
-        var value = $(this).find('option:selected').val(),
-            url = script_root + '/full/vocabs/' + id + '/' + value;
+        var values = $(this).find('select:first').val();
 
         if (do_check_query) check_query();
         
         // set the child with a default value
-        $('#'+ id + ' select:first').val('_all')
+        $('#'+ id + ' select:first').multiselect('uncheckAll')
             .change(); // and trigger a change to propagate to any sub dropdowns
 
-        if (value == '_all') {
+        if (!values || !values.length) {
             $('#'+ id).hide();  // we don't want to see the child
             return;
         }
@@ -789,9 +788,10 @@ function init_theme_dropdown(dropdown, id) {
         $('#'+ id + ' div.box-loading').show();         //show the loading div
         $('#'+ id + ' > div:not(.box-loading)').hide(); //hide all other divs
         $('#'+ id).show();
-        
+
+        var url = script_root + '/full/vocabs/' + id + '/' + values.join(',');
         $.getJSON(url, function onSuccess(data) {
-            var items = ['<option value="_all">All</option>'];
+            var items = [];
             
             data.forEach(function onItem(item) {
                 items.push('<option value="' + item[0] + '">' + item[1] + '</option>');
@@ -800,15 +800,25 @@ function init_theme_dropdown(dropdown, id) {
             do_check_query = false; // don't run a query check due to this change
             if (items.length > 1) {
                 $('#'+ id + ' select:first').empty().append(items.join('')) //add the options to the select
+                    .multiselect('refresh') // make the multiselect aware of the change
                     .change();                                              //trigger a change
                 $('#'+ id + ' div.box-on').show();         //show the on div
                 $('#'+ id + ' > div:not(.box-on)').hide(); //hide all other divs
             } else {
-                $('#'+ id + ' select:first').change();      //trigger a change
+                $('#'+ id + ' select:first')
+                    .multiselect('refresh') // make the multiselect aware of the change
+                    .change();      //trigger a change
                 $('#'+ id + ' div.box-off').show();         //show the off div
                 $('#'+ id + ' > div:not(.box-off)').hide(); //hide all other divs
             }
             do_check_query = true; //query checks can be run again
         });
+    });
+}
+
+function init_dropdowns() {
+    $('#dt,#st,#p').multiselect({
+        header: false,
+        noneSelectedText: 'All'
     });
 }

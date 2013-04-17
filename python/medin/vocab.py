@@ -61,12 +61,13 @@ class Vocabularies(Mapping):
             .filter(skos.Collection.uri == collection)\
             .filter(skos.Concept.prefLabel.ilike(term)).first()
 
-    def getSubConcepts(self, source_collection, associated_member):
+    def getSubConcepts(self, source_collection, associated_members):
         """
         Retrieve all concepts from a collection having a particular broader or
         related member
         """
 
+        placeholder = ','.join('?' * len(associated_members))
         sql = """SELECT o.*
 FROM object o,
      concept c1,
@@ -76,7 +77,7 @@ WHERE o.uri = c1.uri
 AND c1.uri = c2c1.concept_uri
 AND c2c1.collection_uri = ?
 AND c1.uri = cb1.narrower_uri
-AND cb1.broader_uri = ?
+AND cb1.broader_uri IN (%s)
 UNION
 SELECT o.*
 FROM object o,
@@ -87,19 +88,23 @@ WHERE o.uri = c1.uri
 AND c1.uri = c2c1.concept_uri
 AND c2c1.collection_uri = ?
 AND (c1.uri = cr1.left_uri OR c1.uri = cr1.right_uri)
-AND (cr1.right_uri = ? OR cr1.left_uri = ?)"""
+AND (cr1.right_uri IN (%s) OR cr1.left_uri IN (%s))""" % (placeholder, placeholder, placeholder)
         conn = self.session.connection()
-        result = conn.execute(sql, [source_collection, associated_member, source_collection, associated_member, associated_member])
+        params = [source_collection]
+        params.extend(associated_members)
+        params.append(source_collection)
+        params.extend(associated_members * 2)
+        result = conn.execute(sql, params)
         for concept in self.session.query(skos.Concept).instances(result):
             yield concept
 
-    def getSubThemeIdsForDataThemeId(self, data_theme_id):
-        broader = 'http://vocab.nerc.ac.uk/collection/P23/current/' + data_theme_id
-        return self.getIdsFromConcepts(self.getSubConcepts('http://vocab.nerc.ac.uk/collection/P03/current', broader))
+    def getSubThemeIdsForDataThemeIds(self, data_theme_ids):
+        ids = ['http://vocab.nerc.ac.uk/collection/P23/current/' + data_theme_id for data_theme_id in data_theme_ids]
+        return self.getIdsFromConcepts(self.getSubConcepts('http://vocab.nerc.ac.uk/collection/P03/current', ids))
 
-    def getParameterIdsForSubThemeId(self, sub_theme_id):
-        broader = 'http://vocab.nerc.ac.uk/collection/P03/current/' + sub_theme_id
-        return self.getIdsFromConcepts(self.getSubConcepts('http://vocab.nerc.ac.uk/collection/P02/current', broader))
+    def getParameterIdsForSubThemeIds(self, sub_theme_ids):
+        ids = ['http://vocab.nerc.ac.uk/collection/P03/current/' + sub_theme_id for sub_theme_id in sub_theme_ids]
+        return self.getIdsFromConcepts(self.getSubConcepts('http://vocab.nerc.ac.uk/collection/P02/current', ids))
 
     def getDataThemeIds(self):
         return self.getMemberIdsFromCollection('http://vocab.nerc.ac.uk/collection/P23/current')

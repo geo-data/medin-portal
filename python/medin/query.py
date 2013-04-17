@@ -270,9 +270,6 @@ class Query(GETParams):
         except KeyError, AttributeError:
             return default
 
-        if themes[0] == '_all':
-            return default
-
         if not cast:
             return themes
 
@@ -287,9 +284,6 @@ class Query(GETParams):
         except KeyError, AttributeError:
             return default
 
-        if themes[0] == '_all':
-            return default
-
         if not cast:
             return themes
 
@@ -302,9 +296,6 @@ class Query(GETParams):
         try:
             parameters = self['p']
         except KeyError, AttributeError:
-            return default
-
-        if parameters[0] == '_all':
             return default
 
         if not cast:

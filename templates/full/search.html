@@ -30,6 +30,7 @@
 %>
 
 <%def name="header()">
+    <link href="/css/jquery.multiselect.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         #map {
             /* it is important to assign absolute pixel sizes for IE
@@ -73,11 +74,16 @@
             vertical-align: middle;
             margin: 0.5em;
         }
+        label.ui-corner-all > input {
+            margin-right: 0.5em;
+            vertical-align: middle;
+        }
     </style>
     <script type="text/javascript" src="/js/jquery.iclick.js"></script>
     <script type="text/javascript" src="/js/jquery.alignwith.js"></script>
     <script type="text/javascript" src="/js/jquery.ba-resize.js"></script>
     <script type="text/javascript" src="/js/jquery.caret-range.js"></script>
+    <script type="text/javascript" src="/js/jquery.multiselect.min.js"></script>
     <script type="text/javascript" src="/js/openlayers/OpenLayers.js"></script>
     <script type="text/javascript" src="/js/full/map.js"></script>
     <script type="text/javascript" src="/js/jquery.olLayerControl.js"></script>
@@ -111,6 +117,9 @@ $(function() {
     init_date('start-date');
     init_date('end-date');
 
+    // initialise the dropdowns
+    init_dropdowns();
+    
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
     $('#search-form input[type=text]:not(#bbox),select.checkable').change(function() {
@@ -319,8 +328,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
       
       <div id="data-themes">and/or choose a data theme:
         <div>
-          <select name="dt">
-            <option value="_all">All</option>
+          <select id="dt" name="dt" multiple="multiple">
             %for id, name in data_themes:
             <option value="${id}"
                     %if id in selected_data_themes:
@@ -349,8 +357,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
              %endif
              >choose a sub theme:
           <div>
-            <select name="st">
-              <option value="_all">All</option>
+            <select id="st" name="st" multiple="multiple">
               %for id, name in sub_themes:
               <option value="${id}"
                       %if id in selected_sub_themes:
@@ -380,8 +387,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
              %endif
              >choose a parameter:
           <div>
-            <select class="checkable" name="p">
-              <option value="_all">All</option>
+            <select id="p" class="checkable" name="p" multiple="multiple">
               %for id, name in parameters:
               <option value="${id}"
                       %if id in selected_parameters:

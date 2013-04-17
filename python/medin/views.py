@@ -37,7 +37,6 @@ from errata import HTTPError
 from medin.templates import TemplateLookup, MakoApp, TemplateContext
 from medin.log import msg_info, msg_warn, msg_error
 from medin.metadata import MetadataError
-from itertools import chain
 
 # Utility functions
 
@@ -417,9 +416,9 @@ class Search(MakoApp):
         # get the themes for the dropdowns
         data_themes = vocab.getDataThemeIds()
         selected_data_themes = set([theme[0] for theme in criteria['data_themes']])
-        sub_themes = list(chain(*[vocab.getSubThemeIdsForDataThemeId(id_) for id_ in selected_data_themes]))
+        sub_themes = vocab.getSubThemeIdsForDataThemeIds(selected_data_themes)
         selected_sub_themes = set([theme[0] for theme in criteria['sub_themes']])
-        parameters = list(chain(*[vocab.getParameterIdsForSubThemeId(id_) for id_ in selected_sub_themes]))
+        parameters = vocab.getParameterIdsForSubThemeIds(selected_sub_themes)
         selected_parameters = set([theme[0] for theme in criteria['parameters']])
 
         # get the data formats
@@ -1239,7 +1238,7 @@ def sub_themes(environ, start_response):
     from json import dumps as tojson
 
     vocab = get_vocab(environ)
-    themes = vocab.getSubThemeIdsForDataThemeId(environ['selector.vars']['broader'])
+    themes = vocab.getSubThemeIdsForDataThemeIds(environ['selector.vars']['broader'].split(','))
     json = tojson(themes)
 
     headers = [('Cache-Control', 'max-age=3600, must-revalidate'),
@@ -1251,7 +1250,7 @@ def parameters(environ, start_response):
     from json import dumps as tojson
 
     vocab = get_vocab(environ)
-    parameters = vocab.getParameterIdsForSubThemeId(environ['selector.vars']['broader'])
+    parameters = vocab.getParameterIdsForSubThemeIds(environ['selector.vars']['broader'].split(','))
     json = tojson(parameters)
 
     headers = [('Cache-Control', 'max-age=3600, must-revalidate'),
