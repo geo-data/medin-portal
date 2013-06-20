@@ -222,33 +222,6 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
 
       <div id="search-term-help" style="display:none">
         <h3>Search help</h3>
-        <p>The interface allows the user to search specific metadata fields. The following explains the fields.</p>
-	<table class="help" summary="Target field definitions">
-          <tbody>
-	    <tr>
-	      <td>Parameter</td>
-	      <td>parameters are those in the <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FP021%2Fcurrent&amp;earliestRecord=&amp;submit=submit">BODC Parameter Discovery Vocabulary (P021) list</a> and are terms describing fine-grained related groups of measurements. <a href="http://seadatanet.maris2.nl/v_bodc_vocab/vocabrelations.aspx">This</a> is a user friendly interface showing the relationship between list P021 and other parameter lists P081 and P031.</td>
-            </tr>
-            <tr>
-              <td>Resource type</td>
-              <td>describes the nature of the information, for example, dataset, service, series, model, feature or software. All terms can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
-            </tr>
-            <tr>
-              <td>Public access limits</td>
-              <td>describes restrictions imposed on the resource. All terms are selected from a controlled vocabulary that can be found in the <a href="http://www.oceannet.org/marine_data_standards/medin_disc_stnd.html">MEDIN discovery standard</a>.</td>
-            </tr>
-            <tr>
-              <td>Data originator</td>
-              <td>free text field to search for the person or organisation that created the resource.</td>
-            </tr>
-            <tr>
-              <td>Data format</td>
-              <td>describes the formats in which digital data can be provided for example, database, image or GIS. This list is <a href="http://vocab.ndg.nerc.ac.uk/clients/getList?recordKeys=http%3A%2F%2Fvocab.ndg.nerc.ac.uk%2Flist%2FM010%2Fcurrent&amp;earliestRecord=&amp;submit=submit">MEDIN controlled vocabulary M010</a>.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Advanced search</h3>
         <p>Words typed in 'as is' will result in a full text search that
           requires all words to be present in the results.</p>      
         <blockquote>
@@ -296,43 +269,6 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
           <div class="example"><kbd>acoustic <strong>OR</strong> currents sediment</kbd></div>
         </blockquote>
         
-        <p>As well as running full text searches, more specific search
-          targets can be specified by prefixing search terms with a target
-          identifier.  Available target identifiers and how they relate to
-          search fields are as follows:</p>
-        
-        <table class="help" summary="Available target identifiers" style="margin-left:1.5em">
-          <tbody>
-            <tr>
-              <td>p</td><td>= Parameter</td>
-            </tr>
-            <tr>
-              <td>rt</td><td>= Resource type</td>
-            </tr>
-            <tr>
-              <td>al</td><td>= Public access limits</td>
-            </tr>
-            <tr>
-              <td>o</td><td>= Data originator</td>
-            </tr>
-            <tr>
-              <td>f</td><td>= Data format</td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <p>The identifier is separated from the search term using a
-          <strong>colon</strong> (<strong>:</strong>)</p>
-        <blockquote>
-          <div>
-            <p><strong>Example</strong>: type the following to find all
-              documents that contain <kbd>acoustic</kbd> that also have
-              a <strong>data format</strong> suitable for Geographic
-              Information Systems and a <strong>parameter</strong>
-              containing <kbd>sediment</kbd>:</p>
-          </div>
-          <div class="example"><kbd>acoustic <strong>f:</strong>"Geographic Information System"<strong> p:</strong>sediment</kbd></div>
-        </blockquote>
       </div>
       
       <div id="data-themes">and/or choose a data theme:
