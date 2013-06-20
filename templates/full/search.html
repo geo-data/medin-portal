@@ -30,7 +30,7 @@
 %>
 
 <%def name="header()">
-    <link href="/css/jquery.multiselect.css" rel="stylesheet" type="text/css" />
+    <link href="/css/chosen.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         #map {
             /* it is important to assign absolute pixel sizes for IE
@@ -78,12 +78,21 @@
             margin-right: 0.5em;
             vertical-align: middle;
         }
+
+        /* override the styles from `site.css` */
+        #search-form li {
+            list-style:none outside none;
+        }
+        #search-form ul {
+            font-size: 1em;
+            margin-bottom: 0;
+        }
     </style>
     <script type="text/javascript" src="/js/jquery.iclick.js"></script>
     <script type="text/javascript" src="/js/jquery.alignwith.js"></script>
     <script type="text/javascript" src="/js/jquery.ba-resize.js"></script>
     <script type="text/javascript" src="/js/jquery.caret-range.js"></script>
-    <script type="text/javascript" src="/js/jquery.multiselect.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.chosen.js"></script>
     <script type="text/javascript" src="/js/openlayers/OpenLayers.js"></script>
     <script type="text/javascript" src="/js/full/map.js"></script>
     <script type="text/javascript" src="/js/jquery.olLayerControl.js"></script>

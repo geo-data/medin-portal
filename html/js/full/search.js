@@ -1,4 +1,4 @@
-/*
+/**
  * Created by Homme Zwaagstra
  * 
  * Copyright (c) 2010 GeoData Institute
@@ -777,8 +777,13 @@ function init_theme_dropdown(dropdown, id) {
         if (do_check_query) check_query();
         
         // set the child with a default value
-        $('#'+ id + ' select:first').multiselect('uncheckAll')
-            .change(); // and trigger a change to propagate to any sub dropdowns
+        var select = $('#'+ id + ' select:first')
+                .val([]).trigger("liszt:updated") // clear existing selections
+                .change(); // trigger a change to propagate to any sub dropdowns
+
+        // work around an apparent Chosen bug and remove existing choices
+        // (these should be removed in the previous statement).
+        $('#'+ id + ' ul.chzn-choices li.search-choice').remove();
 
         if (!values || !values.length) {
             $('#'+ id).hide();  // we don't want to see the child
@@ -799,15 +804,12 @@ function init_theme_dropdown(dropdown, id) {
 
             do_check_query = false; // don't run a query check due to this change
             if (items.length) {
-                $('#'+ id + ' select:first').empty().append(items.join('')) //add the options to the select
-                    .multiselect('refresh') // make the multiselect aware of the change
-                    .change();                                              //trigger a change
+                select.empty().append(items.join('')) //add the options to the select
+                    .trigger("liszt:updated"); // make chosen aware of the change
                 $('#'+ id + ' div.box-on').show();         //show the on div
                 $('#'+ id + ' > div:not(.box-on)').hide(); //hide all other divs
             } else {
-                $('#'+ id + ' select:first')
-                    .multiselect('refresh') // make the multiselect aware of the change
-                    .change();      //trigger a change
+                select.trigger("liszt:updated"); // make chosen aware of the change
                 $('#'+ id + ' div.box-off').show();         //show the off div
                 $('#'+ id + ' > div:not(.box-off)').hide(); //hide all other divs
             }
@@ -817,8 +819,9 @@ function init_theme_dropdown(dropdown, id) {
 }
 
 function init_dropdowns() {
-    $('#dt,#st,#p,#dh,#at,#f').multiselect({
-        header: false,
-        noneSelectedText: 'All'
+    $('#dt,#st,#p,#dh,#at,#f').chosen({
+        placeholder_text: "All searched for by default",
+        no_results_text: "All",
+        width: '100%' 
     });
 }
