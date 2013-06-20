@@ -98,7 +98,7 @@ class TermBuilder(object):
             # If the term is a phrase ensure it is enclosed with two
             # pairs of quotes for the DWS
             if word.startswith('"') and word.endswith('"'):
-                word = '""%s""' % word.strip('"')
+                word = "'''%s'''" % word.strip('"')
 
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = word
@@ -116,7 +116,7 @@ class TermBuilder(object):
         # add parameters to the search terms
         if parameters:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.Term = ' '.join(['""%s""' % param for param in parameters]) # `OR` query
+            term.Term = ' '.join(["'''%s'''" % param for param in parameters]) # `OR` query
             term.TermTarget = self.targets['p']
             if terms:
                 term._operator = 'AND'
@@ -128,7 +128,7 @@ class TermBuilder(object):
         # add data holders to the search terms
         if data_holders:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.Term = ' '.join(['""%s""' % holder for holder in data_holders]) # `OR` query
+            term.Term = ' '.join(["'''%s'''" % holder for holder in data_holders]) # `OR` query
             term.TermTarget = self.targets['o']
             if terms:
                 term._operator = 'AND'
@@ -140,7 +140,7 @@ class TermBuilder(object):
         # add access types to the search terms
         if access_types:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.Term = ' '.join(['""%s""' % type_.prefLabel for type_ in access_types]) # `OR` query
+            term.Term = ' '.join(["'''%s'''" % type_.prefLabel for type_ in access_types]) # `OR` query
             term.TermTarget = self.targets['al']
             if terms:
                 term._operator = 'AND'
@@ -152,7 +152,7 @@ class TermBuilder(object):
         # add data formats to the search terms
         if data_formats:
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.Term = ' '.join(['""%s""' % fmt.prefLabel for fmt in data_formats]) # `OR` query
+            term.Term = ' '.join(["'''%s'''" % fmt.prefLabel for fmt in data_formats]) # `OR` query
             term.TermTarget = self.targets['f']
             if terms:
                 term._operator = 'AND'
