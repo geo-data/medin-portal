@@ -271,92 +271,96 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         
       </div>
       
-      <div id="data-themes">and/or choose a data theme:
-        <div>
-          <select id="dt" name="dt" multiple="multiple">
-            %for id, name in data_themes:
-            <option value="${id}"
-                    %if id in selected_data_themes:
- selected="selected"\
-                    %endif
->${name | x}</option>
-            %endfor
-          </select>
-        </div>
-      </div>
-
-      <div id="sub-themes"
-           %if not selected_data_themes:
-           style="display:none"
-           %endif
-           >
-        <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading sub-themes...</div>
-        <div class="box-off"
-             %if selected_data_themes and sub_themes:
-             style="display:none"
-             %endif
-             >There are no sub-themes for this selection</div>
-        <div class="box-on"
-             %if selected_data_themes and not sub_themes:
-             style="display:none"
-             %endif
-             >choose a sub theme:
-          <div>
-            <select id="st" name="st" multiple="multiple">
-              %for id, name in sub_themes:
-              <option value="${id}"
-                      %if id in selected_sub_themes:
-                      selected="selected"\
-                      %endif
-                      >${name | x}</option>
-              %endfor
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div id="parameters"
-           %if not parameters:
-           style="display:none"
-           %endif
-           >
-        <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading parameters...</div>
-        <div class="box-off"
-             %if selected_sub_themes and parameters:
-             style="display:none"
-             %endif
-             >There are no parameters for this selection</div>
-        <div class="box-on"
-             %if selected_sub_themes and not parameters:
-             style="display:none"
-             %endif
-             >choose a parameter:
-          <div>
-            <select id="p" class="checkable" name="p" multiple="multiple">
-              %for id, name in parameters:
-              <option value="${id}"
-                      %if id in selected_parameters:
-                      selected="selected"\
-                      %endif
-                      >${name | x}</option>
-              %endfor
-            </select>
-          </div>
-        </div>
-      </div>
       <br/>
     (<a href="javascript:toggle('advanced-search', 'Advanced search', 'Hide the advanced search')" id="advanced-search-link" title="Show or hide the advanced search">
-        %if selected_data_holders or selected_access_types or selected_data_formats:
+        %if selected_data_themes or selected_sub_themes or selected_parameters or selected_data_holders or selected_access_types or selected_data_formats:
         Hide the advanced search
         %else:
         Advanced search
         %endif
       </a>)
       <div id="advanced-search"
-           %if not selected_data_holders and not selected_access_types and not selected_data_formats:
+           %if not selected_data_themes and not selected_sub_themes and not selected_parameters and not selected_data_holders and not selected_access_types and not selected_data_formats:
            style="display:none"
            %endif
            >
+        <h3>Search by theme</h3>
+
+        <div id="data-themes">and/or choose a data theme:
+          <div>
+            <select id="dt" name="dt" multiple="multiple">
+              %for id, name in data_themes:
+              <option value="${id}"
+                      %if id in selected_data_themes:
+                      selected="selected"\
+                      %endif
+                      >${name | x}</option>
+              %endfor
+            </select>
+          </div>
+        </div>
+
+        <div id="sub-themes"
+             %if not selected_data_themes:
+             style="display:none"
+             %endif
+             >
+          <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading sub-themes...</div>
+          <div class="box-off"
+               %if selected_data_themes and sub_themes:
+               style="display:none"
+               %endif
+               >There are no sub-themes for this selection</div>
+          <div class="box-on"
+               %if selected_data_themes and not sub_themes:
+               style="display:none"
+               %endif
+               >choose a sub theme:
+            <div>
+              <select id="st" name="st" multiple="multiple">
+                %for id, name in sub_themes:
+                <option value="${id}"
+                        %if id in selected_sub_themes:
+                        selected="selected"\
+                        %endif
+                        >${name | x}</option>
+                %endfor
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="parameters"
+             %if not parameters:
+             style="display:none"
+             %endif
+             >
+          <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading parameters...</div>
+          <div class="box-off"
+               %if selected_sub_themes and parameters:
+               style="display:none"
+               %endif
+               >There are no parameters for this selection</div>
+          <div class="box-on"
+               %if selected_sub_themes and not parameters:
+               style="display:none"
+               %endif
+               >choose a parameter:
+            <div>
+              <select id="p" class="checkable" name="p" multiple="multiple">
+                %for id, name in parameters:
+                <option value="${id}"
+                        %if id in selected_parameters:
+                        selected="selected"\
+                        %endif
+                        >${name | x}</option>
+                %endfor
+              </select>
+            </div>
+          </div>
+        </div>
+        <br/>
+
         <h3>Search by other terms</h3>
         <div>Choose a data holder:
           <div>
