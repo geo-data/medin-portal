@@ -78,6 +78,9 @@
             margin-right: 0.5em;
             vertical-align: middle;
         }
+        #advanced-search ul.disabled {
+            background: none repeat scroll 0 0 #DEDEDE;
+        }
 
         /* override the styles from `site.css` */
         #search-form li {
@@ -115,6 +118,9 @@ var script_root = '${script_root}';
 $(function() {
     OpenLayers.ProxyHost="${script_root}/proxy?url=";
 
+    // initialise the dropdowns
+    init_dropdowns();
+
     // initialise the search term controls
     init_search_term();
            
@@ -125,9 +131,6 @@ $(function() {
     $.datepicker.setDefaults({ dateFormat: 'yy-mm-dd' });
     init_date('start-date');
     init_date('end-date');
-
-    // initialise the dropdowns
-    init_dropdowns();
     
     // add the user input checks to the form so that when input is
     // updated it is checked on the server.
@@ -300,24 +303,14 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
           </div>
         </div>
 
-        <div id="sub-themes"
-             %if not selected_data_themes:
-             style="display:none"
-             %endif
-             >
-          <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading sub-themes...</div>
-          <div class="box-off"
-               %if selected_data_themes and sub_themes:
-               style="display:none"
-               %endif
-               >There are no sub-themes for this selection</div>
-          <div class="box-on"
-               %if selected_data_themes and not sub_themes:
-               style="display:none"
-               %endif
-               >choose a sub theme:
+        <div id="sub-themes">
+          <div class="box-on">choose a sub theme:
             <div>
-              <select id="st" name="st" multiple="multiple">
+              <select id="st" name="st" multiple="multiple"
+               %if selected_data_themes and not sub_themes:
+               disabled="disabled"
+               %endif
+               >
                 %for id, name in sub_themes:
                 <option value="${id}"
                         %if id in selected_sub_themes:
@@ -330,24 +323,14 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
           </div>
         </div>
 
-        <div id="parameters"
-             %if not parameters:
-             style="display:none"
-             %endif
-             >
-          <div class="box-loading" style="display:none"><img class="loading" src="/images/loading.gif" width="16" height="16" alt=""/> Loading parameters...</div>
-          <div class="box-off"
-               %if selected_sub_themes and parameters:
-               style="display:none"
-               %endif
-               >There are no parameters for this selection</div>
-          <div class="box-on"
-               %if selected_sub_themes and not parameters:
-               style="display:none"
-               %endif
-               >choose a parameter:
+        <div id="parameters">
+          <div class="box-on">choose a parameter:
             <div>
-              <select id="p" class="checkable" name="p" multiple="multiple">
+              <select id="p" class="checkable" name="p" multiple="multiple"
+               %if selected_sub_themes and not parameters:
+               disabled="disabled"
+               %endif
+               >
                 %for id, name in parameters:
                 <option value="${id}"
                         %if id in selected_parameters:

@@ -769,8 +769,16 @@ OpenLayers.Handler.DrawBox = OpenLayers.Class(OpenLayers.Handler.Box, {
     CLASS_NAME: "OpenLayers.Handler.DrawBox"
 });
 
+// `init_dropdowns()` must be called before this function
 var do_check_query = true;
 function init_theme_dropdown(dropdown, id) {
+    // disable the sub dropdown if there are no selections for this dropdown
+    var values = $(dropdown).find('select:first').val();
+    if (!values || !values.length) {
+        $('#'+ id + ' input').attr('disabled', 'disabled');
+        $('#'+ id + ' ul.chzn-choices').addClass('disabled');
+    }
+
     dropdown.change(function onSelect(event) {
         var values = $(this).find('select:first').val();
 
@@ -778,41 +786,44 @@ function init_theme_dropdown(dropdown, id) {
         
         // set the child with a default value
         var select = $('#'+ id + ' select:first')
-                .val([]).trigger("liszt:updated") // clear existing selections
+                .empty().trigger("liszt:updated") // clear existing selections
                 .change(); // trigger a change to propagate to any sub dropdowns
 
         // work around an apparent Chosen bug and remove existing choices
         // (these should be removed in the previous statement).
         $('#'+ id + ' ul.chzn-choices li.search-choice').remove();
 
+        // disable chosen inputs on the child
+        $('#'+ id + ' input').attr('disabled', 'disabled');
+
+        // visually feed back that the inputs are disabled
+        $('#'+ id + ' ul.chzn-choices').addClass('disabled');
+
         if (!values || !values.length) {
-            $('#'+ id).hide();  // we don't want to see the child
+            // we don't need to populate the child dropdown
             return;
         }
 
-        $('#'+ id + ' div.box-loading').show();         //show the loading div
-        $('#'+ id + ' > div:not(.box-loading)').hide(); //hide all other divs
-        $('#'+ id).show();
+        var oldText = $('#' + id + ' input:first').val();
+        $('#' + id + ' input:first').val('Loading options...');
 
         var url = script_root + '/full/vocabs/' + id + '/' + values.join(',');
         $.getJSON(url, function onSuccess(data) {
             var items = [];
             
             $.each(data, function onItem(index, item) {
-                items.push('<option value="' + item[0] + '">' + item[1] + '</option>');
+                items.push('<option value="' + item[0 ]+ '">' + item[1] + '</option>');
             });
 
             do_check_query = false; // don't run a query check due to this change
             if (items.length) {
                 select.empty().append(items.join('')) //add the options to the select
                     .trigger("liszt:updated"); // make chosen aware of the change
-                $('#'+ id + ' div.box-on').show();         //show the on div
-                $('#'+ id + ' > div:not(.box-on)').hide(); //hide all other divs
             } else {
                 select.trigger("liszt:updated"); // make chosen aware of the change
-                $('#'+ id + ' div.box-off').show();         //show the off div
-                $('#'+ id + ' > div:not(.box-off)').hide(); //hide all other divs
             }
+            $('#' + id + ' input').removeAttr('disabled').val(oldText);
+            $('#'+ id + ' ul.chzn-choices').removeClass('disabled');
             do_check_query = true; //query checks can be run again
         });
     });
