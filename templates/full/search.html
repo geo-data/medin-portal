@@ -289,7 +289,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
            >
         <h3>Search by theme</h3>
 
-        <div id="data-themes">and/or choose a data theme:
+        <div id="data-themes">Choose a data theme:
           <div>
             <select id="dt" name="dt" multiple="multiple">
               %for id, name in data_themes:
@@ -304,7 +304,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         </div>
 
         <div id="sub-themes">
-          <div class="box-on">choose a sub theme:
+          <div class="box-on">Choose a sub theme:
             <div>
               <select id="st" name="st" multiple="multiple"
                %if selected_data_themes and not sub_themes:
@@ -324,7 +324,7 @@ href="mailto:enquiries@oceannet.org">enquiries@oceannet.org</a></p>
         </div>
 
         <div id="parameters">
-          <div class="box-on">choose a parameter:
+          <div class="box-on">Choose a parameter:
             <div>
               <select id="p" class="checkable" name="p" multiple="multiple"
                %if selected_sub_themes and not parameters:
