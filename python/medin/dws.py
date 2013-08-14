@@ -78,13 +78,7 @@ class TermBuilder(object):
     def __init__(self, client):
         self.client = client
 
-    def __call__(self, tokens, skip_errors=True):
-        # If there aren't any tokens we need to do a full text search
-        if not tokens:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
-            term.TermTarget = 'FullText'
-            return [term]
-
+    def __call__(self, tokens, parameters, data_holders, access_types, data_formats, skip_errors=True):
         # Create the termSearch objects from the tokens
         terms = []
         for i, token in enumerate(tokens):
@@ -104,7 +98,7 @@ class TermBuilder(object):
             # If the term is a phrase ensure it is enclosed with two
             # pairs of quotes for the DWS
             if word.startswith('"') and word.endswith('"'):
-                word = '""%s""' % word.strip('"')
+                word = "'''%s'''" % word.strip('"')
 
             term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
             term.Term = word
@@ -117,6 +111,60 @@ class TermBuilder(object):
 
             term._id = i+1
             term._operator = op
+            terms.append(term)
+
+        # add parameters to the search terms
+        if parameters:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(["'''%s'''" % param for param in parameters]) # `OR` query
+            term.TermTarget = self.targets['p']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # add data holders to the search terms
+        if data_holders:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(["'''%s'''" % holder for holder in data_holders]) # `OR` query
+            term.TermTarget = self.targets['o']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # add access types to the search terms
+        if access_types:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(["'''%s'''" % type_.prefLabel for type_ in access_types]) # `OR` query
+            term.TermTarget = self.targets['al']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # add data formats to the search terms
+        if data_formats:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.Term = ' '.join(["'''%s'''" % fmt.prefLabel for fmt in data_formats]) # `OR` query
+            term.TermTarget = self.targets['f']
+            if terms:
+                term._operator = 'AND'
+                term._id = len(terms) + 1
+            else:
+                term._id = 1
+            terms.append(term)
+
+        # If there aren't any tokens we need to do a full text search
+        if not terms:
+            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term.TermTarget = 'FullText'
             terms.append(term)
 
         return terms
@@ -346,8 +394,8 @@ class SearchRequest(Request):
             raise ValueError('Unknown result type: %s' % str(result_type))
 
         count = query.getCount()
-        search_term = query.getSearchTerm(skip_errors=True)
-
+        search_term = query.getSearchTerm(default=[], skip_errors=True)
+        
         # do a sanity check on the start index
         if query.getStartIndex() < (1 - count):
             query.setStartIndex(1)
@@ -375,8 +423,12 @@ class SearchRequest(Request):
         search = self.client.factory.create('ns0:SearchCriteria')
 
         # add the terms
+        parameters = query.getParameterLabels()
+        data_holders = query.getDataHolders(default=[])
+        access_types = query.getAccessTypes(default=[])
+        data_formats = query.getDataFormats(default=[])
         term_parser = TermBuilder(self.client)
-        terms = term_parser(search_term)
+        terms = term_parser(search_term, parameters, data_holders, access_types, data_formats)
         search.TermSearch.extend(terms)
 
         # add the spatial criteria
