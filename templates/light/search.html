@@ -59,8 +59,8 @@
     <div>
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a parameter...</option>
-        %for parameter in parameters.members.itervalues():
-        <option title="${(parameter.definition or parameter.prefLabel) | x}" value="${parameter.prefLabel | q,x}">${parameter.prefLabel | x}</option>
+        %for prefLabel, definition in parameters:
+        <option title="${(definition or prefLabel) | x}" value="${prefLabel | q,x}">${prefLabel | x}</option>
         %endfor
       </select>
     </div>
@@ -69,8 +69,8 @@
     <div>
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a resource type...</option>
-        %for rtype in resource_types.members.itervalues():
-        <option title="${(rtype.definition or rtype.prefLabel) | x}" value="${rtype.prefLabel | q,x}">${rtype.prefLabel | x}</option>
+        %for prefLabel, definition in resource_types:
+        <option title="${(definition or prefLabel) | x}" value="${prefLabel | q,x}">${prefLabel | x}</option>
         %endfor
       </select>
     </div>
@@ -79,8 +79,8 @@
     <div>
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose an access type...</option>
-        %for atype in access_types.members.itervalues():
-        <option title="${(atype.definition or atype.prefLabel) | x}" value="${atype.prefLabel | q,x}">${atype.prefLabel | x}</option>
+        %for prefLabel, definition in access_types:
+        <option title="${(definition or prefLabel) | x}" value="${prefLabel | q,x}">${prefLabel | x}</option>
         %endfor
       </select>
     </div>
@@ -89,8 +89,8 @@
     <div>
       <select name="q" multiple="multiple" size="5">
         <option value="">Choose a data format...</option>
-        %for format in data_formats.members.itervalues():
-        <option title="${(format.definition or format.prefLabel) | x}" value="${format.prefLabel | q,x}">${format.prefLabel | x}</option>
+        %for prefLabel, definition in data_formats:
+        <option title="${(definition or prefLabel) | x}" value="${prefLabel | q,x}">${prefLabel | x}</option>
         %endfor
       </select>
     </div>
