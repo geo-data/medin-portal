@@ -351,7 +351,7 @@ function check_query() {
                            !criteria['data_formats'].length)
                     term.append('<strong>everything</strong>');
                 else
-                    term.append('<span>documents ' + (criteria['terms'].length ? ' containing ' : ' ') + '</span>');
+                    term.append('<span>data ' + (criteria['terms'].length ? ' containing ' : ' ') + '</span>');
 
                 for (var i = 0; i < criteria['terms'].length; i++) {
                     var tterm = criteria['terms'][i];
