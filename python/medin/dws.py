@@ -100,7 +100,7 @@ class TermBuilder(object):
             if word.startswith('"') and word.endswith('"'):
                 word = "'''%s'''" % word.strip('"')
 
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.Term = word
             try:
                 term.TermTarget = self.targets[token.target.lower()]
@@ -115,7 +115,7 @@ class TermBuilder(object):
 
         # add parameters to the search terms
         if parameters:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.Term = ' '.join(["'''%s'''" % param for param in parameters]) # `OR` query
             term.TermTarget = self.targets['p']
             if terms:
@@ -127,7 +127,7 @@ class TermBuilder(object):
 
         # add data holders to the search terms
         if data_holders:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.Term = ' '.join(["'''%s'''" % holder for holder in data_holders]) # `OR` query
             term.TermTarget = self.targets['o']
             if terms:
@@ -139,7 +139,7 @@ class TermBuilder(object):
 
         # add access types to the search terms
         if access_types:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.Term = ' '.join(["'''%s'''" % type_.prefLabel for type_ in access_types]) # `OR` query
             term.TermTarget = self.targets['al']
             if terms:
@@ -151,7 +151,7 @@ class TermBuilder(object):
 
         # add data formats to the search terms
         if data_formats:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.Term = ' '.join(["'''%s'''" % fmt.prefLabel for fmt in data_formats]) # `OR` query
             term.TermTarget = self.targets['f']
             if terms:
@@ -163,7 +163,7 @@ class TermBuilder(object):
 
         # If there aren't any tokens we need to do a full text search
         if not terms:
-            term = self.client.factory.create('ns0:SearchCriteria.TermSearch')
+            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
             term.TermTarget = 'FullText'
             terms.append(term)
 
@@ -401,11 +401,11 @@ class SearchRequest(Request):
             query.setStartIndex(1)
 
         # construct the RetrieveCriteria
-        retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
+        retrieve = self.client.factory.create('ns1:RetrieveCriteriaType')
         retrieve.RecordDetail = ResponseClass.doc_type
 
         # add the ordering criteria
-        order_by = self.client.factory.create('ns0:OrderByType')
+        order_by = self.client.factory.create('ns1:OrderByType')
         order = query.getSort()
         if not order:
             field = 'DatasetMetadataUpdateDate'
@@ -420,7 +420,7 @@ class SearchRequest(Request):
         retrieve.OrderBy.append(order_by)
 
         # construct the SearchCriteria
-        search = self.client.factory.create('ns0:SearchCriteria')
+        search = self.client.factory.create('ns1:SearchCriteriaType')
 
         # add the terms
         parameters = query.getParameterLabels()
@@ -459,14 +459,14 @@ class SearchRequest(Request):
         # add the temporal criteria
         start = query.getStartDate()
         if start:
-            start_date = self.client.factory.create('ns0:DateValueType')
+            start_date = self.client.factory.create('ns1:DateValueType')
             start_date.DateValue = start.date().isoformat()
             start_date.TemporalOperator = "OnOrAfter"
             search.TemporalSearch.DateRange.Date.append(start_date)
 
         end = query.getEndDate()
         if end:
-            end_date = self.client.factory.create('ns0:DateValueType')
+            end_date = self.client.factory.create('ns1:DateValueType')
             end_date.DateValue = end.date().isoformat()
             end_date.TemporalOperator = "OnOrBefore"
             search.TemporalSearch.DateRange.Date.append(end_date)
@@ -492,13 +492,15 @@ class SearchRequest(Request):
             # the count is zero so needs to be set to one
             dws_count = 1
 
+        doSearch = self.client.factory.create('ns1:DoSearchType')
+        doSearch.SearchCriteria = search
+        doSearch.RetrieveCriteria = retrieve
+        doSearch.Start = start_index
+        doSearch.HowMany = dws_count
         self.caller = SOAPCaller(self.client,
-                                 'doSearch',
+                                 'DoSearch',
                                  logger,
-                                 search,
-                                 retrieve,
-                                 start_index,
-                                 dws_count)
+                                 doSearch)
         self.count = count
         self.ResponseClass = ResponseClass
         self.logger = logger
@@ -564,24 +566,24 @@ class MetadataResponse(object):
 class MetadataRequest(Request):
 
     def getMetadataFormats(self, logger):
-        caller = SOAPCaller(self.client, 'getList', logger, 'MetadataFormatList')
+        caller = SOAPCaller(self.client, 'GetList', logger, 'MetadataFormatList')
         response = caller()
 
         return response.listMember
 
     def prepareCaller(self, logger, gid, format):
         # construct the RetrieveCriteria
-        retrieve = self.client.factory.create('ns0:RetrieveCriteriaType')
+        retrieve = self.client.factory.create('ns1:RetrieveCriteriaType')
         retrieve.RecordDetail = 'DocumentFull' # we want all the info
         retrieve.MetadataFormat = format
 
         # construct the SimpleDocument
-        simpledoc = self.client.factory.create('ns0:SimpleDocument')
+        simpledoc = self.client.factory.create('ns1:SimpleDocument')
         simpledoc.DocumentId = gid
 
         # send the query to the DWS
         self.caller = SOAPCaller(self.client,
-                                 'doPresent',
+                                 'DoPresent',
                                  logger,
                                  [simpledoc],
                                  retrieve)

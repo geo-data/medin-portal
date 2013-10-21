@@ -1,110 +1,418 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions xmlns:tns="http://medin.discovery.services.ndg" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:sch="http://medin.discovery.services.ndg/schema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://medin.discovery.services.ndg">
-  <wsdl:types>
-    <xs:schema targetNamespace="http://medin.discovery.services.ndg">
-      <xs:import namespace="http://medin.discovery.services.ndg/schema" schemaLocation="DiscoverySchema.xsd"/>
-    </xs:schema>
-  </wsdl:types>
-  <wsdl:message name="doPresentResponse">
-    <wsdl:part name="part" element="sch:DoPresentReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListNamesResponse">
-    <wsdl:part name="part" element="sch:GetListNamesReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="doSearchResponse">
-    <wsdl:part name="part" element="sch:DoSearchReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListResponse">
-    <wsdl:part name="part" element="sch:GetListReturn">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="doSearchRequest">
-    <wsdl:part name="part" element="sch:DoSearch">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="doPresentRequest">
-    <wsdl:part name="part" element="sch:DoPresent">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListRequest">
-    <wsdl:part name="part" element="sch:GetList">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:message name="getListNamesRequest">
-    <wsdl:part name="part" element="sch:GetListNames">
-    </wsdl:part>
-  </wsdl:message>
-  <wsdl:portType name="Discovery">
-    <wsdl:operation name="doSearch">
-      <wsdl:input name="doSearchRequest" message="tns:doSearchRequest">
-    </wsdl:input>
-      <wsdl:output name="doSearchResponse" message="tns:doSearchResponse">
-    </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="doPresent">
-      <wsdl:input name="doPresentRequest" message="tns:doPresentRequest">
-    </wsdl:input>
-      <wsdl:output name="doPresentResponse" message="tns:doPresentResponse">
-    </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="getListNames">
-      <wsdl:input name="getListNamesRequest" message="tns:getListNamesRequest">
-    </wsdl:input>
-      <wsdl:output name="getListNamesResponse" message="tns:getListNamesResponse">
-    </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="getList">
-      <wsdl:input name="getListRequest" message="tns:getListRequest">
-    </wsdl:input>
-      <wsdl:output name="getListResponse" message="tns:getListResponse">
-    </wsdl:output>
-    </wsdl:operation>
-  </wsdl:portType>
-  <wsdl:binding name="DiscoverySoapBinding" type="tns:Discovery">
-    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
-    <wsdl:operation name="doSearch">
-      <wsdlsoap:operation/>
-      <wsdl:input>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:input>
-      <wsdl:output>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="doPresent">
-      <wsdlsoap:operation/>
-      <wsdl:input>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:input>
-      <wsdl:output>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="getListNames">
-      <wsdlsoap:operation/>
-      <wsdl:input>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:input>
-      <wsdl:output>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="getList">
-      <wsdlsoap:operation/>
-      <wsdl:input>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:input>
-      <wsdl:output>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:output>
-    </wsdl:operation>
-  </wsdl:binding>
-  <wsdl:service name="DiscoveryServiceMEDIN">
-    <wsdl:port name="Discovery" binding="tns:DiscoverySoapBinding">
-      <wsdlsoap:address location="http://triton.badc.rl.ac.uk/axis2/services/DiscoveryServiceMEDIN/"/>
-    </wsdl:port>
-  </wsdl:service>
-</wsdl:definitions>
+<definitions name='DiscoveryService' targetNamespace='http://discovery.ejb.revitalization.services.ndg/' xmlns='http://schemas.xmlsoap.org/wsdl/' xmlns:ns1='http://schemas.services.ndg/discovery' xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/' xmlns:tns='http://discovery.ejb.revitalization.services.ndg/' xmlns:xsd='http://www.w3.org/2001/XMLSchema'>
+ <types>
+  <xs:schema targetNamespace='http://discovery.ejb.revitalization.services.ndg/' version='1.0' xmlns:ns1='http://schemas.services.ndg/discovery' xmlns:tns='http://discovery.ejb.revitalization.services.ndg/' xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+   <xs:import namespace='http://schemas.services.ndg/discovery'/>
+   <xs:element name='DoPresent' type='tns:DoPresent'/>
+   <xs:element name='DoPresentResponse' type='tns:DoPresentResponse'/>
+   <xs:element name='DoSearch' type='tns:DoSearch'/>
+   <xs:element name='DoSearchResponse' type='tns:DoSearchResponse'/>
+   <xs:element name='GetList' type='tns:GetList'/>
+   <xs:element name='GetListNames' type='tns:GetListNames'/>
+   <xs:element name='GetListNamesResponse' type='tns:GetListNamesResponse'/>
+   <xs:element name='GetListResponse' type='tns:GetListResponse'/>
+   <xs:complexType name='GetList'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='request' type='ns1:GetListType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GetListResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='ns1:GetListReturnType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoSearch'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='request' type='ns1:DoSearchType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoSearchResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='ns1:DoSearchReturnType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoPresent'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='request' type='ns1:DoPresentType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoPresentResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='ns1:DoPresentReturnType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GetListNames'>
+    <xs:sequence/>
+   </xs:complexType>
+   <xs:complexType name='GetListNamesResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='ns1:GetListNamesReturnType'/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:schema>
+  <xs:schema elementFormDefault='qualified' targetNamespace='http://schemas.services.ndg/discovery' version='1.0' xmlns:tns='http://schemas.services.ndg/discovery' xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+   <xs:element name='BoundingBoxContour' nillable='true' type='tns:BoundingBoxType'/>
+   <xs:element name='ContourType' nillable='true' type='xs:anyType'/>
+   <xs:element name='DoPresent' nillable='true' type='tns:DoPresentType'/>
+   <xs:element name='DoPresentReturn' nillable='true' type='tns:DoPresentReturnType'/>
+   <xs:element name='DoSearch' nillable='true' type='tns:DoSearchType'/>
+   <xs:element name='DoSearchReturn' nillable='true' type='tns:DoSearchReturnType'/>
+   <xs:element name='GetList' nillable='true' type='tns:GetListType'/>
+   <xs:element name='GetListNames' nillable='true' type='xs:anyType'/>
+   <xs:element name='GetListNamesReturn' nillable='true' type='tns:GetListNamesReturnType'/>
+   <xs:element name='GetListReturn' nillable='true' type='tns:GetListReturnType'/>
+   <xs:element name='MultiPolygonContour' nillable='true' type='tns:MultiPolygonContourType'/>
+   <xs:element name='PolygonContour' nillable='true' type='tns:PolygonContourType'/>
+   <xs:complexType name='GetListType'>
+    <xs:sequence>
+     <xs:element name='listName' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GetListReturnType'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='list'>
+      <xs:complexType>
+       <xs:sequence>
+        <xs:element maxOccurs='unbounded' name='listMember' type='xs:string'/>
+       </xs:sequence>
+       <xs:attribute name='name' type='xs:string' use='required'/>
+      </xs:complexType>
+     </xs:element>
+     <xs:element name='Status' type='xs:boolean'/>
+     <xs:element name='StatusMessage' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='SearchCriteriaType'>
+     <xs:sequence>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='TermSearch' type='tns:TermSearchType'/>
+       <xs:element minOccurs='0' name='SpatialSearch' type='tns:SpatialType'/>
+       <xs:element minOccurs='0' name='TemporalSearch' type='tns:TemporalType'/>
+       <xs:element name='ResourceLocator' type='xs:boolean'/>
+     </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoSearchType'>
+    <xs:sequence>
+     <xs:element name='SearchCriteria' type='tns:SearchCriteriaType'/>
+     <xs:element minOccurs='0' name='RetrieveCriteria' type='tns:RetrieveCriteriaType'/>
+     <xs:element minOccurs='0' name='Start' type='xs:unsignedInt'/>
+     <xs:element minOccurs='0' name='HowMany' type='xs:unsignedInt'/>
+     <xs:element maxOccurs='unbounded' minOccurs='0' name='Scope' type='xs:string'/>
+     <xs:element minOccurs='0' name='OriginalFormat' type='xs:string'/>
+     <xs:element minOccurs='0' name='TicketId' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='TermSearchType'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='Term' type='xs:string'/>
+     <xs:element minOccurs='0' name='TermTarget' type='xs:string'/>
+    </xs:sequence>
+    <xs:attribute name='id' type='xs:short' use='required'/>
+    <xs:attribute name='operator' type='xs:string'/>
+   </xs:complexType>
+   <xs:complexType name='SpatialType'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='SpatialOperator' type='xs:string'/>
+     <xs:element minOccurs='0' name='SpatialReferenceSystem' type='xs:string'/>
+     <xs:choice>
+      <xs:element ref='tns:ContourType'/>
+      <xs:element ref='tns:MultiPolygonContour'/>
+      <xs:element ref='tns:PolygonContour'/>
+      <xs:element ref='tns:BoundingBoxContour'/>
+     </xs:choice>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GetListNamesReturnType'>
+    <xs:sequence>
+     <xs:element name='listNames'>
+      <xs:complexType>
+       <xs:sequence>
+        <xs:element maxOccurs='unbounded' name='listName' type='xs:string'/>
+       </xs:sequence>
+      </xs:complexType>
+     </xs:element>
+     <xs:element name='Status' type='xs:boolean'/>
+     <xs:element name='StatusMessage' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DoSearchReturnType'>
+    <xs:sequence>
+     <xs:element name='Status' type='xs:boolean'/>
+     <xs:element name='StatusMessage' type='xs:string'/>
+     <xs:element minOccurs='0' name='TicketId' type='xs:string'/>
+     <xs:element minOccurs='0' name='Hits' type='xs:int'/>
+     <xs:element minOccurs='0' name='Documents' type='tns:Documents'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='Documents'>
+    <xs:complexContent>
+     <xs:extension base='tns:DocumentsType'>
+      <xs:sequence>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='DocumentSimple' type='tns:ReturnSimpleType'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='DocumentFull' type='tns:ReturnFullType'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='DocumentBrief' type='tns:ReturnBriefType'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='DocumentSummary' type='tns:ReturnSummaryType'/>
+      </xs:sequence>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='DocumentsType'>
+    <xs:sequence/>
+   </xs:complexType>
+   <xs:complexType name='ReturnSimpleType'>
+    <xs:complexContent>
+     <xs:extension base='tns:SimpleDocument'>
+      <xs:sequence/>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='SimpleDocument'>
+    <xs:sequence>
+     <xs:element name='DocumentId' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ReturnBriefType'>
+    <xs:complexContent>
+     <xs:extension base='tns:ReturnSimpleType'>
+      <xs:sequence>
+       <xs:element name='AdditionalInformation' type='tns:CustomInfo'/>
+       <xs:element minOccurs='0' name='Title' type='xs:string'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='OrderedField' type='tns:OrderingMetricType'/>
+      </xs:sequence>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='CustomInfo'>
+    <xs:sequence>
+     <xs:element name='Authors' type='xs:string'/>
+     <xs:element name='Parameters' type='xs:string'/>
+     <xs:element name='ResourceType' type='xs:string'/>
+     <xs:element name='TopicCategory' type='xs:string'/>
+     <xs:element name='Lineage' type='xs:string'/>
+     <xs:element name='LimitationsPublicAccess' type='xs:string'/>
+     <xs:element name='DataOriginator' type='xs:string'/>
+     <xs:element name='OriginalFormatName' type='xs:string'/>
+     <xs:element name='DatasetUpdateDate' type='xs:string'/>
+     <xs:element name='ResourceLocator' type='xs:boolean'/>
+     <xs:element name='DataCustodian' type='xs:string'/>
+     <xs:element name='DataDistributor' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='OrderingMetricType'>
+    <xs:sequence>
+     <xs:element name='MetricName' type='xs:string'/>
+     <xs:element minOccurs='0' name='MetricValue' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ReturnFullType'>
+    <xs:complexContent>
+     <xs:extension base='tns:ReturnSimpleType'>
+      <xs:sequence>
+       <xs:element name='AdditionalInformation' type='tns:CustomInfo'/>
+       <xs:element minOccurs='0' name='Title' type='xs:string'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='OrderedField' type='tns:OrderingMetricType'/>
+       <xs:element minOccurs='0' name='Abstract' type='xs:string'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='Temporal' type='tns:TemporalType'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='Spatial' type='tns:SpatialType'/>
+       <xs:element name='Document' type='xs:string'/>
+      </xs:sequence>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='TemporalType'>
+    <xs:sequence>
+     <xs:element name='DateRange' type='tns:DateRangeType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DateRangeType'>
+    <xs:sequence>
+     <xs:element maxOccurs='unbounded' name='Date' type='tns:DateValueType'/>
+     <xs:element minOccurs='0' name='DateRangeTarget' type='xs:string'/>
+    </xs:sequence>
+    <xs:attribute name='overlap' type='xs:boolean'/>
+   </xs:complexType>
+   <xs:complexType name='DateValueType'>
+    <xs:sequence>
+     <xs:element name='DateValue' type='xs:date'/>
+     <xs:element minOccurs='0' name='TemporalOperator' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ReturnSummaryType'>
+    <xs:complexContent>
+     <xs:extension base='tns:ReturnSimpleType'>
+      <xs:sequence>
+       <xs:element name='AdditionalInformation' type='tns:CustomInfo'/>
+       <xs:element minOccurs='0' name='Title' type='xs:string'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='OrderedField' type='tns:OrderingMetricType'/>
+       <xs:element minOccurs='0' name='Abstract' type='xs:string'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='Temporal' type='tns:TemporalType'/>
+       <xs:element maxOccurs='unbounded' minOccurs='0' name='Spatial' type='tns:SpatialType'/>
+      </xs:sequence>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='DoPresentType'>
+    <xs:sequence>
+     <xs:element maxOccurs='unbounded' name='Documents' type='tns:SimpleDocument'/>
+     <xs:element minOccurs='0' name='RetrieveCriteria' type='tns:RetrieveCriteriaType'/>
+     <xs:element minOccurs='0' name='TicketId' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='RetrieveCriteriaType'>
+    <xs:sequence>
+     <xs:element maxOccurs='unbounded' minOccurs='0' name='OrderBy' type='tns:OrderByType'/>
+     <xs:element minOccurs='0' name='RecordDetail' type='xs:string'/>
+     <xs:element minOccurs='0' name='MetadataFormat' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='OrderByType'>
+    <xs:sequence>
+     <xs:element name='OrderByField' type='xs:string'/>
+     <xs:element minOccurs='0' name='OrderByDirection' type='tns:OrderByDirectionType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='BoundingBoxType'>
+    <xs:all>
+     <xs:element name='LimitNorth' type='xs:float'/>
+     <xs:element name='LimitSouth' type='xs:float'/>
+     <xs:element name='LimitWest' type='xs:float'/>
+     <xs:element name='LimitEast' type='xs:float'/>
+    </xs:all>
+   </xs:complexType>
+   <xs:complexType name='DoPresentReturnType'>
+    <xs:sequence>
+     <xs:element name='Status' type='xs:boolean'/>
+     <xs:element name='StatusMessage' type='xs:string'/>
+     <xs:element minOccurs='0' name='TicketId' type='xs:string'/>
+     <xs:element minOccurs='0' name='Documents' type='tns:Documents'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='MultiPolygonContourType'>
+    <xs:sequence>
+     <xs:element maxOccurs='unbounded' name='polygonContour' type='tns:PolygonContourType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='PolygonContourType'>
+    <xs:sequence>
+     <xs:element maxOccurs='unbounded' name='polygonPoint' type='tns:PolygonPointType'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='PolygonPointType'>
+    <xs:all>
+     <xs:element name='x' type='xs:float'/>
+     <xs:element name='y' type='xs:float'/>
+     <xs:element minOccurs='0' name='z' type='xs:float'/>
+    </xs:all>
+   </xs:complexType>
+   <xs:complexType name='GetVersion'>
+    <xs:sequence/>
+   </xs:complexType>
+   <xs:complexType name='GetVersionReturn'>
+    <xs:complexContent>
+     <xs:extension base='tns:GetVersionReturnType'>
+      <xs:sequence/>
+     </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+   <xs:complexType name='GetVersionReturnType'>
+    <xs:sequence>
+     <xs:element name='Version' type='xs:string'/>
+     <xs:element name='Comment' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='DocumentReturnType'>
+    <xs:sequence/>
+   </xs:complexType>
+   <xs:simpleType name='OrderByDirectionType'>
+    <xs:restriction base='xs:string'>
+     <xs:enumeration value='ascending'/>
+     <xs:enumeration value='descending'/>
+    </xs:restriction>
+   </xs:simpleType>
+  </xs:schema>
+ </types>
+ <message name='DiscoveryInterface_DoSearchResponse'>
+  <part element='tns:DoSearchResponse' name='DoSearchResponse'></part>
+ </message>
+ <message name='DiscoveryInterface_DoPresentResponse'>
+  <part element='tns:DoPresentResponse' name='DoPresentResponse'></part>
+ </message>
+ <message name='DiscoveryInterface_GetList'>
+  <part element='tns:GetList' name='GetList'></part>
+ </message>
+ <message name='DiscoveryInterface_GetListNames'>
+  <part element='tns:GetListNames' name='GetListNames'></part>
+ </message>
+ <message name='DiscoveryInterface_GetListNamesResponse'>
+  <part element='tns:GetListNamesResponse' name='GetListNamesResponse'></part>
+ </message>
+ <message name='DiscoveryInterface_DoPresent'>
+  <part element='tns:DoPresent' name='DoPresent'></part>
+ </message>
+ <message name='DiscoveryInterface_GetListResponse'>
+  <part element='tns:GetListResponse' name='GetListResponse'></part>
+ </message>
+ <message name='DiscoveryInterface_DoSearch'>
+  <part element='tns:DoSearch' name='DoSearch'></part>
+ </message>
+ <portType name='DiscoveryInterface'>
+  <operation name='DoPresent' parameterOrder='DoPresent'>
+   <input message='tns:DiscoveryInterface_DoPresent'></input>
+   <output message='tns:DiscoveryInterface_DoPresentResponse'></output>
+  </operation>
+  <operation name='DoSearch' parameterOrder='DoSearch'>
+   <input message='tns:DiscoveryInterface_DoSearch'></input>
+   <output message='tns:DiscoveryInterface_DoSearchResponse'></output>
+  </operation>
+  <operation name='GetList' parameterOrder='GetList'>
+   <input message='tns:DiscoveryInterface_GetList'></input>
+   <output message='tns:DiscoveryInterface_GetListResponse'></output>
+  </operation>
+  <operation name='GetListNames' parameterOrder='GetListNames'>
+   <input message='tns:DiscoveryInterface_GetListNames'></input>
+   <output message='tns:DiscoveryInterface_GetListNamesResponse'></output>
+  </operation>
+ </portType>
+ <binding name='DiscoveryInterfaceBinding' type='tns:DiscoveryInterface'>
+  <soap:binding style='document' transport='http://schemas.xmlsoap.org/soap/http'/>
+  <operation name='DoPresent'>
+   <soap:operation soapAction=''/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='DoSearch'>
+   <soap:operation soapAction=''/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='GetList'>
+   <soap:operation soapAction=''/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='GetListNames'>
+   <soap:operation soapAction=''/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+ </binding>
+ <service name='DiscoveryService'>
+  <port binding='tns:DiscoveryInterfaceBinding' name='DiscoveryPort'>
+   <soap:address location='http://csw1-dev.cems.rl.ac.uk:8180/discovery/dws'/>
+  </port>
+ </service>
+</definitions>
