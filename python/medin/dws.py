@@ -492,11 +492,14 @@ class SearchRequest(Request):
             # the count is zero so needs to be set to one
             dws_count = 1
 
+        # construct the encapsulating request type
         doSearch = self.client.factory.create('ns1:DoSearchType')
         doSearch.SearchCriteria = search
         doSearch.RetrieveCriteria = retrieve
         doSearch.Start = start_index
         doSearch.HowMany = dws_count
+
+        # send the query to the DWS
         self.caller = SOAPCaller(self.client,
                                  'DoSearch',
                                  logger,
@@ -581,12 +584,16 @@ class MetadataRequest(Request):
         simpledoc = self.client.factory.create('ns1:SimpleDocument')
         simpledoc.DocumentId = gid
 
+        # construct the encapsulating request type
+        doPresent = self.client.factory.create('ns1:DoPresentType')
+        doPresent.Documents = [simpledoc]
+        doPresent.RetrieveCriteria = retrieve
+
         # send the query to the DWS
         self.caller = SOAPCaller(self.client,
                                  'DoPresent',
                                  logger,
-                                 [simpledoc],
-                                 retrieve)
+                                 doPresent)
         self.gid = gid
         self.logger = logger
         return self.caller
