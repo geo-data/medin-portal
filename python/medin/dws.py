@@ -569,10 +569,12 @@ class MetadataResponse(object):
 class MetadataRequest(Request):
 
     def getMetadataFormats(self, logger):
-        caller = SOAPCaller(self.client, 'GetList', logger, 'MetadataFormatList')
+        getList = self.client.factory.create('ns1:GetListType')
+        getList.listName = 'MetadataFormatList'
+        caller = SOAPCaller(self.client, 'GetList', logger, getList)
         response = caller()
 
-        return response.listMember
+        return response.list.listMember
 
     def prepareCaller(self, logger, gid, format):
         # construct the RetrieveCriteria
