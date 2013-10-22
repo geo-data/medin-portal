@@ -112,7 +112,7 @@ def get_query(environ, from_referrer=False):
             else:
                 qsl = ''
 
-    fields = ('updated', 'originator', 'title')
+    fields = ('updated', 'originator', 'title', 'online-resource')
     return Query(qsl, get_areas(environ), fields, get_vocab(environ), get_db(environ))
 
 def get_areas(environ):

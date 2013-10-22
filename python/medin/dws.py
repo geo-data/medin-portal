@@ -264,6 +264,7 @@ class BriefResponse(SearchResponse):
                 'public-access': i.LimitationsPublicAccess,
                 'originator': i.DataOriginator,
                 'format': i.OriginalFormatName,
+                'online-resource': i.ResourceLocator,
                 'parameters': to_list(i.Parameters)}
 
 class SummaryResponse(BriefResponse):
@@ -298,6 +299,7 @@ class OrderAnalyser(object):
 
     _field_map = {'updated': 'DatasetMetadataUpdateDate',
                   'title': 'DiscoveryTitle',
+                  'online-resource': 'ResourceLocator',
                   'originator': 'DataCenter'}
 
     def __init__(self, field, ascending):
