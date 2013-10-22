@@ -444,16 +444,18 @@ class SearchRequest(Request):
         if boxes:
             # get the total extent, as the DWS does not currently
             # support multiple bounding boxes
-            bbox = [
+            bbox = self.client.factory.create('ns1:BoundingBoxType');
+
+            (bbox.LimitWest,
+             bbox.LimitSouth,
+             bbox.LimitEast,
+             bbox.LimitNorth) = [
                 min((box[0] for box in boxes)),
                 min((box[1] for box in boxes)),
                 max((box[2] for box in boxes)),
                 max((box[3] for box in boxes))]
 
-            (search.SpatialSearch.BoundingBox.LimitWest,
-             search.SpatialSearch.BoundingBox.LimitSouth,
-             search.SpatialSearch.BoundingBox.LimitEast,
-             search.SpatialSearch.BoundingBox.LimitNorth) = bbox
+            search.SpatialSearch.SpatialReferenceSystem = bbox
             search.SpatialSearch.SpatialOperator = 'Overlaps'
 
         # add the temporal criteria
