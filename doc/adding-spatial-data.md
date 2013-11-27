@@ -14,22 +14,22 @@ Although this document only deals with adding data, steps for removing or
 editing data can be logically derived from it.
 
 The following instructions assume you are working in a local checkout of the
-project git repository and commit your changes accordingly.
+project git repository and commit and deploy your changes accordingly.
 
 ## Adding a contextual map layer
 
 Creating a contextual layer for display within the OpenLayers map only requires
 editing and creating files consumed by the browser: there is no need to edit
-server side code. This achieved by the following steps:
+server side code. This achieved with the following steps:
 
 1. Obtain a GeoJSON file representing a GeoJSON `FeatureCollection` of the new
    spatial data.  If you require a feature to have an associated label rendered
    on the map then ensure that the feature has a property called `Name` with an
-   appropriate value which to be used as the label.  By convention this file
+   appropriate value which will be used as the label.  By convention this file
    should be called `areas.geojson`.
    
-2. `areas.geojson` needs to be served up to OpenLayers when required.  This can
-   be achieved by creating an appropriate directory beneath `html/data`
+2. `areas.geojson` needs to be served up to OpenLayers on demand.  This can be
+   achieved by creating an appropriate directory beneath `html/data`
    (e.g. `html/data/my-new-layer`) and placing `areas.geojson` within it.
 
 3. Make OpenLayers aware of the new data.  This involves editing the function
@@ -38,7 +38,7 @@ server side code. This achieved by the following steps:
    Charting Progress Sea Areas.  Simply ensure that
    `/data/charting-progress/areas.geojson` is changed to
    `/data/my-new-layer/areas.geojson` and edit the name and any other styling
-   or layer options to suit your requirements.
+   and/or layer options to suit your requirements.
 
 ```javascript
     // add the UK Charting Progress Sea Areas
@@ -70,18 +70,20 @@ deployed.
 
 When in doubt use the existing layers as a template for adding your new data.
 
-# Adding data to the area dropdown controls
+## Adding data to the area dropdown controls
 
 This is more involved than adding data to the map and requires the following
-server side changes: adding bounding box data to a sqlite database; editing the
+server side changes: adding bounding box data to a Sqlite database; editing the
 Portal's spatial Python module to hook into that data; editing the search view
 to make use of the new spatial hooks; and finally editing the HTML template to
 render the variables exposed by the hooks into the dropdown controls.  In more
 detail these steps are as follows:
 
-1. The bounding box data is stored in `data/portal.sqlite` in tables that must
-   have a specific structure describing the bounding box id, name and
-   coordinates.  This structure is exemplified by the `ices_rectangles` table:
+### Add the data to the Sqlite database
+
+The bounding box data is stored in `data/portal.sqlite` in tables that must
+have a specific structure describing the bounding box id, name and coordinates.
+This structure is exemplified by the `ices_rectangles` table:
 
 ```sql
 CREATE TABLE "ices_rectangles" (
@@ -94,10 +96,11 @@ CREATE TABLE "ices_rectangles" (
 );
 ```
 
-Note that the `id` data type can be any length of varchar that is required.
+Note that the `id` data type can be any length of varchar that is required, not
+just `varchar(4)`.
 
-The table name can be any name that is not already taken and makes sense for
-your data e.g. `my_new_data`.
+The table name can be any name which is not already taken and which makes sense
+for your data (e.g. `my_new_data`).
 
 As well as creating and populating this table, the `areas` view must also be
 updated to include the new bounding boxes.  This view is used when performing
@@ -117,7 +120,7 @@ CREATE VIEW areas AS
   SELECT id, name, minx, miny, maxx, maxy, 'ir' AS type FROM ices_rectangles;
 ```
 
-After adding your new table it should look something like:
+After adding your new table it should be updated to look something like:
 
 ```sql
 CREATE VIEW areas AS
@@ -138,10 +141,15 @@ The `nd` value specified for the `type` field is used as key in the dropdowns
 to differentiate between the data source: choose an appropriate value and
 remember it - it will be used in future steps.
 
-2. Edit the `Areas` class in `python/medin/spatial.py` to hook into the new
-   database table. This involves creating a new method on this class that
-   retrieves the id and name for the new table.  Again the method to obtain
-   ICES Rectangles provides a good template:
+Please refer to the Sqlite documentation for how to edit and update Sqlite
+databases.
+
+### Hook the Python `spatial` module into the new data
+
+Edit the `Areas` class in `python/medin/spatial.py` to hook into the new
+database table. This involves creating a new method on this class that
+retrieves the id and name for the new table.  Again the method to obtain ICES
+Rectangles provides a good template:
    
 ```python
     def icesRectangles(self):
@@ -150,16 +158,17 @@ remember it - it will be used in future steps.
         return [row for row in cur]
 ```
 
-This just needs to be renamed (e.g. to `myNewData()` and have the
-`ices_rectangles` table name replaced with `my_new_data` to continue the
-example.
+Continuing the example, this just needs to be renamed (e.g. to `myNewData()`)
+and have the `ices_rectangles` table name replaced with `my_new_data`.
 
-3. The Search view now needs to be edited to make use of the new spatial
-   method, which is called to add the associated id and name tuples to the
-   search template.  Specifically, the definition for the `area_ids` hash in
-   the `setup()` method of the `Search` class needs to be updated.  This is
-   found in `python/medin/views.py`. As an example it may be defined along the
-   following lines:
+### Make the Search view aware of the new spatial hooks
+
+The Search view now needs to be edited to make use of the new spatial method,
+which is called to add the associated id and name tuples to the search
+template.  Specifically, the definition for the `area_ids` hash in the
+`setup()` method of the `Search` class needs to be updated.  This is found in
+`python/medin/views.py`. As an example it may currently be defined along the
+following lines:
    
 ```python
         area_ids = {'british-isles': areas.britishIsles(),
@@ -169,7 +178,7 @@ example.
                     'ices-rectangles': areas.icesRectangles()}
 ```
 
-Editing it to include the new data method would be along these lines:
+Editing the above to include the new data method would produce the following:
 
 ```python
         area_ids = {'british-isles': areas.britishIsles(),
@@ -183,21 +192,23 @@ Editing it to include the new data method would be along these lines:
 Note that the `my-new-data` key to `area_ids` will be used in the template to
 reference the new data.
 
-4. The `templates/full/search.html` Mako template now needs to be edited to
-   extend the dropdowns to incorporate the new data.  This firstly involves
-   editing the `for` loop in the area type select dropdown (found with the
-   string `<select name="t" id="area-type">`).  Using our example the `for`
-   loop should end up looking as follows:
+### Expose the new data in the HTML dropdowns
+
+The `templates/full/search.html` Mako template now needs to be edited to extend
+the dropdowns to incorporate the new data.  This firstly involves editing the
+`for` loop in the area type select dropdown (found with the string `<select
+name="t" id="area-type">`).  Using our example the `for` loop should end up
+looking as follows:
    
 ```python
 %for id, name in (('co', 'Countries'), ('sa', 'SeaVoX Salt and Fresh Water Body Gazetteer'), ('cp', 'UK Charting Progress Sea Areas'), ('ir', 'ICES Rectangles'), ('nd', 'My New Data')):
 ```
 
-Note that the `nd` identifier specified in the sqlite `areas` view in step 1 is
-used here.
+Note that the `nd` identifier specified in the sqlite `areas` view in the first
+step is used here.
 
-Next the select dropdown containing the names for the new bounding boxes should
-be appended to the other selects.  Our example would be:
+Finally the select dropdown containing the names for the new bounding boxes
+should be appended to the other selects.  In our example it would be:
 
 ```html
         <select class="area" id="nd"\
@@ -213,9 +224,9 @@ ${area_selection('my-new-data')}
 ```
 
 Again this uses the `nd` identifier, this time to determine whether to display
-the dropdown on page load.  It also uses the `my-new-data` identifier which is
-passed to the Mako `area_selection()` function to build the options
-representing the new data.
+the dropdown on page load.  It also uses the `my-new-data` identifier created
+in the previous step: this is passed to the Mako `area_selection()` function to
+build the options representing the new data.
 
 Committing and deploying these changes  should result in your new data dropdown
 being ready for use.
