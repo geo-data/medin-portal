@@ -457,7 +457,7 @@ class SearchRequest(Request):
                 max((box[2] for box in boxes)),
                 max((box[3] for box in boxes))]
 
-            search.SpatialSearch.SpatialReferenceSystem = bbox
+            search.SpatialSearch.BoundingBoxContour = bbox
             search.SpatialSearch.SpatialOperator = 'Overlaps'
 
         # add the temporal criteria
