@@ -6,7 +6,7 @@
 # production deployment.
 #
 
-FROM homme/medin-portal:mod-wsgi
+FROM homme/medin-portal:base
 
 MAINTAINER Homme Zwaagstra <hrz@geodata.soton.ac.uk>
 
