@@ -35,8 +35,9 @@ RUN ln -s /usr/src/medin-portal/html/* /var/medin-portal/html/
 RUN ln -s /usr/src/medin-portal/templates /var/medin-portal/templates
 RUN ln -s /usr/src/medin-portal/data /var/medin-portal/data
 
-# Set up the temporary directory
+# Set up a temporary directory not under union fs control
 VOLUME ["/tmp"]
+RUN chmod a+rwxt /tmp
 RUN ln -s /tmp /var/medin-portal/tmp
 
 # Install the portal configuration file
