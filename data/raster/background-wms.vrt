@@ -6,7 +6,7 @@
     <ColorInterp>Red</ColorInterp>
     <Metadata/>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">../../../tmp/background-wms.xml</SourceFilename>
+      <SourceFilename relativeToVRT="1">../../tmp/background-wms.xml</SourceFilename>
       <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="268435456" RasterYSize="134217728" DataType="Byte" BlockXSize="256" BlockYSize="256"/>
       <SrcRect xOff="0" yOff="0" xSize="268435456" ySize="134217728"/>
@@ -17,7 +17,7 @@
     <ColorInterp>Green</ColorInterp>
     <Metadata/>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">../../../tmp/background-wms.xml</SourceFilename>
+      <SourceFilename relativeToVRT="1">../../tmp/background-wms.xml</SourceFilename>
       <SourceBand>2</SourceBand>
       <SourceProperties RasterXSize="268435456" RasterYSize="134217728" DataType="Byte" BlockXSize="256" BlockYSize="256"/>
       <SrcRect xOff="0" yOff="0" xSize="268435456" ySize="134217728"/>
@@ -28,7 +28,7 @@
     <ColorInterp>Blue</ColorInterp>
     <Metadata/>
     <SimpleSource>
-      <SourceFilename relativeToVRT="1">../../../tmp/background-wms.xml</SourceFilename>
+      <SourceFilename relativeToVRT="1">../../tmp/background-wms.xml</SourceFilename>
       <SourceBand>3</SourceBand>
       <SourceProperties RasterXSize="268435456" RasterYSize="134217728" DataType="Byte" BlockXSize="256" BlockYSize="256"/>
       <SrcRect xOff="0" yOff="0" xSize="268435456" ySize="134217728"/>
