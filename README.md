@@ -1,9 +1,9 @@
 # Introduction
 
-This software has been developed to create the MEDIN
-Portal(http://portal.oceannet.org) by the GeoData
-Institute(http://www.geodata.soton.ac.uk) on behalf of the MEDIN
-partnership(http://www.oceannet.org).
+This software has been developed to create the
+[MEDIN Portal](http://portal.oceannet.org) by the
+[GeoData Institute](http://www.geodata.soton.ac.uk) on behalf of the
+[MEDIN partnership](http://www.oceannet.org).
 
 Feedback and input (including code) is welcome. Please email
 geodata@soton.ac.uk
@@ -26,7 +26,7 @@ environment for production deployment (e.g. www.modwsgi.org).
 ## Getting started using Docker
 
 The easiest way to install the application for production use is to
-use Docker(http://www.docker.io) using the mod wsgi container: after
+use [Docker](http://www.docker.io) using the mod wsgi container: after
 installing docker running the following command will expose the
 application on port `8000`.
 
@@ -101,10 +101,10 @@ contents as required.
 Specific configuration of the portal spatial services is done by
 editing the files in the templates/config directory.
 
-Additionally, the online EPSG Geodetic Parameter Database
-(http://epsg-registry.org) should be updated by running the
-`bin/epsg-update.py` script when required (e.g. on a daily basis as a
-cron job):
+Additionally, the online
+[EPSG Geodetic Parameter Database](http://epsg-registry.org) should be
+updated by running the `bin/epsg-update.py` script when required
+(e.g. on a daily basis as a cron job):
 
     PYTHONPATH=./python python ./bin/epsg-update.py ./data/epsg-registry.sqlite
 
