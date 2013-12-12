@@ -112,25 +112,23 @@ class EnvironProxy(Proxy):
         return path_info
 
     # code adapted from http://www.python.org/dev/peps/pep-0333/#url-reconstruction
-    def http_uri(self):
+    def http_uri(self, **kwargs):
         url = self['wsgi.url_scheme']+'://'
+        server_port = kwargs.get('SERVER_PORT', self.get('SERVER_PORT', '80'))
 
-        try:
-            url += self['HTTP_HOST']
-        except KeyError:
-            url += self['SERVER_NAME']
+        url += self['SERVER_NAME']
 
-            if self['wsgi.url_scheme'] == 'https' and self['SERVER_PORT'] != '443':
-                url += ':' + self['SERVER_PORT']
-            elif self['SERVER_PORT'] != '80':
-                url += ':' + self['SERVER_PORT']
+        if self['wsgi.url_scheme'] == 'https' and server_port != '443':
+            url += ':' + server_port
+        elif server_port != '80':
+            url += ':' + server_port
 
         return url
 
-    def script_uri(self):
+    def script_uri(self, **kwargs):
         from urllib import quote
 
-        return self.http_uri() + quote(self.get('SCRIPT_NAME',''))
+        return self.http_uri(**kwargs) + quote(self.get('SCRIPT_NAME',''))
 
     def resource_uri(self):
         from urllib import quote
@@ -460,7 +458,7 @@ def wsgi_app():
 
     # get an image representing the metadata bounds.
     view = views.SOAPRequest(views.MetadataImage())
-    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=view)
+    application.add('/{template}/catalogue/{gid:segment}/extent.png', GET=config(view))
 
     # download the metadata as CSV
     view = views.SOAPRequest(views.MetadataCSV())

@@ -1029,6 +1029,7 @@ def background_raster(template_lookup, environ):
 
     import os.path
     from mako.runtime import Context
+    from ConfigParser import NoOptionError
 
     raster = 'background-wms.xml'
     templatepath = os.path.join('config', raster)
@@ -1037,7 +1038,18 @@ def background_raster(template_lookup, environ):
 
     # render the template to the file
     fh = open(rasterpath, 'w')
-    ctx = Context(fh, resource_root=environ.script_uri())
+
+    # get the resource root, using a local HTTP port if set in the
+    # config.
+    config = environ['config']
+    try:
+        local_port = config.get('DEFAULT', 'local_port')
+    except NoOptionError:
+        resource_root = environ.script_uri()
+    else:
+        resource_root = environ.script_uri(SERVER_PORT=local_port)
+
+    ctx = Context(fh, resource_root=resource_root)
     template.render_context(ctx)
     fh.close()
 

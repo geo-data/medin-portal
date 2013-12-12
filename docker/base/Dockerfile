@@ -40,9 +40,10 @@ VOLUME ["/tmp"]
 #RUN chmod a+rwxt /tmp # This doesn't seem to work
 RUN ln -s /tmp /var/medin-portal/tmp
 
-# Install the portal configuration file
+# Install the portal configuration file. This includes setting the
+# `local_port` variable.
 RUN mkdir /var/medin-portal/etc 
-RUN cp /usr/src/medin-portal/etc/portal.ini.example /var/medin-portal/etc/portal.ini
+RUN sed -e 's/;local_port/local_port/g' /usr/src/medin-portal/etc/portal.ini.example > /var/medin-portal/etc/portal.ini
 
 # Update the SKOS based vocabulary cache
 RUN cd /usr/src/medin-portal && PYTHONPATH=./python python ./bin/vocab-update.py  --vocabularies ./data/vocabularies/vocab-list.txt ./data/vocabularies.sqlite
