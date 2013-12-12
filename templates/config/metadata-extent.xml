@@ -1,35 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE Map>
-<Map bgcolor="white" srs="+proj=latlong +datum=WGS84">
+<Map background-color="white" srs="+proj=latlong +datum=WGS84">
 
   <Style name="AreaOfInterest">
     <Rule>
-	  <Filter>[type] = 'bbox'</Filter>
-      <PolygonSymbolizer>
-        <CssParameter name="fill">#ca0000</CssParameter>
-		<CssParameter name="fill-opacity">0.25</CssParameter>
-      </PolygonSymbolizer>
-      <LineSymbolizer>
-        <CssParameter name="stroke">#ca0000</CssParameter>
-        <CssParameter name="stroke-width">1.5</CssParameter>
-      </LineSymbolizer>
+      <Filter>[type] = 'bbox'</Filter>
+      <PolygonSymbolizer fill="#ca0000" fill-opacity="0.25"/>
+      <LineSymbolizer stroke="#ca0000" stroke-width="1.5"/>
     </Rule>
     <Rule>
-	  <Filter>[type] = 'point'</Filter>
-	  <PointSymbolizer allow_overlap="yes"
-					   file="${root_dir}/data/symbols/star.png"
-					   type="png"
-					   width="25"
-					   height="24" />
-	</Rule>
+      <Filter>[type] = 'point'</Filter>
+      <PointSymbolizer allow-overlap="yes"
+		       file="${root_dir}/data/symbols/star.png"/>
+    </Rule>
   </Style>
 
   <Style name="Raster">
     <Rule>
-      <RasterSymbolizer>
-        <CssParameter name="opacity">1</CssParameter>
-        <CssParameter name="scaling">bilinear</CssParameter>
-      </RasterSymbolizer>
+      <RasterSymbolizer opacity="1" scaling="bilinear"/>
     </Rule>
   </Style>
   
