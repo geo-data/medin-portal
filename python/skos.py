@@ -1,1 +1,0 @@
-../submodules/python-skos/skos.py
