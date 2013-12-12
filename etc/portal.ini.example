@@ -9,6 +9,16 @@
 [DEFAULT]
 email = enquiries@oceannet.org
 
+; This represents the port that the webserver is running on when
+; accessed from localhost.  This is used in the GDAL data source used
+; to access the tile mapping service through a self-referencing
+; URL. It needs to be set if port forwarding is used to expose the
+; application to an external web server on a non-standard port, which
+; otherwise results in an invalid `SERVER_PORT` server variable (the
+; forwarded port is used, rather than the actual local port).
+;
+;local_port = 80
+
 [SMTP]
 ; Uncomment and edit the following options to cater for non default
 ; SMTP settings
