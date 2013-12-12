@@ -16,4 +16,4 @@ RUN ln -s /etc/apache2/sites-available/medin-portal /etc/apache2/sites-enabled/0
 RUN rm /etc/apache2/sites-enabled/000-default
 
 # Start Apache by default
-CMD service apache2 start && tail -F /var/log/apache2/error.log
+CMD chmod a+rwxt /tmp && service apache2 start && tail -F /var/log/apache2/error.log

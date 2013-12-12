@@ -22,4 +22,4 @@ RUN rm /etc/apache2/sites-enabled/000-default
 RUN mkdir /var/medin-portal/wsgi && ln -s /usr/src/medin-portal/deploy/search.wsgi /var/medin-portal/wsgi/search.wsgi
 
 # Start Apache by default
-CMD service apache2 start && tail -F /var/log/apache2/error.log
+CMD chmod a+rwxt /tmp && service apache2 start && tail -F /var/log/apache2/error.log

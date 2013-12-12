@@ -37,7 +37,7 @@ RUN ln -s /usr/src/medin-portal/data /var/medin-portal/data
 
 # Set up a temporary directory not under union fs control
 VOLUME ["/tmp"]
-RUN chmod a+rwxt /tmp
+#RUN chmod a+rwxt /tmp # This doesn't seem to work
 RUN ln -s /tmp /var/medin-portal/tmp
 
 # Install the portal configuration file
