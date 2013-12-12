@@ -29,11 +29,14 @@ RUN git clone https://github.com/geo-data/medin-portal.git /usr/src/medin-portal
 RUN cd /usr/src/medin-portal && git checkout docker
 RUN cd /usr/src/medin-portal && git submodule init && git submodule update
 
-# Set up the web root and link in the relevant static portal files
+# Set up the web root and link in the relevant static portal files.
 RUN mkdir -p /var/medin-portal/html
 RUN ln -s /usr/src/medin-portal/html/* /var/medin-portal/html/
 RUN ln -s /usr/src/medin-portal/templates /var/medin-portal/templates
-RUN ln -s /usr/src/medin-portal/data /var/medin-portal/data
+# The data directory has to be hard linked rather than symlinked so
+# that relative links within `data/raster/background-wms.vrt` work
+# correctly.
+RUN cp --archive --link /usr/src/medin-portal/data /var/medin-portal/data
 
 # Set up a temporary directory not under union fs control
 VOLUME ["/tmp"]
