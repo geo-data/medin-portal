@@ -44,8 +44,5 @@ RUN ln -s /tmp /var/medin-portal/tmp
 RUN mkdir /var/medin-portal/etc 
 RUN cp /usr/src/medin-portal/etc/portal.ini.example /var/medin-portal/etc/portal.ini
 
-# Set up the custom Apache log directory
-RUN mkdir /var/medin-portal/logs && chown nobody /var/medin-portal/logs
-
 # Update the SKOS based vocabulary cache
 RUN cd /usr/src/medin-portal && PYTHONPATH=./python python ./bin/vocab-update.py  --vocabularies ./data/vocabularies/vocab-list.txt ./data/vocabularies.sqlite
