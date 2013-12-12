@@ -202,7 +202,7 @@ def metadata_image(bboxes, mapfile):
     """Create a metadata image"""
 
     from json import dumps as tojson
-    import mapnik
+    import mapnik2 as mapnik
 
     features = []
 
