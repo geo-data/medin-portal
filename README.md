@@ -47,7 +47,9 @@ In either case the `Dockerfile`s generating these containers provide
 the definitive version of the dependencies and configuration required
 by the application and as such should be used as a recipe for
 replicating the installation in other environments.  See
-`docker/README.md` for further details.
+`docker/README.md` and the [Docker
+Index](https://index.docker.io/u/homme/medin-portal/) for further
+details.
 
 ## Requirements
 

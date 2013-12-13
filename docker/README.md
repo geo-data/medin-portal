@@ -23,3 +23,6 @@ As an example the following command runs the mod wsgi container,
 exposing the application on port `8000` of the host machine:
 
     docker run -p=8000:80 homme/medin-portal:wsgi
+
+See the [Docker Index](https://index.docker.io/u/homme/medin-portal/)
+for further details.
