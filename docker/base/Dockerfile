@@ -22,7 +22,7 @@ RUN apt-get install -y git apache2 python-libxml2 python-gdal python-mapnik2 pyt
 RUN pip install SQLAlchemy==0.8.4 iso8601==0.1.8 rdfextras==0.4 rdflib==4.0.1
 
 # The epsg module needs to be installed separately to SQLAlchemy to avoid problems
-RUN pip install python-epsg==0.1.3 python-skos==0.0.3
+RUN pip install python-epsg==0.1.4 python-skos==0.0.3
 
 # Clone the git repository
 RUN git clone https://github.com/geo-data/medin-portal.git /usr/src/medin-portal

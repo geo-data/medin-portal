@@ -73,7 +73,7 @@ The software has the following dependencies:
 
  * iso8601 0.1.8 (https://pypi.python.org/pypi/iso8601/0.1.8)
 
- * python-epsg 0.1.3 (https://pypi.python.org/pypi/python-epsg/0.1.3)
+ * python-epsg 0.1.4 (https://pypi.python.org/pypi/python-epsg/0.1.4)
 
  * python-skos 0.0.3 (https://pypi.python.org/pypi/python-skos/0.0.3)
 
