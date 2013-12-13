@@ -29,6 +29,12 @@ RUN git clone https://github.com/geo-data/medin-portal.git /usr/src/medin-portal
 RUN cd /usr/src/medin-portal && git checkout docker
 RUN cd /usr/src/medin-portal && git submodule init && git submodule update
 
+# Update the EPSG registry cache. This may take a while...
+RUN cd /usr/src/medin-portal && PYTHONPATH=./python python ./bin/epsg-update.py ./data/epsg-registry.sqlite
+
+# Update the SKOS based vocabulary cache
+RUN cd /usr/src/medin-portal && PYTHONPATH=./python python ./bin/vocab-update.py  --vocabularies ./data/vocabularies/vocab-list.txt ./data/vocabularies.sqlite
+
 # Set up the web root and link in the relevant static portal files.
 RUN mkdir -p /var/medin-portal/html
 RUN ln -s /usr/src/medin-portal/html/* /var/medin-portal/html/
@@ -47,6 +53,3 @@ RUN ln -s /tmp /var/medin-portal/tmp
 # `local_port` variable.
 RUN mkdir /var/medin-portal/etc 
 RUN sed -e 's/;local_port/local_port/g' /usr/src/medin-portal/etc/portal.ini.example > /var/medin-portal/etc/portal.ini
-
-# Update the SKOS based vocabulary cache
-RUN cd /usr/src/medin-portal && PYTHONPATH=./python python ./bin/vocab-update.py  --vocabularies ./data/vocabularies/vocab-list.txt ./data/vocabularies.sqlite
