@@ -26,7 +26,7 @@ RUN pip install python-epsg==0.1.4 python-skos==0.0.3
 
 # Clone the git repository
 RUN git clone https://github.com/geo-data/medin-portal.git /usr/src/medin-portal
-RUN cd /usr/src/medin-portal && git checkout docker
+RUN cd /usr/src/medin-portal && git checkout new-dws
 RUN cd /usr/src/medin-portal && git submodule init && git submodule update
 
 # Update the EPSG registry cache. This may take a while...
