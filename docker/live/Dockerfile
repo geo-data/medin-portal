@@ -53,9 +53,6 @@ RUN ln -s /tmp /var/medin-portal/tmp
 RUN mkdir /var/medin-portal/etc 
 RUN sed -e 's/;local_port/local_port/g' /usr/src/medin-portal/etc/portal.ini.example > /var/medin-portal/etc/portal.ini
 
-# Install mod-wsgi
-RUN apt-get install -y libapache2-mod-wsgi
-
 # Set up the mod-wsgi based virtual host
 ADD apache-vhost.conf /etc/apache2/sites-available/medin-portal
 RUN ln -s /etc/apache2/sites-available/medin-portal /etc/apache2/sites-enabled/000-medin-portal
