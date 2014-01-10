@@ -46,7 +46,7 @@ class Request(object):
         if wsdl is None:
             wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
-        self.client = suds.client.Client(wsdl, timeout=10)
+        self.client = suds.client.Client(wsdl, timeout=120)
 
     def __call__(self):
         try:
@@ -73,6 +73,8 @@ class TermBuilder(object):
                'l': "Lineage",
                'al': "PublicAccessLimits",
                'o': "DataOriginator",
+               'c': "DataCustodian",
+               'd': "DataDistributor",
                'f': "AvailableDataFormats"}
 
     def __init__(self, client):
@@ -127,15 +129,18 @@ class TermBuilder(object):
 
         # add data holders to the search terms
         if data_holders:
-            term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
-            term.Term = ' '.join(["'''%s'''" % holder for holder in data_holders]) # `OR` query
-            term.TermTarget = self.targets['o']
-            if terms:
-                term._operator = 'AND'
-                term._id = len(terms) + 1
-            else:
-                term._id = 1
-            terms.append(term)
+            holder_terms = []
+            for target in (self.targets['c'], self.targets['d']):
+                term = self.client.factory.create('ns1:SearchCriteria.TermSearch')
+                term.Term = ' '.join(["'''%s'''" % holder for holder in data_holders]) # `OR` query
+                term.TermTarget = target
+                if holder_terms:
+                    term._operator = 'OR'
+                    term._id = len(terms) + len(holder_terms) + 1
+                else:
+                    term._id = len(terms) or 1
+                holder_terms.append(term)
+            terms.extend(holder_terms)
 
         # add access types to the search terms
         if access_types:
