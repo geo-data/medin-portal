@@ -46,7 +46,7 @@ class Request(object):
         if wsdl is None:
             wsdl = 'file://%s' % os.path.abspath(os.path.join(os.path.dirname(__file__), 'data', 'dws.wsdl'))
 
-        self.client = suds.client.Client(wsdl, timeout=120)
+        self.client = suds.client.Client(wsdl, timeout=10)
 
     def __call__(self):
         try:
