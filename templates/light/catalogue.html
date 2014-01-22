@@ -187,7 +187,7 @@ result1
 %endif
 ">
   <strong>${start_index+i}.</strong> <a href="${script_root}/light/catalogue/${res['id'] | x}" title="${res['title'] | x}">${res['title'] | x}</a>
-  <div title="Originator">${res['originator'] | x}</div>
+  <div title="Custodian">${res['custodian'] | x}</div>
   <div title="Metadata update date"><em>${res['updated'].strftime("%a %d %b %Y")}</em></div>
 </div>
 % endfor
@@ -201,7 +201,7 @@ ${result_links()}
   <input type="hidden" name="${k}" value="${v | h}"/>
 % endfor
   <select name="s">
-% for cid, name in (('updated', 'Metadata update date'), ('title', 'Title'), ('originator', 'Originator')):
+% for cid, name in (('updated', 'Metadata update date'), ('title', 'Title'), ('custodian', 'Custodian')):
   % for i, order in enumerate(('desc', 'asc')):
   <% value = '%s,%d' % (cid, i) %>\
     <option value="${value}"\

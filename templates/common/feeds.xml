@@ -65,7 +65,7 @@ if bboxes:
 </%def>
 
 <%def name="content(entry)">
-&lt;strong&gt;Originator:&lt;/strong&gt; ${entry['originator'] | x}&lt;br/&gt;
+&lt;strong&gt;Custodian:&lt;/strong&gt; ${entry['custodian'] | x}&lt;br/&gt;
 &lt;strong&gt;Last updated:&lt;/strong&gt; ${dateformat(entry['updated']) | x}
 &lt;p&gt;${entry['abstract'] | x}&lt;/p&gt;
 </%def>

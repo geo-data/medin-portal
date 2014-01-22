@@ -334,7 +334,7 @@ ${result_links(True)}
   <thead>
   <tr>
     <th colspan="2">${sort_links('Title', 'title')}</th>
-    <th>${sort_links('Originator', 'originator')}</th>
+    <th>${sort_links('Custodian', 'custodian')}</th>
     <th>${sort_links('Metadata update date', 'updated')}</th>
     <th>${sort_links('Online resource', 'online-resource')}</th>
   </tr>
@@ -351,7 +351,7 @@ ${result_links(True)}
   %endif
     <td>${start_index+i}.</td>
     <td><a href="${script_root}/full/catalogue/${res['id'] | x}" title="${res['title'] | x}">${res['title'] | x}</a></td>
-    <td>${res['originator'] | x}</td>
+    <td>${res['custodian'] | x}</td>
     <td>${res['updated'].strftime("%a %d %b %Y")}</td>
     <td>
 % if res['online-resource']:

@@ -112,7 +112,7 @@ def get_query(environ, from_referrer=False):
             else:
                 qsl = ''
 
-    fields = ('updated', 'originator', 'title', 'online-resource')
+    fields = ('updated', 'custodian', 'title', 'online-resource')
     return Query(qsl, get_areas(environ), fields, get_vocab(environ), get_db(environ))
 
 def get_areas(environ):
@@ -755,7 +755,7 @@ class CSVResults(Results):
                 'Authors',
                 'URL',
                 'Abstract',
-                'Originator',
+                'Custodian',
                 'Resource type',
                 'Topic category',
                 'Lineage',
@@ -775,7 +775,7 @@ class CSVResults(Results):
                 '; '.join(result['authors']),
                 url,
                 result['abstract'],
-                result['originator'],
+                result['custodian'],
                 result['resource-type'],
                 result['topic-category'],
                 result['lineage'],

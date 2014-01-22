@@ -63,7 +63,7 @@
   <entry>
     <title>${result['title'] | x}</title>
     <author>
-      <name>${result['originator'] | x}</name>
+      <name>${result['custodian'] | x}</name>
     </author>
     <updated>${isoformat(result['updated'])}</updated>
     <link href="${script_root}/${self.attr.template}/catalogue/${result['id'] | x}"/>
