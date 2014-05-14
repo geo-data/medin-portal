@@ -179,8 +179,8 @@ ${format_epsg(epsg)}
 <div class="sibling">
   Extent: <a href="${script_root}/full/catalogue?bbox=${epsg.westBoundLongitude},${epsg.southBoundLatitude},${epsg.eastBoundLongitude},${epsg.northBoundLatitude}"
         title="Search for all metadata within this area">
-        ${epsg.westBoundLongitude}&deg;W, ${epsg.eastBoundLongitude}&deg;E,
-        ${epsg.northBoundLatitude}&deg;N, ${epsg.southBoundLatitude}&deg;S</a>
+        ${epsg.westBoundLongitude}&deg;, ${epsg.southBoundLatitude}&deg;,
+        ${epsg.eastBoundLongitude}&deg;, ${epsg.northBoundLatitude}&deg;</a>
 </div>
 </%def>\
 
@@ -328,11 +328,11 @@ ${format_crs(crs)}
 </%def>\
 
 <%def name="format_bboxes(bboxes)">\
-  The metadata covers the following areas:
+  The metadata covers the following areas (in the order West, South, East, North):
   <ul>
     % for bbox in bboxes:
     <li><a href="${script_root}/full/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}" title="Area search for metadata">
-  ${bbox[0]}&deg;W, ${bbox[2]}&deg;E, ${bbox[3]}&deg;N, ${bbox[1]}&deg;S</a></li>
+  ${bbox[0]}&deg;, ${bbox[1]}&deg;, ${bbox[2]}&deg;, ${bbox[3]}&deg;</a></li>
     % endfor
   </ul>
 
