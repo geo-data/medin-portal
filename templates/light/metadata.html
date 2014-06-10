@@ -149,8 +149,8 @@ ${format_epsg(epsg)}
 <div>
   Extent: <a href="${script_root}/light/catalogue?bbox=${epsg.westBoundLongitude},${epsg.southBoundLatitude},${epsg.eastBoundLongitude},${epsg.northBoundLatitude}"
         title="Search for all metadata within this area">
-        ${epsg.westBoundLongitude}°W, ${epsg.eastBoundLongitude}°E,
-        ${epsg.northBoundLatitude}°N, ${epsg.southBoundLatitude}°S</a>
+        ${epsg.westBoundLongitude}°, ${epsg.southBoundLatitude}°,
+        ${epsg.eastBoundLongitude}°, ${epsg.northBoundLatitude}°</a>
 </div>
 </%def>\
 
@@ -296,11 +296,11 @@ ${format_crs(crs)}
 </%def>\
 
 <%def name="format_bboxes(bboxes)">\
-  The metadata covers the following areas:
+  The metadata covers the following areas (in the order West, South, East, North):
   <ul>
     % for bbox in bboxes:
     <li><a href="${script_root}/light/catalogue?bbox=${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}" title="Area search for metadata">
-  ${bbox[0]}°;W, ${bbox[2]}°E, ${bbox[3]}°N, ${bbox[1]}°S</a></li>
+  ${bbox[0]}°, ${bbox[1]}°, ${bbox[2]}°, ${bbox[3]}°</a></li>
     % endfor
   </ul>
 
