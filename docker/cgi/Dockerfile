@@ -6,7 +6,7 @@
 # deployment.
 #
 
-FROM homme/medin-portal:base
+FROM geodata/medin-portal:base
 
 MAINTAINER Homme Zwaagstra <hrz@geodata.soton.ac.uk>
 

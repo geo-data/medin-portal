@@ -30,7 +30,7 @@ use [Docker](http://www.docker.io) using the mod wsgi container: after
 installing docker running the following command will expose the
 application on port `8000`.
 
-    docker run -p=8000:80 homme/medin-portal:wsgi
+    docker run -p=8000:80 geodata/medin-portal:wsgi
 
 Port `8000` can be reverse proxied to a public facing web server or
 caching service.  Multiple instances of the container could also be
@@ -41,43 +41,21 @@ development.  The CGI docker container comes in handy here as the
 application is loaded on each request, meaning that changes to the
 source files are immediately visible in the application:
 
-    docker run -p=8000:80 homme/medin-portal:cgi
+    docker run -p=8000:80 geodata/medin-portal:cgi
 
 In either case the `Dockerfile`s generating these containers provide
 the definitive version of the dependencies and configuration required
 by the application and as such should be used as a recipe for
 replicating the installation in other environments.  See
 `docker/README.md` and the [Docker
-Index](https://index.docker.io/u/homme/medin-portal/) for further
+Index](https://index.docker.io/u/geodata/medin-portal/) for further
 details.
 
 ## Requirements
 
-The software has the following dependencies:
-
- * Python 2.7
-
- * libxml2 >= 2.7 (http://www.xmlsoft.org/) compiled with support for
-   Python
-
- * GDAL >= 1.7 (http://www.gdal.org) compiled with support for OGR
-
- * TMS/WMS + Python Mapnik 2.0 (http://www.mapnik.org/) compiled with
-   support for GDAL + Python
-
- * sqlite3 (http://www.sqlite.org/) compiled with threadsafe support
-
- * SQLAlchemy 0.8.4 (http://www.sqlalchemy.org/)
-
- * rdfextras 0.4 (http://pypi.python.org/pypi/rdfextras/0.4)
-
- * RDFLib 4.0.1 (http://pypi.python.org/pypi/rdflib/4.0.1)
-
- * iso8601 0.1.8 (https://pypi.python.org/pypi/iso8601/0.1.8)
-
- * python-epsg 0.1.4 (https://pypi.python.org/pypi/python-epsg/0.1.4)
-
- * python-skos 0.0.3 (https://pypi.python.org/pypi/python-skos/0.0.3)
+The Portal has a number of dependencies, including Python 2.7, GDAL, Mapnik, and
+a number of Python modules.  The exact requirements are best obtained from the
+Dockerfile (`docker/base/Dockerfile`)
 
 The CGI script is `deploy/portal.cgi` and the WSGI application is
 found in `deploy/portal.wsgi`. Your web server should be configured

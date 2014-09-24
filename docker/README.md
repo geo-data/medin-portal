@@ -12,9 +12,9 @@ image runs the portal as a mod-wsgi service; this is intended for
 production deployment. These can be created using docker commands long
 the following lines:
 
-    docker build -t homme/medin-portal:base ./base
-    docker build -t homme/medin-portal:cgi ./cgi
-    docker build -t homme/medin-portal:wsgi ./wsgi
+    docker build -t geodata/medin-portal:base ./base
+    docker build -t geodata/medin-portal:cgi ./cgi
+    docker build -t geodata/medin-portal:wsgi ./wsgi
 
 Pre-generated images corresponding to these commands can be found in
 the [Docker Index](https://index.docker.io/).
@@ -22,7 +22,7 @@ the [Docker Index](https://index.docker.io/).
 As an example the following command runs the mod wsgi container,
 exposing the application on port `8000` of the host machine:
 
-    docker run -p=8000:80 homme/medin-portal:wsgi
+    docker run -p=8000:80 geodata/medin-portal:wsgi
 
-See the [Docker Index](https://index.docker.io/u/homme/medin-portal/)
+See the [Docker Index](https://index.docker.io/u/geodata/medin-portal/)
 for further details.
