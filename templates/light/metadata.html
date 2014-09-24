@@ -315,7 +315,7 @@ ${format_crs(crs)}
 <h2>Abstract</h2>
 <p>${metadata.abstract | x}</p>
 
-<p><strong>Data holder:</strong> ${', '.join(custodians) or 'Unknown'}</p>
+<p><strong>Data holder:</strong> ${', '.join(custodians) or 'Unknown' | x}</p>
 
 <p><strong>Online resource present:</strong>
 % if metadata.online_resource:
