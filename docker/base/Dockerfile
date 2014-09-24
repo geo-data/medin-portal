@@ -7,22 +7,22 @@
 # ready configuring by derived images.
 #
 
-FROM ubuntu:quantal
+# Ubuntu Trusty
+FROM ubuntu:14.04
 
 MAINTAINER Homme Zwaagstra <hrz@geodata.soton.ac.uk>
 
 # Ensure the package repository is up to date
-RUN echo "deb http://archive.ubuntu.com/ubuntu quantal main universe" > /etc/apt/sources.list
 RUN apt-get update
 
 # Install dependencies provided by Ubuntu repositories
-RUN apt-get install -y git apache2 python-libxml2 python-gdal python-mapnik2 python-pip libapache2-mod-xsendfile
+RUN apt-get install -y git apache2 python-libxml2 python-gdal python-mapnik2 python-pip libapache2-mod-xsendfile libapache2-mod-wsgi python-dev
 
 # Install dependencies provided by PIP
-RUN pip install SQLAlchemy==0.8.4 iso8601==0.1.8 rdfextras==0.4 rdflib==4.0.1
+RUN pip install SQLAlchemy==0.9.7 iso8601==0.1.10 rdfextras==0.4 rdflib==4.1.2
 
 # The epsg module needs to be installed separately to SQLAlchemy to avoid problems
-RUN pip install python-epsg==0.1.4 python-skos==0.0.3
+RUN pip install python-epsg==0.1.4 python-skos==0.1.1
 
 # Clone the git repository
 RUN git clone https://github.com/geo-data/medin-portal.git /usr/src/medin-portal
