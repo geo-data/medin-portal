@@ -19,7 +19,16 @@ RUN apt-get update
 RUN apt-get install -y git apache2 python-libxml2 python-gdal python-mapnik2 python-pip libapache2-mod-xsendfile libapache2-mod-wsgi python-dev
 
 # Install dependencies provided by PIP
-RUN pip install SQLAlchemy==0.9.7 iso8601==0.1.10 rdfextras==0.4 rdflib==4.1.2
+RUN pip install docutils \
+    SQLAlchemy==0.9.7 \
+    iso8601==0.1.10 \
+    rdfextras==0.4 \
+    rdflib==4.1.2 \
+    Mako==1.0.0 \
+    TileCache==2.11 \
+    Paste==1.7.5.1 \
+    suds==0.4 \
+    selector==0.10.1
 
 # The epsg module needs to be installed separately to SQLAlchemy to avoid problems
 RUN pip install python-epsg==0.1.4 python-skos==0.1.1
