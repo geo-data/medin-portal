@@ -25,10 +25,11 @@ environment for production deployment (e.g. www.modwsgi.org).
 
 ## Getting started using Docker
 
-The easiest way to install the application for production use is to
-use [Docker](http://www.docker.io) using the mod wsgi container: after
-installing docker running the following command will expose the
-application on port `8000`.
+[Docker](http://www.docker.io/) provides a Linux environment for applications to
+run in containers.  Pre-built images for these containers are available and
+provide the easiest way to install the application for production use.  For
+example, running the following command will deploy the portal on port `8000`
+under Apache using mod wsgi:
 
     docker run -p=8000:80 geodata/medin-portal:wsgi
 
