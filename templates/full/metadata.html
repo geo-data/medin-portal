@@ -26,7 +26,7 @@
 <%namespace import="search_criteria" file="search-common.html"/>
 <%inherit file="base-ok.html"/>\
 <%!
-    from medin.filters import quote as q
+    from medin.filters import quote as q, rst2html
     from medin.metadata import Year, YearMonth
 %>
 
@@ -361,7 +361,7 @@ ${format_crs(crs)}
 
 <h2>Overview</h2>
 
-<p><strong>Abstract:</strong> ${metadata.abstract}</p>
+<div><strong>Abstract:</strong> ${metadata.abstract | rst2html}</div>
 
 <p><strong>Data holder:</strong> ${', '.join(custodians) or 'Unknown'}</p>
 

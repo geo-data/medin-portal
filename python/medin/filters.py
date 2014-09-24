@@ -22,6 +22,8 @@
 # You can obtain a full copy of the RPL from
 # http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 
+from docutils import core
+
 """
 Filters used in Mako templates.
 
@@ -37,3 +39,10 @@ def quote(text):
     if ' ' in text:
         return '"' + text + '"'
     return text
+
+def rst2html(rst):
+    """Convert restructured text into a HTML fragment"""
+    # taken from <https://wiki.python.org/moin/ReStructuredText>
+
+    parts = core.publish_parts(source=rst, writer_name='html')
+    return parts['body_pre_docinfo']+parts['fragment']

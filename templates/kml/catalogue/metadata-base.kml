@@ -24,6 +24,8 @@
  http://opensource.org/licenses/rpl1.5.txt or geodata@soton.ac.uk
 </%doc>\
 <%!
+    from medin.filters import rst2html
+
     template = ""
 %><?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
@@ -50,9 +52,7 @@
       <name>${title | x}</name>
       <description>
         <![CDATA[
-        <p>
-          ${abstract | x}
-        </p>
+        ${abstract | rst2html}
 
         <p>Further metadata details are available <a href="${script_root}/${self.attr.template}/catalogue/${gid | x}" title="Full metadata details">here</a>.</p>
 
