@@ -229,10 +229,10 @@ $(function() {
 % endif
 </div>
 <div class="right syndicate">
-  <a href="${script_root}/full/catalogue.rss${start_link()}" title="Subscribe to these results using RSS"><img alt="Subscribe using RSS" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
-  <a href="${script_root}/full/catalogue.atom${start_link()}" title="Subscribe to these results using Atom"><img alt="Subscribe using Atom" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
-  <a href="${script_root}/full/catalogue.kml${start_link()}" title="View these results in Google Earth"><img alt="Subscribe using KML" src="/images/kml.png" class="image_no_border"/> KML</a>
-  <a href="${script_root}/full/catalogue.csv${start_link()}" title="Download these results as a spreadsheet"><img alt="Subscribe using CSV" src="/images/csv.png" class="image_no_border"/> CSV</a>
+  <a href="${script_root}/full/catalogue.rss${query_string | x}" title="Subscribe to these results using RSS"><img alt="Subscribe using RSS" src="/images/feed-icon.gif" class="image_no_border"/> RSS</a> 
+  <a href="${script_root}/full/catalogue.atom${query_string | x}" title="Subscribe to these results using Atom"><img alt="Subscribe using Atom" src="/images/feed-icon.gif" class="image_no_border"/> Atom</a>
+  <a href="${script_root}/full/catalogue.kml${query_string | x}" title="View these results in Google Earth"><img alt="Subscribe using KML" src="/images/kml.png" class="image_no_border"/> KML</a>
+  <a href="${script_root}/full/catalogue.csv${query_string | x}" title="Download these results as a spreadsheet"><img alt="Subscribe using CSV" src="/images/csv.png" class="image_no_border"/> CSV</a>
 </div>
 </div>
 </%def>
