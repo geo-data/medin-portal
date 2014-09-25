@@ -30,6 +30,10 @@ RUN pip install docutils \
     suds==0.4 \
     selector==0.10.1
 
+# Patch SUDS to properly handle invalid service responses
+ADD suds-client.py.patch /tmp/
+RUN patch -p0 /usr/local/lib/python2.7/dist-packages/suds/client.py /tmp/suds-client.py.patch
+
 # The epsg module needs to be installed separately to SQLAlchemy to avoid problems
 RUN pip install python-epsg==0.1.4 python-skos==0.1.1
 
