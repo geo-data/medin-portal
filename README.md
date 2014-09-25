@@ -27,29 +27,15 @@ environment for production deployment (e.g. www.modwsgi.org).
 
 [Docker](http://www.docker.io/) provides a Linux environment for applications to
 run in containers.  Pre-built images for these containers are available and
-provide the easiest way to install the application for production use.  For
-example, running the following command will deploy the portal on port `8000`
-under Apache using mod wsgi:
+provide the easiest way to install the application for production use: the only
+requirement is that Docker is installed and running.
 
-    docker run -p=8000:80 geodata/medin-portal:wsgi
+The `Dockerfile`s generating these images provide the definitive version of the
+dependencies and configuration required by the application and as such should be
+used as a recipe for deploying the portal in other environments.
 
-Port `8000` can be reverse proxied to a public facing web server or
-caching service.  Multiple instances of the container could also be
-started on separate hosts and connected to a load balancing service.
-
-Even if the docker is not used in production it can be used for
-development.  The CGI docker container comes in handy here as the
-application is loaded on each request, meaning that changes to the
-source files are immediately visible in the application:
-
-    docker run -p=8000:80 geodata/medin-portal:cgi
-
-In either case the `Dockerfile`s generating these containers provide
-the definitive version of the dependencies and configuration required
-by the application and as such should be used as a recipe for
-replicating the installation in other environments.  See
-`docker/README.md` and the [Docker
-Index](https://index.docker.io/u/geodata/medin-portal/) for further
+See `docker/README.md` and the
+[Docker Index](https://index.docker.io/u/geodata/medin-portal/) for further
 details.
 
 ## Requirements
