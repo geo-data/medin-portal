@@ -15,7 +15,17 @@ MAINTAINER Homme Zwaagstra <hrz@geodata.soton.ac.uk>
 RUN apt-get update
 
 # Install dependencies provided by Ubuntu repositories
-RUN apt-get install -y git apache2 python-libxml2 python-gdal python-mapnik2 python-pip libapache2-mod-xsendfile libapache2-mod-wsgi python-dev
+RUN apt-get install -y \
+    git \
+    apache2 \
+    python-libxml2 \
+    python-gdal \
+    python-mapnik2 \
+    python-pip \
+    libapache2-mod-xsendfile \
+    libapache2-mod-wsgi \
+    python-dev \
+    python-docutils
 
 # Install dependencies provided by PIP
 RUN pip install SQLAlchemy==0.9.7 iso8601==0.1.10 rdfextras==0.4 rdflib==4.1.2
