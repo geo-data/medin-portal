@@ -104,7 +104,7 @@
   </wsdl:binding>
   <wsdl:service name="DiscoveryServiceMEDIN">
     <wsdl:port name="Discovery" binding="tns:DiscoverySoapBinding">
-      <wsdlsoap:address location="http://triton.badc.rl.ac.uk/axis2/services/DiscoveryServiceMEDIN/"/>
+      <wsdlsoap:address location="http://ceda-discovery.ceda.ac.uk:8080/axis2/services/DiscoveryServiceMEDIN/"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
