@@ -176,20 +176,24 @@ ${date.isoformat()}\
 <%def name="format_areaofuse(epsg)">\
 <h3>Area of Use</h3>
 ${format_epsg(epsg)}
+% if None not in (epsg.westBoundLongitude, epsg.southBoundLatitude, epsg.eastBoundLongitude, epsg.northBoundLatitude):
 <div class="sibling">
   Extent: <a href="${script_root}/full/catalogue?bbox=${epsg.westBoundLongitude},${epsg.southBoundLatitude},${epsg.eastBoundLongitude},${epsg.northBoundLatitude}"
         title="Search for all metadata within this area">
         ${epsg.westBoundLongitude}&deg;, ${epsg.southBoundLatitude}&deg;,
         ${epsg.eastBoundLongitude}&deg;, ${epsg.northBoundLatitude}&deg;</a>
 </div>
+% endif
 </%def>\
 
 <%def name="format_datum(epsg)">\
 <h3>Datum</h3>
 ${format_epsg(epsg)}
+% if epsg.realizationEpoch is not None:
 <div class="sibling">
   Realisation epoch: ${format_date(epsg.realizationEpoch)}
 </div>
+% endif
 % if hasattr(epsg, 'primeMeridian'):
 ${format_prime_meridian(epsg.primeMeridian)}
 % endif
