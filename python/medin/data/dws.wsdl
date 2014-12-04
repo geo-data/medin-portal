@@ -412,7 +412,7 @@
  </binding>
  <service name='DiscoveryService'>
   <port binding='tns:DiscoveryInterfaceBinding' name='DiscoveryPort'>
-   <soap:address location='http://csw1-dev.cems.rl.ac.uk:8180/discovery/dws'/>
+   <soap:address location='http://ceda-discovery.ceda.ac.uk:8180/discovery/dws'/>
   </port>
  </service>
 </definitions>
